@@ -1,0 +1,198 @@
+:root {
+    --verde: #9bc431;
+    --turquesa: #2eb198;
+    --gris: #616160;
+    --blanco: #ffffff;
+    --error: #e74c3c;
+    --success: #27ae60;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Mulish', sans-serif;
+    background-color: #f9f9f9;
+    color: var(--gris);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    text-align: center;
+}
+
+.logo {
+    margin-bottom: 30px;
+}
+
+.logo img {
+    max-width: 200px;
+    height: auto;
+}
+
+.logo a {
+    text-decoration: none;
+    border: none;
+}
+
+.recovery-card {
+    background-color: var(--blanco);
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    padding: 40px 30px;
+    max-width: 500px;
+    width: 100%;
+    text-align: left;
+}
+
+h1 {
+    font-family: 'Barlow', sans-serif;
+    font-weight: 600;
+    color: var(--gris);
+    margin-bottom: 15px;
+    font-size: 28px;
+    text-align: center;
+}
+
+p {
+    line-height: 1.6;
+    margin-bottom: 25px;
+    font-size: 16px;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--gris);
+}
+
+.input-container {
+    position: relative;
+    width: 100%;
+}
+
+input[type="email"] {
+    width: 100%;
+    padding: 12px 45px 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border 0.3s;
+}
+
+input[type="email"]:focus {
+    border-color: var(--turquesa);
+    outline: none;
+}
+
+.input-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gris);
+    font-size: 16px;
+}
+
+.error-message {
+    color: var(--error);
+    font-size: 14px;
+    display: block;
+    margin-top: 5px;
+    min-height: 20px;
+}
+
+.btn {
+    display: block;
+    width: 100%;
+    background-color: var(--turquesa);
+    color: var(--blanco);
+    text-decoration: none;
+    padding: 12px 30px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-family: 'Barlow', sans-serif;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.btn:hover {
+    background-color: var(--verde);
+    transform: translateY(-2px);
+}
+
+.btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.success-message {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    background-color: #f8fff8;
+    border-radius: 8px;
+    border: 1px solid #e1f7e1;
+    margin-top: 20px;
+}
+
+.success-icon {
+    color: var(--success);
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.success-message h2 {
+    color: var(--success);
+    margin-bottom: 10px;
+    font-family: 'Barlow', sans-serif;
+}
+
+.links {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.links a {
+    display: block;
+    color: var(--turquesa);
+    text-decoration: none;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.links a:hover {
+    text-decoration: underline;
+}
+
+.footer {
+    margin-top: 30px;
+    font-size: 14px;
+    color: var(--gris);
+}
+
+@media (max-width: 480px) {
+    .recovery-card {
+        padding: 30px 20px;
+    }
+    
+    h1 {
+        font-size: 24px;
+    }
+}

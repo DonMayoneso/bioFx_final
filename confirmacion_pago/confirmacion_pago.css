@@ -1,0 +1,149 @@
+/* =============================================
+   ESTILOS ESPECÍFICOS PARA CONFIRMACIÓN DE PAGO
+   ============================================= */
+
+/* Variables de colores basadas en tu esquema */
+:root {
+    --verde: #9bc431;
+    --turquesa: #2eb198;
+    --gris: #616160;
+    --blanco: #ffffff;
+    --success: #27ae60;
+    --dark: #333333;
+    --light-gray: #f5f5f5;
+}
+
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Mulish', 'Segoe UI', sans-serif;
+    background-color: #f8f9fa;
+    color: var(--gris);
+    line-height: 1.6;
+}
+
+/* Contenedor principal */
+.confirmation-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+/* Contenido de confirmación */
+.confirmation-content {
+    background: var(--blanco);
+    border-radius: 15px;
+    padding: 50px 40px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 100%;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Icono de confirmación */
+.confirmation-icon {
+    font-size: 5rem;
+    color: var(--success);
+    margin-bottom: 25px;
+    animation: bounceIn 0.8s ease-out;
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Texto */
+.confirmation-content h1 {
+    color: var(--dark);
+    margin-bottom: 15px;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.confirmation-content p {
+    color: var(--gris);
+    margin-bottom: 30px;
+    font-size: 1.1rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Botón */
+.btn {
+    display: inline-block;
+    padding: 14px 35px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.btn-primary {
+    background-color: var(--turquesa);
+    color: var(--blanco);
+    box-shadow: 0 4px 15px rgba(46, 177, 152, 0.3);
+}
+
+.btn-primary:hover {
+    background-color: var(--verde);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(155, 196, 49, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .confirmation-content {
+        padding: 40px 25px;
+    }
+    
+    .confirmation-content h1 {
+        font-size: 1.7rem;
+    }
+    
+    .confirmation-icon {
+        font-size: 4rem;
+    }
+    
+    .btn {
+        padding: 12px 30px;
+        font-size: 1rem;
+    }
+}

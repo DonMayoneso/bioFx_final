@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - bioFX</title>
+    <link rel="icon" type="image/png" href="assets/logos/isotipoico.png"> 
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Estilos específicos para la página de perfil */
+        .profile-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 30px;
+            border: 4px solid var(--primary);
+        }
+        
+        .profile-info h1 {
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+        
+        .profile-info p {
+            color: var(--gray);
+            margin-bottom: 5px;
+        }
+        
+        .profile-edit-btn {
+            margin-left: auto;
+            padding: 10px 20px;
+            background-color: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .profile-edit-btn:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .profile-sections {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+        
+        .profile-sidebar {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 25px;
+        }
+        
+        .profile-nav {
+            list-style: none;
+        }
+        
+        .profile-nav li {
+            margin-bottom: 15px;
+        }
+        
+        .profile-nav a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: var(--dark);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+        
+        .profile-nav a:hover,
+        .profile-nav a.active {
+            background-color: rgba(42, 127, 140, 0.1);
+            color: var(--primary);
+        }
+        
+        .profile-nav i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .profile-content {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 30px;
+        }
+        
+        .section-title {
+            color: var(--dark);
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light-gray);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--light-gray);
+            border-radius: 4px;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(42, 127, 140, 0.1);
+        }
+        
+        .form-actions {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .orders-list {
+            margin-top: 30px;
+        }
+        
+        .order-card {
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: var(--transition);
+        }
+        
+        .order-card:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .order-id {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .order-date {
+            color: var(--gray);
+        }
+        
+        .order-products {
+            margin-bottom: 15px;
+        }
+        
+        .order-product {
+            display: grid;
+            grid-template-columns: 60px 1fr auto;
+            gap: 15px;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        
+        .order-product:last-child {
+            border-bottom: none;
+        }
+        
+        .order-product-img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+        
+        .order-product-info h4 {
+            margin-bottom: 5px;
+            color: var(--dark);
+            font-size: 16px;
+        }
+        
+        .order-product-info p {
+            color: var(--gray);
+            margin-bottom: 3px;
+            font-size: 14px;
+        }
+        
+        .order-price {
+            font-weight: 600;
+            color: var(--primary);
+            text-align: right;
+        }
+        
+        .order-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--light-gray);
+        }
+        
+        .order-total {
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 18px;
+        }
+        
+        .order-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-repeat-order {
+            padding: 8px 16px;
+            background-color: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .btn-repeat-order:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .empty-orders {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--gray);
+        }
+        
+        .empty-orders i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: var(--light-gray);
+        }
+        
+        .empty-orders p {
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 968px) {
+            .profile-sections {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .order-product {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .order-footer {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .order-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .profile-avatar {
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+            
+            .profile-edit-btn {
+                margin-left: 0;
+                margin-top: 20px;
+            }
+        }
+
+        /* Tabs de sección */
+        .profile-tabs {
+            display: none;
+        }
+        
+        .profile-tabs.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>bioFX</h1>
+            </div>
+            
+            <nav class="main-nav">
+                <div class="logo">
+                    <a href="index.html">
+                     <img src="assets/logos/logobiofx.png" alt="bioFX Logo" class="logo-img">
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="header-actions">
+                <div class="user-icon" id="userButton">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="cart-icon" id="cartButton">
+                    <i class="fas fa-shopping-cart"></i>
+                    <div class="cart-count" id="cartCount">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="promo-banner">
+  <div class="promo-track">
+    <span class="promo-text">¡Envíos gratis a todo el Ecuador en pedidos a partir de $50!</span>
+    <span class="promo-text">¡Envíos gratis a todo el Ecuador en pedidos a partir de $50!</span>
+    <span class="promo-text">¡Envíos gratis a todo el Ecuador en pedidos a partir de $50!</span>
+    <span class="promo-text">¡Envíos gratis a todo el Ecuador en pedidos a partir de $50!</span>
+  </div>
+</div>
+
+    </header>
+
+    <div class="profile-container">
+        <div class="profile-header">
+            <img src="https://ui-avatars.com/api/?name=Usuario+Biofx&background=2a7f8c&color=fff" alt="Avatar" class="profile-avatar">
+            <div class="profile-info">
+                <h1>María González</h1>
+                <p>maria.gonzalez@email.com</p>
+                <p>Miembro desde: Enero 2023</p>
+            </div>
+            <button class="profile-edit-btn">Editar Perfil</button>
+        </div>
+        
+        <div class="profile-sections">
+            <div class="profile-sidebar">
+                <ul class="profile-nav">
+                    <li><a href="#" class="nav-link active" data-tab="personal"><i class="fas fa-user"></i> Información Personal</a></li>
+                    <li><a href="#" class="nav-link" data-tab="orders"><i class="fas fa-shopping-bag"></i> Historial de Pedidos</a></li>
+                    <li><a href="#" class="nav-link" data-tab="billing"><i class="fas fa-credit-card"></i> Datos de Facturación</a></li>
+                    <li><a href="#" class="nav-link" data-tab="security"><i class="fas fa-shield-alt"></i> Seguridad</a></li>
+                    <li><a href="index.html"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+                </ul>
+            </div>
+            
+            <div class="profile-content">
+                <!-- Sección de Información Personal -->
+                <div id="personal" class="profile-tabs active">
+                    <h2 class="section-title">Información Personal</h2>
+                    <form id="personalForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="firstName">Nombres</label>
+                                <input type="text" id="firstName" value="María" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName">Apellidos</label>
+                                <input type="text" id="lastName" value="González" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Correo Electrónico</label>
+                            <input type="email" id="email" value="maria.gonzalez@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Teléfono</label>
+                            <input type="tel" id="phone" value="+593 987 654 321" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Sección de Historial de Pedidos -->
+                <div id="orders" class="profile-tabs">
+                    <h2 class="section-title">Historial de Pedidos</h2>
+                    
+                    <div class="orders-list">
+                        <!-- Pedido 1 -->
+                        <div class="order-card">
+                            <div class="order-header">
+                                <div>
+                                    <div class="order-id">Pedido #BIO-12345</div>
+                                    <div class="order-date">Realizado el: 15 de Noviembre, 2023</div>
+                                </div>
+                            </div>
+                            
+                            <div class="order-products">
+                                <div class="order-product">
+                                    <img src="assets/productos/energy-plus.jpg" alt="Energy Plus" class="order-product-img">
+                                    <div class="order-product-info">
+                                        <h4>Energy Plus - Suplemento Energético</h4>
+                                        <p>Cantidad: 1 • 60 cápsulas</p>
+                                    </div>
+                                    <div class="order-price">$45.99</div>
+                                </div>
+                                
+                                <div class="order-product">
+                                    <img src="assets/productos/omega-3.jpg" alt="Omega 3" class="order-product-img">
+                                    <div class="order-product-info">
+                                        <h4>Omega 3 Premium - Ácidos Grasos</h4>
+                                        <p>Cantidad: 2 • 90 cápsulas</p>
+                                    </div>
+                                    <div class="order-price">$32.50</div>
+                                </div>
+                            </div>
+                            
+                            <div class="order-footer">
+                                <div class="order-total">Total: $110.99</div>
+                                <div class="order-actions">
+                                    <button class="btn-repeat-order" data-order-id="BIO-12345">Repetir Pedido</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pedido 2 -->
+                        <div class="order-card">
+                            <div class="order-header">
+                                <div>
+                                    <div class="order-id">Pedido #BIO-12346</div>
+                                    <div class="order-date">Realizado el: 5 de Diciembre, 2023</div>
+                                </div>
+                            </div>
+                            
+                            <div class="order-products">
+                                <div class="order-product">
+                                    <img src="assets/productos/detox-pack.jpg" alt="Pack Detox" class="order-product-img">
+                                    <div class="order-product-info">
+                                        <h4>Pack Detox Completo - Limpieza Interior</h4>
+                                        <p>Cantidad: 1 • 3 productos</p>
+                                    </div>
+                                    <div class="order-price">$89.99</div>
+                                </div>
+                            </div>
+                            
+                            <div class="order-footer">
+                                <div class="order-total">Total: $89.99</div>
+                                <div class="order-actions">
+                                    <button class="btn-repeat-order" data-order-id="BIO-12346">Repetir Pedido</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección de Datos de Facturación -->
+                <div id="billing" class="profile-tabs">
+                    <h2 class="section-title">Datos de Facturación</h2>
+                    <form id="billingForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="billingName">Nombre o Razón Social</label>
+                                <input type="text" id="billingName" value="María González" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="billingRUC">RUC/Cédula</label>
+                                <input type="text" id="billingRUC" value="1712345678001" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="billingAddress">Dirección de Facturación</label>
+                            <input type="text" id="billingAddress" value="Av. Amazonas N123 y Av. Patria" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="billingPhone">Teléfono de Contacto</label>
+                            <input type="tel" id="billingPhone" value="+593 987 654 321" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="billingEmail">Email para Factura Electrónica</label>
+                            <input type="email" id="billingEmail" value="maria.gonzalez@email.com" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Guardar Datos de Facturación</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Sección de Seguridad -->
+                <div id="security" class="profile-tabs">
+                    <h2 class="section-title">Seguridad y Contraseña</h2>
+                    <form id="securityForm">
+                        <div class="form-group">
+                            <label for="currentPassword">Contraseña Actual</label>
+                            <input type="password" id="currentPassword" required>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="newPassword">Nueva Contraseña</label>
+                                <input type="password" id="newPassword" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmPassword">Confirmar Nueva Contraseña</label>
+                                <input type="password" id="confirmPassword" required>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Actualizar Contraseña</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-columns">
+                <div class="footer-column">
+                    <h3>bioFX</h3>
+                    <p>Tu tienda de confianza para productos de medicina funcional de calidad a los mejores precios.</p>
+                </div>
+                <div class="footer-column">
+                    <h3>Contacto</h3>
+                    <p><i class="fas fa-map-marker-alt"></i> Av. Principal 123, Ciudad</p>
+                    <p><i class="fas fa-phone"></i> +1 234 567 890</p>
+                    <p><i class="fas fa-envelope"></i> info@biofx.com.ec</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2023 bioFX. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // JavaScript para la funcionalidad del perfil
+        document.addEventListener('DOMContentLoaded', function() {
+            // Navegación entre secciones
+            const navLinks = document.querySelectorAll('.nav-link');
+            const tabs = document.querySelectorAll('.profile-tabs');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remover clase active de todos los enlaces
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    // Agregar clase active al enlace clickeado
+                    this.classList.add('active');
+                    
+                    // Ocultar todas las secciones
+                    tabs.forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    
+                    // Mostrar la sección correspondiente
+                    const targetId = this.getAttribute('data-tab');
+                    document.getElementById(targetId).classList.add('active');
+                });
+            });
+            
+            // Botón para repetir pedido
+            const repeatButtons = document.querySelectorAll('.btn-repeat-order');
+            repeatButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const orderId = this.getAttribute('data-order-id');
+                    alert(`¡El pedido ${orderId} se ha añadido a tu carrito! Serás redirigido a la página de productos.`);
+                    // Aquí iría la lógica para agregar los productos del pedido al carrito
+                    // Redirigir a la página principal
+                    window.location.href = 'index.html';
+                });
+            });
+
+            // Formularios
+            const personalForm = document.getElementById('personalForm');
+            if (personalForm) {
+                personalForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    alert('Información personal actualizada correctamente.');
+                    // Aquí iría la lógica para guardar los cambios
+                });
+            }
+
+            const billingForm = document.getElementById('billingForm');
+            if (billingForm) {
+                billingForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    alert('Datos de facturación actualizados correctamente.');
+                    // Aquí iría la lógica para guardar los cambios
+                });
+            }
+
+            const securityForm = document.getElementById('securityForm');
+            if (securityForm) {
+                securityForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    alert('Contraseña actualizada correctamente.');
+                    // Aquí iría la lógica para guardar los cambios
+                });
+            }
+        });
+    </script>
+</body>
+</html>

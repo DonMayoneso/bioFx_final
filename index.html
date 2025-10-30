@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>bioFX</title>
+    <link rel="icon" type="image/png" href="assets/logos/isotipoico.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inder&family=Mulish:ital,wght@0,200..1000;1,200..1000&family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="header">
+      <div class="container">
+        <div class="logo">
+          <a href="index.html">
+            <!-- Logo normal (se muestra por defecto) -->
+            <img src="assets/logos/logobiofx.png" alt="Bio-fx Logo" class="logo-img logo-full" />
+            <!-- Isotipo (se muestra al hacer scroll) -->
+            <img
+              src="assets/logos/isotipo.png"
+              alt="Bio-fx Isotipo"
+              class="logo-img logo-isotipo"
+            />
+          </a>
+        </div>
+
+        <div class="search-container">
+          <input type="text" id="searchInput" placeholder="Buscar productos..." />
+          <button id="searchButton"><i class="fas fa-search"></i></button>
+          <div id="searchResults" class="search-results"></div>
+        </div>
+
+        <div class="header-actions">
+          <div class="user-icon" id="userButton" data-user-icon>
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="cart-icon" id="cartButton">
+            <i class="fas fa-shopping-cart"></i>
+            <div class="cart-count" id="cartCount">0</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="promo-banner">
+      <div class="promo-track">
+        <div class="promo-content">
+          <span class="promo-text"
+            >¡Envíos gratis a todo el Ecuador en pedidos a partir de $50!</span
+          >
+          <span class="promo-text"
+            >¡Envíos gratis a todo el Ecuador en pedidos a partir de $50!</span
+          >
+          <span class="promo-text"
+            >¡Envíos gratis a todo el Ecuador en pedidos a partir de $50!</span
+          >
+        </div>
+        <div class="promo-content">
+          <span class="promo-text"
+            >¡Envíos gratis a todo el Ecuador en pedidos a partir de $50!</span
+          >
+          <span class="promo-text"
+            >¡Envíos gratis a todo el Ecuador en pedidos a partir de $50!</span
+          >
+          <span class="promo-text"
+            >¡Envíos gratis a todo el Ecuador en pedidos a partir de $50!</span
+          >
+        </div>
+      </div>
+    </div>
+    <!-- Modal de Login -->
+    <div class="modal login-modal" id="loginModal">
+      <div class="login-content">
+        <span class="close-modal" id="closeLoginModal">&times;</span>
+
+        <div class="login-header">
+          <h2>Iniciar Sesión</h2>
+          <p>Accede a tu cuenta para gestionar tus pedidos y preferencias</p>
+        </div>
+
+        <button class="google-login-btn" id="googleLogin">
+          <i class="fab fa-google"></i> Continuar con Google
+        </button>
+
+        <div class="login-divider">
+          <span>o ingresa con tu email</span>
+        </div>
+
+        <form class="login-form" id="loginForm">
+          <div class="form-group">
+            <label for="email">Correo electrónico</label>
+            <input type="email" id="email" placeholder="tu@email.com" required />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" placeholder="Tu contraseña" required />
+          </div>
+
+          <div class="login-options">
+            <div class="remember-me">
+              <input type="checkbox" id="remember" />
+              <label for="remember">Recordarme</label>
+            </div>
+            <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+          </div>
+          <div id="loginError" class="form-error hidden"></div>
+          <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+        </form>
+
+        <div class="login-footer">
+          ¿No tienes una cuenta?
+          <a href="registro/registro.html">Regístrate aquí</a>
+        </div>
+      </div>
+    </div>
+
+    <main class="main-content">
+      <section class="hero">
+        <div class="container"></div>
+      </section>
+
+      <section class="featured-products">
+        <div class="container">
+          <div class="section-header">
+            <h2>Productos destacados</h2>
+            <p class="subtitle">Los más vendidos</p>
+          </div>
+
+          <div class="featured-grid">
+            <!-- Producto 1 ejemplo descuento -->
+
+            <!-- <div class="featured-product" onclick="abrirProducto(7)">
+                <div class="product-badge discount">-50%</div>
+                <div class="product-image">
+                    <img src="assets/productos/dk-mulsion.png" alt="DK-Mulsion">
+                </div>
+                <div class="product-info">
+                    <h3>Dk-Mulsion</h3>
+                    <div class="price-container">
+                        <span class="original-price">$30</span>
+                        <span class="discounted-price">$18.00</span>
+                    </div>
+                </div>
+            </div>-->
+
+            <!-- Producto 2 Más vendido -->
+            <div class="featured-product" onclick="abrirProducto(7)">
+              <div class="product-badge bestseller">Más vendido</div>
+              <div class="product-image">
+                <img src="assets/productos/dk-mulsion.png" alt="DK-Mulsion" />
+              </div>
+              <div class="product-info">
+                <h3>DK-Mulsion</h3>
+                <div class="price-container">
+                  <span class="current-price">$30,00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Producto 3 -->
+            <div class="featured-product" onclick="abrirProducto(19)">
+              <div class="product-badge new">Favorito</div>
+              <div class="product-image">
+                <img src="assets/productos/myoessens.png" alt="Myoessens" />
+              </div>
+              <div class="product-info">
+                <h3>Myoessens</h3>
+                <div class="price-container">
+                  <span class="current-price">$30,00</span>
+                </div>
+              </div>
+            </div>
+            <!-- Producto 4 -->
+            <div class="featured-product" onclick="abrirProducto(21)">
+              <div class="product-badge bestseller">Descúbrelo</div>
+              <div class="product-image">
+                <img src="assets/productos/omegaessens.png" alt="Omegaessens" />
+              </div>
+              <div class="product-info">
+                <h3>Omegaessens</h3>
+                <div class="price-container">
+                  <span class="current-price">$49,50</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="container">
+        <section class="categories">
+          <h2>Categorías</h2>
+          <div class="category-list" id="categoryList">
+            <button class="category-btn active" data-category="todos">
+              <i class="category-icon fas fa-boxes"></i>
+              <span>Todos los productos</span>
+            </button>
+          </div>
+        </section>
+        <section class="products-section">
+          <h2>Nuestros Productos</h2>
+          <div class="products-grid" id="productsContainer">
+            <div class="loading">Cargando productos...</div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div class="modal" id="productModal">
+      <div class="modal-content">
+        <span class="close-modal" id="closeProductModal">&times;</span>
+        <div class="modal-product" id="modalProductContent">
+          <!-- Contenido dinámico -->
+        </div>
+      </div>
+    </div>
+
+    <div class="modal cart-modal" id="cartModal">
+      <div class="modal-content">
+        <span class="close-modal" id="closeCartModal">&times;</span>
+        <h2><i class="fas fa-shopping-cart"></i> Tu Carrito</h2>
+        <div class="cart-items" id="cartItems">
+          <!-- Productos en carrito -->
+        </div>
+        <div class="cart-summary">
+          <div class="cart-total" id="cartTotal">Total: $0.00</div>
+          <div class="cart-actions">
+            <button class="btn btn-outline" id="continueShopping">Seguir Comprando</button>
+            <button class="btn btn-primary" id="checkoutButton">Finalizar Compra</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ¿Por qué elegirnos? -->
+    <section class="why-choose-us">
+      <div class="container">
+        <h2>
+          ¿Por qué elegir
+          <img src="assets/logos/biofx.png" alt="Bio-fx Logo" class="logo-inline" />?
+        </h2>
+        <div class="why-content">
+          <div class="text-content">
+            <h3>Medicina Funcional de Vanguardia</h3>
+            <p class="intro-text">
+              En BioFX transformamos la forma de cuidar tu salud. Combinamos innovación científica,
+              ingredientes naturales y un enfoque totalmente personalizado para ofrecerte soluciones
+              de bienestar efectivas y adaptadas a tus necesidades. Cada producto y recomendación
+              está diseñada para potenciar tu salud de manera integral, priorizando causas y
+              resultados, no solo síntomas.
+            </p>
+
+            <div class="benefits-container">
+              <div class="benefit-row">
+                <div class="benefit-item">
+                  <div class="benefit-icon">
+                    <i class="fas fa-comments"></i>
+                  </div>
+                  <div class="benefit-text">
+                    <h4>Atención personalizada</h4>
+                    <p>
+                      Nuestro equipo te asesora por teléfono o WhatsApp para que encuentres
+                      exactamente lo que tu cuerpo necesita.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="benefit-item">
+                  <div class="benefit-icon">
+                    <i class="fas fa-shipping-fast"></i>
+                  </div>
+                  <div class="benefit-text">
+                    <h4>Entregas rápidas</h4>
+                    <p>Pedidos en menos de 48 horas directamente a tu hogar u oficina.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="benefit-row">
+                <div class="benefit-item">
+                  <div class="benefit-icon">
+                    <i class="fas fa-gift"></i>
+                  </div>
+                  <div class="benefit-text">
+                    <h4>Regalos y sorpresas</h4>
+                    <p>Cada pedido puede incluir muestras, cupones o detalles especiales.</p>
+                  </div>
+                </div>
+
+                <div class="benefit-item">
+                  <div class="benefit-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                  </div>
+                  <div class="benefit-text">
+                    <h4>Compra online sencilla</h4>
+                    <p>
+                      Tienda intuitiva, confiable y disponible 24/7 para comprar desde cualquier
+                      lugar.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="benefit-row">
+                <div class="benefit-item">
+                  <div class="benefit-icon">
+                    <i class="fas fa-headset"></i>
+                  </div>
+                  <div class="benefit-text">
+                    <h4>Soporte constante</h4>
+                    <p>Call center siempre disponible para dudas y seguimiento postventa.</p>
+                  </div>
+                </div>
+
+                <div class="benefit-item">
+                  <div class="benefit-icon">
+                    <i class="fas fa-chart-line"></i>
+                  </div>
+                  <div class="benefit-text">
+                    <h4>Resultados comprobados</h4>
+                    <p>Cientos de clientes satisfechos que confían en nuestros productos.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="image-content">
+            <div class="vertical-image">
+              <img
+                src="assets/extras/vidalibre.jpg"
+                alt="Medicina funcional Biofx"
+                class="main-image"
+              />
+              <div class="overlay-image">
+                <img src="assets/extras/vidaproducto.jpg" alt="Vida Efectiva Biofx" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección de estadísticas -->
+    <!-- <section class="stats-section">
+    <div class="container">
+        <div class="stats-title">
+            <h2>Nuestras estadísticas hablan por nosotros</h2>
+            <p>En BioFX trabajamos cada día para que tu experiencia sea la mejor. Estos son algunos números que lo demuestran</p>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">⭐</div>
+                <div class="stat-number" id="stat1">0</div>
+                <div class="stat-desc">Clientes felices en todo el país, que confían en nuestros productos Nutrabiotics.</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🚚</div>
+                <div class="stat-number" id="stat2">0%</div>
+                <div class="stat-desc">de entregas llegan en menos de 48 horas, porque sabemos que tu salud no puede esperar.</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">📞</div>
+                <div class="stat-number" id="stat3">0%</div>
+                <div class="stat-desc">de consultas atendidas en el primer contacto, gracias a un call center cercano y resolutivo.</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🎁</div>
+                <div class="stat-number" id="stat4">0/10</div>
+                <div class="stat-desc">pedidos incluyen regalos sorpresa, porque queremos que cada compra sea especial.</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🔄</div>
+                <div class="stat-number" id="stat5">0%</div>
+                <div class="stat-desc">de clientes vuelven a comprar, confirmando la calidad de los productos y la confianza en nuestro servicio.</div>
+            </div>
+        </div>
+    </div>
+</section> -->
+
+    <!-- Sección de Testimonios -->
+    <section class="testimonials-section">
+      <div class="container">
+        <h2>Testimonios de Nuestros Clientes</h2>
+        <p class="testimonials-subtitle">Descubre la diferencia bioFX en sus propias palabras</p>
+
+        <div class="testimonials-creative" id="testimonialsCreative">
+          <div class="loading">Cargando testimonios...</div>
+        </div>
+      </div>
+    </section>
+    <!-- Botón flotante de WhatsApp -->
+    <a href="https://wa.me/+593984998324" class="whatsapp-float" target="_blank">
+      <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- Fondo oscuro -->
+    <div class="promo-overlay" id="promoOverlay"></div>
+
+    <!-- Popup promocional -->
+    <div class="promo-popup" id="promoPopup">
+      <span class="close-popup" id="closePopup">&times;</span>
+      <img src="assets/extras/cuadropromocionalpopup.png" alt="Promoción especial" />
+    </div>
+
+    <footer class="footer">
+      <div class="container">
+        <!-- Logo / Isotipo -->
+        <div class="footer-logo">
+          <a href="#" class="logo-link">
+            <img src="assets/logos/isotipob50.png" alt="BioFX" class="logo-img" />
+          </a>
+        </div>
+
+        <div class="footer-columns">
+          <!-- Columna de Información y Ayuda -->
+          <div class="footer-column">
+            <h3>Información Y Ayuda</h3>
+            <ul>
+              <li>
+                <a href="https://wa.me/+593984998324" target="_blank" class="whatsapp-link"
+                  >Ayuda y Contacto</a
+                >
+              </li>
+              <li>
+                <a href="https://wa.me/+593984998324" target="_blank" class="whatsapp-link"
+                  >Devoluciones</a
+                >
+              </li>
+              <li>
+                <a href="https://wa.me/+593984998324" target="_blank" class="whatsapp-link"
+                  >Información de Envíos</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <!-- Columna de Nuestros Productos -->
+          <div class="footer-column">
+            <h3>Nuestros Productos</h3>
+            <ul>
+              <li><a href="#" data-section="productsContainer">Belleza</a></li>
+              <li>
+                <a href="#" data-section="productsContainer">Esenciales</a>
+              </li>
+              <li>
+                <a href="#" data-section="productsContainer">Bienestar</a>
+              </li>
+              <li>
+                <a href="#" data-section="productsContainer">Rendimiento</a>
+              </li>
+              <li>
+                <a href="#" data-section="productsContainer">Control de peso</a>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Columna de Sobre Nosotros -->
+          <div class="footer-column">
+            <h3>Sobre Nosotros</h3>
+            <ul>
+              <li><a href="#" data-section="why-choose-us">BioFX</a></li>
+              <li>
+                <a href="politicas/politicas.html">Políticas de privacidad y cookies</a>
+              </li>
+              <li>
+                <a href="politicas/politicas.html">Términos y Condiciones</a>
+              </li>
+              <li><a href="#" data-section="stats-section">Estadísticas</a></li>
+              <li>
+                <a href="#" data-section="testimonials-section">Testimonios</a>
+              </li>
+              <li><span class="text-link">LinkedIn</span></li>
+              <li><span class="text-link">TikTok</span></li>
+            </ul>
+          </div>
+
+          <!-- Columna de Ofertas y Descuentos -->
+          <div class="footer-column">
+            <h3>Ofertas Y Descuentos</h3>
+            <ul>
+              <li><a href="#" data-section="hero">Descuentos</a></li>
+              <li>
+                <a href="#" data-section="featured-products">Promociones</a>
+              </li>
+              <li><a href="#" data-section="featured-products">Packs</a></li>
+            </ul>
+          </div>
+
+          <!-- Columna de Contacto -->
+          <div class="footer-column">
+            <h3>Contacto</h3>
+            <p><i class="fas fa-map-marker-alt"></i> Centro Comercial Plaza del Rancho</p>
+            <p><i class="fas fa-phone"></i> +593 98 499 8324</p>
+            <p>
+              <a href="mailto:contacto@biofx.com.ec" style="color: inherit; text-decoration: none">
+                <i class="fas fa-envelope"></i> contacto@biofx.com.ec
+              </a>
+            </p>
+
+            <!-- Métodos de pago -->
+            <div class="payment-methods">
+              <h4>Pago Seguro Con</h4>
+              <div class="payment-icons">
+                <i class="fab fa-cc-visa"></i>
+                <i class="fab fa-cc-mastercard"></i>
+                <i class="fab fa-cc-diners-club"></i>
+                <i class="fas fa-university"></i>
+              </div>
+            </div>
+
+            <!-- Redes sociales -->
+            <div class="social-media">
+              <h4>Síguenos</h4>
+              <div class="social-icons">
+                <a href="#" class="social-icon facebook">
+                  <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="#" class="social-icon instagram">
+                  <i class="fab fa-instagram"></i>
+                </a>
+                <a href="https://wa.me/+593984998324" class="social-icon whatsapp" target="_blank">
+                  <i class="fab fa-whatsapp"></i>
+                </a>
+                <a href="#" class="social-icon hidden">
+                  <i class="fab fa-tiktok"></i>
+                </a>
+                <a href="#" class="social-icon hidden">
+                  <i class="fab fa-linkedin-in"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <p>
+            &copy; 2025 BioFX. Todos los derechos reservados. | Diseñado y desarrollado por
+            <a href="mailto:ninblustd@gmail.com" style="color: inherit; text-decoration: underline"
+              >Ninblu.</a
+            >
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Easter Egg Overlay -->
+    <div class="secret-lab-overlay">
+      <div class="secret-lab-content">
+        <!-- Canvas -->
+        <canvas id="secretLabCanvas"></canvas>
+
+        <!-- Texto central -->
+        <div class="secret-text">
+          <h1>Bienvenido al Laboratorio</h1>
+          <p>Descubriste la energía detrás de BioFX.</p>
+        </div>
+
+        <!-- Botón cerrar abajo -->
+        <button class="close-secret-lab">Cerrar</button>
+
+        <!-- Isotipo normal (visible solo al inicio de la experiencia) -->
+        <svg id="intro-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 1024">
+          <defs>
+            <linearGradient
+              id="linear-gradient"
+              x1="1269.14"
+              y1="539.84"
+              x2="21.22"
+              y2="492.75"
+              gradientTransform="translate(0 1024) scale(1 -1)"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0" stop-color="#b4d347" />
+              <stop offset="1" stop-color="#20b255" />
+            </linearGradient>
+          </defs>
+          <path
+            id="logo-path"
+            d="M1207.36,563.51c-16.51,10.14-35.34,15.84-54.45,17.11-.61.06-1.27.11-1.88.11-104.35,7.76-175.63,49.74-164.28,212.63,3.77,53.73-14.9,108.73-56,149.77-75.27,75.33-197.4,75.33-272.67,0-35.5-35.45-54.28-81.42-56.27-127.89,0-.28,0-.55-.05-.83-8.09-180.23-79.26-285.3-319.81-275.11-.39,0-.72.06-1.11.06-69.62,2.99-140.24-22.04-193.41-75.22-100.58-100.58-100.58-263.7,0-364.34,100.63-100.58,263.75-100.58,364.34,0,53.17,53.17,78.21,123.79,75.22,193.42,0,.39-.06.72-.06,1.11-10.19,240.55,94.88,311.72,275.11,319.81.28.05.55.05.83.05,1.66.06,3.32.11,4.99.28,163.89,11.41,205.38-60.76,212.74-166.16l.28.28c2.55-38.11,22.65-75.22,60.32-98.26,38-23.26,88.23-23.26,126.17,0,80.87,49.41,80.87,163.78,0,213.19h-.01Z"
+            fill="url(#linear-gradient)"
+          />
+        </svg>
+      </div>
+    </div>
+    <div id="snackbar" class="snackbar" aria-live="polite"></div>
+
+    <script>
+      window.API_BASE_URL = "https://api.biofx.com.ec";
+    </script>
+    <script src="api-service.js" defer></script>
+    <script src="utils/snackbar.js" defer></script>
+    <script src="login.js" defer></script>
+    <script src="script.js" defer></script>
+  </body>
+</html>

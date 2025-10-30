@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Contraseña - BioFX</title>
+    <link rel="icon" type="image/png" href="../assets/logos/isotipoico.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inder&family=Mulish:ital,wght@0,200..1000;1,200..1000&family=Barlow:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="olvide_contrasenia.css">
+</head>
+<body> 
+    <div class="logo">
+        <a href="../index.html"><img src="../assets/logos/logobiofx.png" alt="BioFX Logo"></a>
+    </div>
+    
+    <div class="recovery-card">
+        <h1>Recuperar Contraseña</h1>
+        <p>Ingresa tu dirección de correo electrónico y te enviaremos un enlace para restablecer tu contraseña.</p>
+        
+        <form id="recoveryForm">
+            <div class="form-group">
+                <label for="email">Correo Electrónico</label>
+                <div class="input-container">
+                    <input type="email" id="email" name="email" placeholder="tu@email.com" required>
+                    <i class="fas fa-envelope input-icon"></i>
+                </div>
+                <span class="error-message" id="emailError"></span>
+            </div>
+            
+            <button type="submit" class="btn">Enviar Enlace de Recuperación</button>
+        </form>
+        
+        <div class="success-message" id="successMessage">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>¡Correo Enviado!</h2>
+            <p>Hemos enviado un enlace de recuperación a tu correo electrónico. Revisa tu bandeja de entrada.</p>
+        </div>
+        
+        <div class="links">
+            <a href="../cambiar_contrasena/cambiar_contrasena.html">¿Ya tienes el enlace? Cambiar contraseña</a>
+            <a href="../index.html">Volver al Inicio</a>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>© 2024 BioFX. Todos los derechos reservados.</p>
+    </div>
+
+    <script src="olvide_contrasenia.js"></script>
+</body>
+</html>

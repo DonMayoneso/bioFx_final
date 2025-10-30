@@ -1,0 +1,126 @@
+:root {
+  --verde: #9bc431;
+  --turquesa: #2eb198;
+  --gris: #616160;
+  --blanco: #ffffff;
+  --error: #e74c3c;
+  --warn: #f39c12;
+  --success: #27ae60;
+  --bg: #f9f9f9;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Mulish", sans-serif;
+  background-color: var(--bg);
+  color: var(--gris);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+}
+
+.logo {
+  margin-bottom: 30px;
+}
+.logo img {
+  max-width: 200px;
+  height: auto;
+}
+.logo a {
+  text-decoration: none;
+  border: none;
+}
+
+.verify-card {
+  background: var(--blanco);
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  padding: 40px 30px;
+  width: 100%;
+  max-width: 520px;
+}
+
+.box {
+  display: none;
+}
+.box__icon {
+  font-size: 52px;
+  margin-bottom: 14px;
+}
+.box__icon.ok {
+  color: var(--success);
+}
+.box__icon.warn {
+  color: var(--warn);
+}
+.box__icon.error {
+  color: var(--error);
+}
+
+.box__title {
+  font-family: "Barlow", sans-serif;
+  font-weight: 600;
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+.box__text {
+  line-height: 1.6;
+  margin-bottom: 22px;
+  font-size: 16px;
+  color: var(--gris);
+}
+
+.btn {
+  display: inline-block;
+  background-color: var(--turquesa);
+  color: var(--blanco);
+  padding: 12px 24px;
+  border-radius: 28px;
+  font-weight: 600;
+  font-family: "Barlow", sans-serif;
+  text-decoration: none;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.btn:hover {
+  background-color: var(--verde);
+  transform: translateY(-2px);
+}
+.btn:active {
+  transform: none;
+}
+
+.footer {
+  margin-top: 26px;
+  font-size: 14px;
+  color: var(--gris);
+}
+
+.state-ok .box--ok {
+  display: block;
+}
+.state-invalid .box--invalid {
+  display: block;
+}
+.state-error .box--error {
+  display: block;
+}
+
+@media (max-width: 480px) {
+  .verify-card {
+    padding: 30px 20px;
+  }
+  .box__title {
+    font-size: 24px;
+  }
+}
+
+.email-hide{ display:none }

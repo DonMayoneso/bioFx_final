@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Bio-fx</title>
+    <link rel="icon" type="image/png" href="../assets/logos/isotipoico.png"> 
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="checkout.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+            <a href="../index.html">
+                <img src="../assets/logos/logobiofx.png" alt="Bio-fx Logo" class="logo-img">
+            </a>
+             </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="../index.html">Volver a la Tienda</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="checkout-container">
+        <div class="container">
+            <div class="checkout-progress">
+                <div class="progress-step active">
+                    <span>1</span>
+                    <p>Información Personal</p>
+                </div>
+                <div class="progress-step">
+                    <span>2</span>
+                    <p>Método de Pago</p>
+                </div>
+                <div class="progress-step">
+                    <span>3</span>
+                    <p>Confirmación</p>
+                </div>
+            </div>
+
+            <h2>Finalizar Compra</h2>
+            
+            <div class="checkout-content">
+                <div class="checkout-form">
+                    <form id="checkoutForm">
+                        <!-- Información Personal -->
+                        <fieldset class="form-section">
+                            <legend><i class="fas fa-user"></i> Información Personal</legend>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="nombres">Nombres Completos *</label>
+                                    <input type="text" id="nombres" name="nombres" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="apellidos">Apellidos Completos *</label>
+                                    <input type="text" id="apellidos" name="apellidos" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="tipoDocumento">Tipo de Documento *</label>
+                                    <select id="tipoDocumento" name="tipoDocumento" required>
+                                        <option value="">Seleccionar...</option>
+                                        <option value="cedula">Cédula</option>
+                                        <option value="ruc">RUC</option>
+                                        <option value="pasaporte">Pasaporte</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="numeroDocumento">Número de Documento *</label>
+                                    <input type="text" id="numeroDocumento" name="numeroDocumento" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="email">Correo Electrónico *</label>
+                                    <input type="email" id="email" name="email" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="telefono">Teléfono de Contacto/Whatsapp*</label>
+                                    <input type="tel" id="telefono" name="telefono" required>
+                                </div>
+                            </div>
+
+                        <!-- Dirección de Envío -->
+                        <fieldset class="form-section">
+                            <legend><i class="fas fa-truck"></i> Dirección de Envío</legend>
+                            
+                            <div class="form-group">
+                                <label for="direccion">Dirección Completa *</label>
+                                <textarea id="direccion" name="direccion" rows="3" required></textarea>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="ciudad">Ciudad *</label>
+                                    <input type="text" id="ciudad" name="ciudad" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="provincia">Provincia *</label>
+                                    <input type="text" id="provincia" name="provincia" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="codigoPostal">Código Postal (opcional)</label>
+                                    <input type="text" id="codigoPostal" name="codigoPostal">
+                                </div>
+                                <div class="form-group">
+                                    <label for="pais">País *</label>
+                                    <select id="pais" name="pais" required>
+                                        <option value="ecuador">Ecuador</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- Receta Médica (Opcional) -->
+                        <fieldset class="form-section">
+                            <legend><i class="fas fa-file-medical"></i> Receta Médica (Opcional)</legend>
+                            
+                            <div class="form-group">
+                                <div class="file-upload">
+                                    <label for="recetaMedica">Subir imagen de receta médica</label>
+                                    <input type="file" id="recetaMedica" name="recetaMedica" accept="image/*">
+                                    <div class="upload-preview" id="uploadPreview">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <p>Arrastra una imagen aquí o haz clic para seleccionar</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                        <fieldset class="form-section">
+                             <legend><i class="fas fa-user-md"></i> Información del Médico</legend>    
+                                <div class="form-group">
+                                    <label for="nombreMedico">Nombre del Médico *</label>
+                                  <input type="text" id="nombreMedico" name="nombreMedico" required>
+                                    <small class="disclaimer-medico">Si no tiene un médico tratante, escriba "NA"</small>
+                                </div>
+                        </fieldset>
+
+                        <!-- Método de Pago -->
+                        <fieldset class="form-section">
+                            <legend><i class="fas fa-credit-card"></i> Método de Pago</legend>
+                            
+                            <div class="payment-methods">
+                                <div class="payment-method selected">
+                                    <div class="payment-header">
+                                        <i class="fas fa-shield-alt"></i>
+                                        <h3>Pago Seguro con PlaceToPay</h3>
+                                    </div>
+                                    <div class="payment-content">
+                                        <p>Serás redirigido a PlaceToPay para completar tu pago de forma segura. Aceptamos tarjetas de crédito, débito y transferencias bancarias.</p>
+                                        <div class="payment-icons">
+                                            <i class="fab fa-cc-visa"></i>
+                                            <i class="fab fa-cc-mastercard"></i>
+                                            <i class="fab fa-cc-amex"></i>
+                                            <i class="fas fa-university"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-outline" id="cancelCheckout">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" id="submitCheckout">
+                                <i class="fas fa-lock"></i> Proceder al Pago
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="order-summary">
+                    <h3>Resumen de tu Pedido</h3>
+                    <div class="summary-items" id="summaryItems">
+                        <div class="loading" id="loadingCart">
+                            <i class="fas fa-spinner fa-spin"></i> Cargando tu carrito...
+                        </div>
+                    </div>
+                    <div class="summary-totals">
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span id="subtotal">$0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Envío</span>
+                            <span id="shipping">$5.00</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total</span>
+                            <span id="total">$0.00</span>
+                        </div>
+                    </div>
+                    <div class="security-badges">
+                        <div class="badge">
+                            <i class="fas fa-lock"></i>
+                            <span>Pago 100% Seguro</span>
+                        </div>
+                        <div class="badge">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Datos Protegidos</span>
+                        </div>
+                        <div class="badge">
+                            <i class="fas fa-truck"></i>
+                            <span>Envío Rápido</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+  <div class="container">
+
+    <!-- Logo / Isotipo -->
+    <div class="footer-logo">
+        <img src="../assets/logos/isotipob50.png" alt="BioFX" class="logo-img">
+    </div>
+
+    <div class="footer-columns">
+      <!-- Columna de Información y Ayuda -->
+      <div class="footer-column">
+        <h3>Información Y Ayuda</h3>
+        <ul>
+          <li><a href="https://wa.me/+593984998324" target="_blank" class="whatsapp-link">Ayuda y Contacto</a></li>
+          <li><a href="https://wa.me/+593984998324" target="_blank" class="whatsapp-link">Devoluciones</a></li>
+          <li><a href="https://wa.me/+593984998324" target="_blank" class="whatsapp-link">Información de Envíos</a></li>
+        </ul>
+      </div>
+
+      <!-- Columna de Contacto -->
+      <div class="footer-column">
+        <h3>Contacto</h3>
+        <p><i class="fas fa-map-marker-alt"></i> Centro Comercial Plaza del Rancho</p>
+        <p><i class="fas fa-phone"></i> +593 98 499 8324</p>
+        <p>
+          <a href="mailto:contacto@biofx.com.ec" style="color: inherit; text-decoration: none;">
+            <i class="fas fa-envelope"></i> contacto@biofx.com.ec
+          </a>
+        </p>
+</footer>
+
+    <script src="checkout/checkout.js"></script>
+</body>
+</html>

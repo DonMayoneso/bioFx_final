@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verificación de correo - BioFX</title>
+    <link rel="icon" type="image/png" href="../assets/logos/isotipoico.png" />
+    <link href="https://fonts.googleapis.com/css2?family=Inder&family=Mulish:ital,wght@0,200..1000;1,200..1000&family=Barlow:wght@400;600&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="verify-email.css" />
+  </head>
+
+  <body>
+  <div class="logo">
+    <a href="../index.html"><img src="../assets/logos/logobiofx.png" alt="BioFX Logo" /></a>
+  </div>
+
+  <div class="verify-card">
+    <!-- OK -->
+    <div class="box box--ok">
+      <div class="box__icon ok"><i class="fas fa-check-circle"></i></div>
+      <h1 class="box__title">¡Verificación completada!</h1>
+      <p class="box__text">
+        Tu correo <strong id="okEmail" class="email-hide"></strong> fue verificado correctamente.
+        Ya puedes iniciar sesión y disfrutar de bioFX.
+      </p>
+      <a href="../index.html" class="btn">Ir al inicio</a>
+    </div>
+
+    <!-- INVALID -->
+    <div class="box box--invalid">
+      <div class="box__icon warn"><i class="fas fa-exclamation-triangle"></i></div>
+      <h1 class="box__title">Enlace inválido o usado</h1>
+      <p class="box__text">
+        El enlace de verificación para <strong id="invalidEmail" class="email-hide"></strong>
+        no es válido o ya fue utilizado. Solicita uno nuevo desde la página de inicio de sesión.
+      </p>
+      <a href="../index.html" class="btn">Ir al inicio</a>
+    </div>
+
+    <!-- ERROR -->
+    <div class="box box--error">
+      <div class="box__icon error"><i class="fas fa-times-circle"></i></div>
+      <h1 class="box__title">No se pudo verificar</h1>
+      <p class="box__text">
+        Ocurrió un error al procesar tu verificación. Inténtalo más tarde.
+      </p>
+      <a href="../index.html" class="btn">Ir al inicio</a>
+    </div>
+  </div>
+
+  <div class="footer"><p>© 2024 BioFX. Todos los derechos reservados.</p></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" defer></script>
+  <script src="verify-email.js" defer></script>
+</body>
+
+</html>
