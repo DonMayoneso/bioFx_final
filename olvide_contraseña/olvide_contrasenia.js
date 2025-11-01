@@ -24,10 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 form.style.display = 'none';
                 successMessage.style.display = 'block';
                 
-                // Opcional: Redirigir después de un tiempo
-                setTimeout(function() {
-                    window.location.href = '../index.html';
-                }, 5000);
             }, 2000);
         }
     });
