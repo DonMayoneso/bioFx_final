@@ -140,7 +140,6 @@ async function cargarCategorias() {
 
     list.appendChild(frag);
     inicializarCategorias();
-    
   } catch (err) {
     console.error("Error cargando categorías:", err);
     // fallback: deja solo “todos”
@@ -452,21 +451,64 @@ function cerrarModalProducto() {
   document.body.style.overflow = "auto";
 }
 
-// Agregar al carrito (función de ejemplo - puedes completarla según tus necesidades)
-function agregarAlCarrito(productoId) {
-  const producto = productos.find((p) => p.id === productoId);
-  const cantidad = parseInt(document.getElementById("productQuantity").value) || 1;
+async function ensureAuthOrOpenLogin(opts = {}) {
+  const { reason, closeProductModal } = opts;
+  if (document.documentElement.classList.contains("auth-ok")) return true;
 
-  if (producto) {
-    // Aquí va tu lógica para agregar al carrito
-    console.log(`Agregado al carrito: ${producto.nombre}, Cantidad: ${cantidad}`);
+  try {
+    const perfil = await window.api.getMiPerfil();
+    if (perfil) return true;
+  } catch {}
 
-    // Ejemplo de notificación
-    alert(`¡${cantidad} ${producto.nombre} agregado(s) al carrito!`);
-
-    // Cerrar modal después de agregar
-    cerrarModalProducto();
+  if (closeProductModal) {
+    try {
+      cerrarModalProducto();
+    } catch {}
   }
+
+  const loginModal = document.getElementById("loginModal");
+  if (loginModal) loginModal.style.display = "flex";
+
+  const msg = reason || "Inicia sesión para continuar.";
+  if (window.Snackbar?.error) window.Snackbar.error(msg, 2600);
+  else if (window.Snackbar?.show) window.Snackbar.show(msg, { type: "error", ms: 2600 });
+  else mostrarNotificacion?.(msg); // fallback
+  return false;
+}
+
+async function agregarAlCarrito(productoId) {
+  if (
+    !(await ensureAuthOrOpenLogin({
+      reason: "Inicia sesión para añadir productos al carrito.",
+      closeProductModal: true,
+    }))
+  )
+    return;
+
+  const producto = productos.find((p) => p.id === productoId);
+  const cantidad = parseInt(document.getElementById("productQuantity")?.value) || 1;
+  if (!producto) return;
+
+  const tieneDescuento = producto.descuento && producto.descuento > 0;
+  const precioFinal = tieneDescuento
+    ? (producto.precio * (100 - producto.descuento)) / 100
+    : producto.precio;
+
+  const idx = carrito.findIndex((it) => it.id === producto.id);
+  if (idx !== -1) carrito[idx].cantidad += cantidad;
+  else
+    carrito.push({
+      id: producto.id,
+      nombre: producto.nombre,
+      imagen: producto.imagen,
+      precio: precioFinal,
+      cantidad,
+    });
+
+  guardarCarrito();
+  actualizarCarrito();
+  cerrarModalProducto();
+  mostrarNotificacion?.(`Se agregaron ${cantidad} unidad(es) de "${producto.nombre}" al carrito.`);
 }
 
 // Manejo de categorías
@@ -520,7 +562,14 @@ function cambiarCategoria(categoria) {
 }
 
 // Abrir modal de carrito
-function abrirCarrito() {
+async function abrirCarrito() {
+  if (
+    !(await ensureAuthOrOpenLogin({
+      reason: "Debes iniciar sesión para ver tu carrito.",
+    }))
+  )
+    return;
+
   cargarCarritoItems();
   cartModal.style.display = "flex";
   document.body.style.overflow = "hidden";
@@ -530,41 +579,6 @@ function abrirCarrito() {
 function cerrarModalCarrito() {
   cartModal.style.display = "none";
   document.body.style.overflow = "auto";
-}
-
-// Agregar producto al carrito
-function agregarAlCarrito(id) {
-  const input = document.getElementById("productQuantity");
-  const cantidad = parseInt(input.value) || 1;
-
-  const producto = productos.find((p) => p.id === id);
-  if (!producto) return;
-
-  // Calcular precio con descuento si aplica
-  const tieneDescuento = producto.descuento && producto.descuento > 0;
-  const precioFinal = tieneDescuento
-    ? (producto.precio * (100 - producto.descuento)) / 100
-    : producto.precio;
-
-  const itemIndex = carrito.findIndex((item) => item.id === id);
-
-  if (itemIndex !== -1) {
-    carrito[itemIndex].cantidad += cantidad;
-  } else {
-    carrito.push({
-      id: producto.id,
-      nombre: producto.nombre,
-      precio: precioFinal,
-      imagen: producto.imagen,
-      cantidad: cantidad,
-    });
-  }
-
-  guardarCarrito();
-  actualizarCarrito();
-  cerrarModalProducto();
-
-  mostrarNotificacion(`Se agregaron ${cantidad} unidad(es) de "${producto.nombre}" al carrito.`);
 }
 
 // Cargar items del carrito
