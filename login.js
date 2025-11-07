@@ -1,6 +1,6 @@
 document.addEventListener("submit", async (ev) => {
   const form = ev.target.closest("#loginForm");
-  if (!form) return; // no es el formulario de login
+  if (!form) return;
   ev.preventDefault();
 
   const emailEl = form.querySelector('input[type="email"], input[name="email"]');
@@ -30,17 +30,20 @@ document.addEventListener("submit", async (ev) => {
   try {
     await window.api.login(email, password);
     await pintarUsuarioEnHeader();
+    window.dispatchEvent(new CustomEvent("auth:login"));
     const lm = document.getElementById("loginModal");
     if (lm) lm.style.display = "none";
     form.reset();
     setErr(""); // limpia
     window.Snackbar?.success("Has iniciado sesión.");
   } catch (err) {
-    if (err.status === 401) setErr("Correo o contraseña no válidas.");
-    else if (err.status === 403) setErr("Cuenta bloqueada temporalmente. Intenta más tarde.");
-    else if ((err.message || "").toLowerCase().includes("confirma"))
-      setErr("Debes confirmar tu correo antes de iniciar sesión.");
-    else setErr(err.message || "No se pudo iniciar sesión.");
+    const serverMsg =
+      err && typeof err.message === "string" && err.message.trim() ? err.message.trim() : "";
+    if (err.status === 401) setErr(serverMsg || "Correo o contraseña no válidas.");
+    else if (err.status === 403)
+      setErr(serverMsg || "Cuenta bloqueada temporalmente. Intenta más tarde.");
+    else if (serverMsg.toLowerCase().includes("confirma")) setErr(serverMsg);
+    else setErr(serverMsg || "No se pudo iniciar sesión.");
     console.error(err);
   } finally {
     submitBtn && (submitBtn.disabled = false);
@@ -95,6 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
         await window.api.logout();
       } catch {}
       limpiarHeader();
+      window.dispatchEvent(new CustomEvent("auth:logout"));
     });
   }
 });

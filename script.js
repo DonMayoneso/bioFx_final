@@ -30,11 +30,10 @@ document.addEventListener("DOMContentLoaded", () => {
   cargarPromociones();
   cargarCategorias();
   cargarProductos();
-  cargarCarrito();
-  actualizarCarrito();
-
-  // Agregar event listeners a los enlaces del footer que tienen data-section
+  inicializarCategorias();
+  initCartSessionAware();
   agregarEventListenersFooter();
+  setCheckoutBtnState();
 
   // Event listeners
   cartButton.addEventListener("click", abrirCarrito);
@@ -76,6 +75,38 @@ document.addEventListener("DOMContentLoaded", () => {
   // Cerrar si se hace clic en el overlay
   promoOverlay.addEventListener("click", handleClosePopup);
 });
+
+function setCheckoutBtnState() {
+  if (!checkoutButton) return;
+  const isAuth = document.documentElement.classList.contains("auth-ok");
+  const hasItems = carrito.some((x) => Number(x.cantidad) > 0);
+  checkoutButton.disabled = !(isAuth && hasItems);
+}
+
+window.addEventListener("auth:login", async () => {
+  try {
+    await fetchAndBindCart();
+
+    if (typeof cargarCarritoItems === "function") cargarCarritoItems();
+  } catch (e) {
+    (window.Snackbar?.error || mostrarNotificacion)?.("No se pudo cargar tu carrito.");
+  }
+  setCheckoutBtnState();
+});
+
+window.addEventListener("auth:logout", () => {
+  carrito = [];
+  try { sessionStorage.removeItem("carritoCheckout"); } catch {}
+  actualizarCarrito();
+  setCheckoutBtnState();
+});
+
+// engancha al repintado del contador
+const _oldActualizarCarrito = actualizarCarrito;
+actualizarCarrito = function() {
+  _oldActualizarCarrito.apply(this, arguments);
+  setCheckoutBtnState();
+};
 
 async function cargarCategorias() {
   const list = document.getElementById("categoryList");
@@ -146,6 +177,27 @@ async function cargarCategorias() {
   }
 }
 
+function buildCheckoutSnapshot(items) {
+  const now = Date.now();
+  const safeItems = (items || []).map((it) => ({
+    id: Number(it.id),
+    nombre: String(it.nombre || ""),
+    precio: Number(it.precio || 0),
+    cantidad: Number(it.cantidad || 0),
+    imagen: String(it.imagen || ""),
+  }));
+
+  // Mismo criterio de checksum que usa Checkout.js: suma (id*cantidad + precio) % 1000
+  const checksum = safeItems.reduce((acc, x) => acc + x.id * x.cantidad + x.precio, 0) % 1000;
+
+  return {
+    items: safeItems,
+    origin: window.location.origin,
+    timestamp: now,
+    checksum,
+  };
+}
+
 // Cargar productos desde el JSON
 async function cargarProductos() {
   try {
@@ -194,6 +246,42 @@ async function cargarProductos() {
         <p>${error.message || "Intenta más tarde."}</p>
       </div>`;
   }
+}
+
+async function initCartSessionAware() {
+  const perfil = await window.api.getMiPerfil();
+  if (!perfil) {
+    carrito = []; // sin sesión: no persistir nada local
+    actualizarCarrito();
+    return;
+  }
+  await fetchAndBindCart(); // con sesión: traer del API
+}
+
+async function fetchAndBindCart() {
+  const data = await window.api.getMyCart();
+
+  const rawItems =
+    (Array.isArray(data?.Items) && data.Items) ||
+    (Array.isArray(data?.items) && data.items) ||
+    (Array.isArray(data?.Data?.Items) && data.Data.Items) ||
+    (Array.isArray(data?.data?.items) && data.data.items) ||
+    [];
+
+  carrito = rawItems.map((it) => {
+    const pid = Number(it.ProductId ?? it.productId ?? it.productID ?? it.pid);
+    const prod = productos.find((p) => p.id === pid);
+    return {
+      itemId: Number(it.Id ?? it.id),
+      id: pid,
+      nombre: it.Nombre ?? it.nombre ?? (prod?.nombre || ""),
+      imagen: prod?.imagen || "",
+      precio: Number(it.UnitPrice ?? it.unitPrice ?? it.Precio ?? it.price ?? 0),
+      cantidad: Number(it.Quantity ?? it.quantity ?? it.Cantidad ?? 0),
+    };
+  });
+
+  actualizarCarrito(); // actualiza el badge
 }
 
 // Renderizar productos en la página con efecto flip
@@ -485,30 +573,15 @@ async function agregarAlCarrito(productoId) {
   )
     return;
 
-  const producto = productos.find((p) => p.id === productoId);
   const cantidad = parseInt(document.getElementById("productQuantity")?.value) || 1;
-  if (!producto) return;
-
-  const tieneDescuento = producto.descuento && producto.descuento > 0;
-  const precioFinal = tieneDescuento
-    ? (producto.precio * (100 - producto.descuento)) / 100
-    : producto.precio;
-
-  const idx = carrito.findIndex((it) => it.id === producto.id);
-  if (idx !== -1) carrito[idx].cantidad += cantidad;
-  else
-    carrito.push({
-      id: producto.id,
-      nombre: producto.nombre,
-      imagen: producto.imagen,
-      precio: precioFinal,
-      cantidad,
-    });
-
-  guardarCarrito();
-  actualizarCarrito();
-  cerrarModalProducto();
-  mostrarNotificacion?.(`Se agregaron ${cantidad} unidad(es) de "${producto.nombre}" al carrito.`);
+  try {
+    await window.api.addCartItem(productoId, cantidad);
+    await fetchAndBindCart(); // refresca desde servidor
+    cerrarModalProducto();
+    (window.Snackbar?.success || mostrarNotificacion)(`Se agregaron ${cantidad} unidad(es).`);
+  } catch (e) {
+    (window.Snackbar?.error || mostrarNotificacion)(e.message || "Error al agregar.");
+  }
 }
 
 // Manejo de categorías
@@ -547,11 +620,6 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// Cargar productos cuando la página esté lista
-document.addEventListener("DOMContentLoaded", function () {
-  cargarProductos();
-  inicializarCategorias();
-});
 
 // Función para cambiar categoría desde otros lugares (si es necesario)
 function cambiarCategoria(categoria) {
@@ -563,13 +631,10 @@ function cambiarCategoria(categoria) {
 
 // Abrir modal de carrito
 async function abrirCarrito() {
-  if (
-    !(await ensureAuthOrOpenLogin({
-      reason: "Debes iniciar sesión para ver tu carrito.",
-    }))
-  )
+  if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para ver tu carrito." })))
     return;
 
+  await fetchAndBindCart();
   cargarCarritoItems();
   cartModal.style.display = "flex";
   document.body.style.overflow = "hidden";
@@ -624,117 +689,65 @@ function cargarCarritoItems() {
 }
 
 // Actualizar cantidad en el carrito
-function actualizarCantidadCarrito(id, delta) {
-  const itemIndex = carrito.findIndex((item) => item.id === id);
+async function actualizarCantidadCarrito(productId, delta) {
+  const item = carrito.find((x) => x.id === productId);
+  if (!item) return;
+  const nueva = Number(item.cantidad) + delta;
 
-  if (itemIndex !== -1) {
-    carrito[itemIndex].cantidad += delta;
-
-    if (carrito[itemIndex].cantidad < 1) {
-      carrito.splice(itemIndex, 1);
+  try {
+    if (nueva <= 0) {
+      await window.api.removeCartItem(item.itemId);
+    } else {
+      await window.api.updateCartItemQty(item.itemId, nueva);
     }
-
-    guardarCarrito();
-    actualizarCarrito();
+    await fetchAndBindCart();
     cargarCarritoItems();
+  } catch (e) {
+    (window.Snackbar?.error || mostrarNotificacion)(e.message || "Error al actualizar.");
   }
 }
 
 // Eliminar producto del carrito
-function eliminarDelCarrito(id) {
-  carrito = carrito.filter((item) => item.id !== id);
-  guardarCarrito();
-  actualizarCarrito();
-  cargarCarritoItems();
+async function eliminarDelCarrito(productId) {
+  const item = carrito.find((x) => x.id === productId);
+  if (!item) return;
+  try {
+    await window.api.removeCartItem(item.itemId);
+    await fetchAndBindCart();
+    cargarCarritoItems();
+  } catch (e) {
+    (window.Snackbar?.error || mostrarNotificacion)(e.message || "Error al eliminar.");
+  }
 }
 
-// En la función finalizarCompra, reemplaza con este código:
-function finalizarCompra() {
-  if (carrito.length === 0) {
-    mostrarNotificacion("Tu carrito está vacío");
+async function finalizarCompra() {
+  // 1) Requiere sesión
+  if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para pagar." }))) return;
+
+  // 2) Sincroniza carrito desde API para evitar cantidades desactualizadas
+  await fetchAndBindCart();
+
+  // 3) Bloquea si vacío
+  const totalItems = carrito.reduce((s, it) => s + Number(it.cantidad || 0), 0);
+  if (!totalItems) {
+    (window.Snackbar?.error || mostrarNotificacion)?.("Tu carrito está vacío.");
     return;
   }
 
-  // Crear objeto con timestamp para verificar frescura de los datos
-  const carritoConTimestamp = {
-    items: carrito,
-    timestamp: new Date().getTime(),
-    origin: window.location.origin,
-    // Agregar checksum para verificación de integridad
-    checksum: calcularChecksum(carrito),
-  };
-
-  // Almacenar en múltiples lugares para mayor seguridad
+  // 4) Snapshot mínimo para Checkout
+  const snapshot = buildCheckoutSnapshot(carrito);
   try {
-    localStorage.setItem("carritoCheckout", JSON.stringify(carritoConTimestamp));
-    console.log("Carrito guardado en localStorage");
-  } catch (e) {
-    console.error("Error con localStorage:", e);
-  }
+    sessionStorage.setItem("carritoCheckout", JSON.stringify(snapshot));
+  } catch {}
 
-  try {
-    sessionStorage.setItem("carritoCheckout", JSON.stringify(carritoConTimestamp));
-    console.log("Carrito guardado en sessionStorage");
-  } catch (e) {
-    console.error("Error con sessionStorage:", e);
-  }
-
-  // Usar cookies como respaldo
-  try {
-    const carritoString = JSON.stringify(carritoConTimestamp);
-    document.cookie = `carritoCheckout=${encodeURIComponent(
-      carritoString
-    )}; max-age=300; path=/; samesite=lax`;
-    console.log("Carrito guardado en cookies");
-  } catch (e) {
-    console.error("Error con cookies:", e);
-  }
-
-  // Redirigir con parámetros URL como último recurso
-  try {
-    const carritoParam = encodeURIComponent(JSON.stringify(carritoConTimestamp));
-    if (carritoParam.length < 2000) {
-      // Límite seguro para URLs
-      window.location.href = `checkout/checkout.html?carrito=${carritoParam}`;
-    } else {
-      window.location.href = "checkout/checkout.html";
-    }
-  } catch (e) {
-    console.error("Error al generar URL:", e);
-    window.location.href = "checkout/checkout.html";
-  }
+  // 5) Redirige
+  window.location.href = "checkout/checkout.html";
 }
 
-// Función para calcular checksum de verificación
-function calcularChecksum(carrito) {
-  let checksum = 0;
-  carrito.forEach((item) => {
-    checksum += item.id * item.cantidad + item.precio;
-  });
-  return checksum % 1000; // Simplificado para demostración
-}
 // Actualizar contador de carrito
 function actualizarCarrito() {
-  const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+  const totalItems = carrito.reduce((sum, item) => sum + Number(item.cantidad || 0), 0);
   cartCount.textContent = totalItems;
-}
-
-// Guardar carrito en localStorage
-function guardarCarrito() {
-  localStorage.setItem("carrito", JSON.stringify(carrito));
-}
-
-// Cargar carrito desde localStorage
-function cargarCarrito() {
-  const carritoGuardado = localStorage.getItem("carrito");
-  if (carritoGuardado) {
-    try {
-      carrito = JSON.parse(carritoGuardado);
-    } catch (e) {
-      console.error("Error al parsear el carrito:", e);
-      carrito = [];
-    }
-  }
 }
 
 // Mostrar notificación

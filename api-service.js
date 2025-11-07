@@ -80,6 +80,31 @@ class ApiService {
       body: { email, password, nombre, apellido, telefono },
     });
   }
+
+  // Carrito
+  getMyCart() {
+    return this.request("/api/ShoppingCart/mine"); // crea si no existe
+  }
+  clearMyCart() {
+    return this.request("/api/ShoppingCart/clear", { method: "POST" });
+  }
+  addCartItem(productId, quantity) {
+    return this.request("/api/CartItems/add", {
+      method: "POST",
+      body: { productId, quantity },
+    });
+  }
+  updateCartItemQty(itemId, quantity) {
+    return this.request(`/api/CartItems/${itemId}`, {
+      method: "PUT",
+      body: { quantity },
+    });
+  }
+  removeCartItem(itemId) {
+    return this.request(`/api/CartItems/${itemId}`, { method: "DELETE" });
+  }
+
+  
 }
 
 window.api = new ApiService();
