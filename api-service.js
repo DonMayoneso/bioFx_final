@@ -104,7 +104,29 @@ class ApiService {
     return this.request(`/api/CartItems/${itemId}`, { method: "DELETE" });
   }
 
-  
+  // Orders / Checkout
+  createOrderFromCart(reference, description) {
+    return this.request("/api/Orders/create", {
+      method: "POST",
+      body: { reference, description },
+    });
+  }
+  createPlacetoPaySession(orderId, returnUrl) {
+    return this.request(`/api/Orders/${orderId}/placetopay/session`, {
+      method: "POST",
+      body: { returnUrl },
+    });
+  }
+  getOrderStatus(orderId) {
+    return this.request(`/api/Orders/${orderId}/status`);
+  }
+
+  refreshByRequestId(requestId) {
+    return this.request(`/api/Transactions/refresh-by-request`, {
+      method: "POST",
+      body: { requestId },
+    });
+  }
 }
 
 window.api = new ApiService();

@@ -51,6 +51,37 @@ function validarDatosCarrito(carritoData) {
   return true;
 }
 
+async function prefillPersonalInfo() {
+  let perfil = null;
+  try {
+    perfil = await window.api.getMiPerfil();
+  } catch {
+    return;
+  }
+  if (!perfil) return;
+
+  const setIfEmpty = (id, val) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!el.value) el.value = val ?? "";
+  };
+
+  // nombre y apellido
+  setIfEmpty("nombres", String(perfil.nombre ?? "").trim());
+  setIfEmpty("apellidos", String(perfil.apellido ?? "").trim());
+
+  // email
+  setIfEmpty("email", String(perfil.email ?? "").trim());
+
+  // teléfono: normaliza a dígitos si es ecuatoriano
+  const tel = String(perfil.telefono ?? "").replace(/\D+/g, "");
+  setIfEmpty("telefono", tel);
+
+  const pais = document.getElementById("pais");
+  if (pais && !pais.value) pais.value = "ecuador";
+}
+
+
 async function requireAuthOrReturn() {
   try {
     const perfil = await window.api.getMiPerfil();
@@ -97,6 +128,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   const almacenamientoDisponible = verificarAlmacenamiento();
   if (!almacenamientoDisponible) console.log("Usando métodos alternativos de almacenamiento");
+
+  await prefillPersonalInfo();
 
   cargarResumenPedido();
   if (loadingElement) loadingElement.style.display = "none";
@@ -210,7 +243,27 @@ function cargarResumenPedido() {
     console.error("Error al leer parámetros URL:", e);
   }
 
-  // 2. Intentar desde localStorage
+  // 2. Intentar desde sessionStorage
+  if (!carritoData) {
+    try {
+      const sessionData = sessionStorage.getItem("carritoCheckout");
+      if (sessionData) {
+        const parsedData = JSON.parse(sessionData);
+        if (
+          (!parsedData.origin || parsedData.origin === window.location.origin) &&
+          validarDatosCarrito(parsedData)
+        ) {
+          carritoData = parsedData;
+          fuente = "sessionStorage";
+          console.log("Carrito cargado desde sessionStorage");
+        }
+      }
+    } catch (e) {
+      console.error("Error al leer sessionStorage:", e);
+    }
+  }
+
+  // 3. Intentar desde localStorage
   if (!carritoData) {
     try {
       const localData = localStorage.getItem("carritoCheckout");
@@ -228,26 +281,6 @@ function cargarResumenPedido() {
       }
     } catch (e) {
       console.error("Error al leer localStorage:", e);
-    }
-  }
-
-  // 3. Intentar desde sessionStorage
-  if (!carritoData) {
-    try {
-      const sessionData = sessionStorage.getItem("carritoCheckout");
-      if (sessionData) {
-        const parsedData = JSON.parse(sessionData);
-        if (
-          (!parsedData.origin || parsedData.origin === window.location.origin) &&
-          validarDatosCarrito(parsedData)
-        ) {
-          carritoData = parsedData;
-          fuente = "sessionStorage";
-          console.log("Carrito cargado desde sessionStorage");
-        }
-      }
-    } catch (e) {
-      console.error("Error al leer sessionStorage:", e);
     }
   }
 
@@ -470,7 +503,7 @@ function procesarCheckout(e) {
       localStorage.removeItem("carritoCheckout");
       sessionStorage.removeItem("carritoCheckout");
       document.cookie = "carritoCheckout=; max-age=0; path=/";
-      window.location.href = "index.html"; // En una implementación real, redirigir a PlaceToPay
+      window.location.href = "../index.html"; // En una implementación real, redirigir a PlaceToPay
     }, 2000);
   }, 2000);
 }
