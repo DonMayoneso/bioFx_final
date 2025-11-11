@@ -15,7 +15,11 @@ class ApiService {
       err.status = res.status;
       try {
         const j = await res.json();
-        err.message = j.message || j.error || JSON.stringify(j);
+        const parts = [];
+        if (j.message) parts.push(j.message);
+        if (j.code) parts.push(`SQL ${j.code}`);
+        if (j.error) parts.push(j.error);
+        err.message = parts.join(" • ") || `HTTP ${res.status} ${res.statusText}`;
       } catch {
         err.message = `HTTP ${res.status} ${res.statusText}`;
       }
