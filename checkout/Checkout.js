@@ -41,9 +41,9 @@ function validarDatosCarrito(carritoData) {
     }
   }
 
-  // Verificar que todos los items tengan la estructura correcta
   for (const item of carritoData.items) {
-    if (!item.id || !item.nombre || !item.precio || !item.cantidad) {
+    const precioOk = Number.isFinite(Number(item.precio)) && Number(item.precio) >= 0;
+    if (!item.id || !item.nombre || !precioOk || !Number(item.cantidad)) {
       return false;
     }
   }
@@ -81,47 +81,40 @@ async function prefillPersonalInfo() {
   if (pais && !pais.value) pais.value = "ecuador";
 }
 
-
-async function requireAuthOrReturn() {
+async function guardAccessOrRedirectCheckout() {
   try {
+    // 1) sesión
     const perfil = await window.api.getMiPerfil();
-    if (perfil) return true;
-  } catch {}
-  try {
-    sessionStorage.removeItem("carritoCheckout");
-  } catch {}
-  try {
-    localStorage.removeItem("carritoCheckout");
-  } catch {}
-  window.location.replace("../index.html");
-  return false;
-}
+    if (!perfil) throw new Error("NO_SESSION");
 
-async function requireNonEmptyCartOrReturn() {
-  try {
-    const cart = await window.api.getMyCart();
+    // 2) carrito con items
+    const cart = await window.api.getMyCart(); // crea si no existe
     const items = Array.isArray(cart?.Items)
       ? cart.Items
       : Array.isArray(cart?.items)
       ? cart.items
       : [];
-    if (items.length > 0) return true;
-  } catch {}
-  try {
-    sessionStorage.removeItem("carritoCheckout");
-  } catch {}
-  try {
-    localStorage.removeItem("carritoCheckout");
-  } catch {}
-  document.cookie = "carritoCheckout=; max-age=0; path=/";
-  window.location.replace("../index.html?m=carrito_vacio");
-  return false;
+    if (!items || items.length === 0) throw new Error("EMPTY_CART");
+
+    return true; // acceso permitido
+  } catch {
+    // limpia rastros mínimos y regresa a la tienda
+    try {
+      sessionStorage.removeItem("carritoCheckout");
+    } catch {}
+    try {
+      localStorage.removeItem("carritoCheckout");
+    } catch {}
+    document.cookie = "carritoCheckout=; max-age=0; path=/";
+    window.location.replace("../index.html");
+    return false;
+  }
 }
 
 // Inicialización del checkout
 document.addEventListener("DOMContentLoaded", async function () {
-  if (!(await requireAuthOrReturn())) return;
-  if (!(await requireNonEmptyCartOrReturn())) return;
+  const ok = await guardAccessOrRedirectCheckout();
+  if (!ok) return;
 
   const loadingElement = document.getElementById("loadingCart");
   if (loadingElement) loadingElement.style.display = "block";
@@ -219,99 +212,122 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 // Cargar resumen del pedido desde múltiples fuentes
-function cargarResumenPedido() {
+async function cargarResumenPedido() {
   let carritoData = null;
   let fuente = "";
 
-  console.log("Buscando datos del carrito...");
-
-  // 1. Intentar desde parámetros URL primero (para entornos restrictivos)
+  // 1) URL ?carrito=...
   try {
     const urlParams = new URLSearchParams(window.location.search);
     const carritoParam = urlParams.get("carrito");
     if (carritoParam) {
-      carritoData = JSON.parse(decodeURIComponent(carritoParam));
-      if (validarDatosCarrito(carritoData)) {
+      const parsed = JSON.parse(decodeURIComponent(carritoParam));
+      if (validarDatosCarrito(parsed)) {
+        carritoData = parsed;
         fuente = "URL";
-        console.log("Carrito cargado desde parámetros URL");
-      } else {
-        carritoData = null;
-        console.log("Datos de URL no válidos");
       }
     }
-  } catch (e) {
-    console.error("Error al leer parámetros URL:", e);
-  }
+  } catch {}
 
-  // 2. Intentar desde sessionStorage
+  // 2) sessionStorage
   if (!carritoData) {
     try {
-      const sessionData = sessionStorage.getItem("carritoCheckout");
-      if (sessionData) {
-        const parsedData = JSON.parse(sessionData);
+      const v = sessionStorage.getItem("carritoCheckout");
+      if (v) {
+        const parsed = JSON.parse(v);
         if (
-          (!parsedData.origin || parsedData.origin === window.location.origin) &&
-          validarDatosCarrito(parsedData)
+          (!parsed.origin || parsed.origin === window.location.origin) &&
+          validarDatosCarrito(parsed)
         ) {
-          carritoData = parsedData;
+          carritoData = parsed;
           fuente = "sessionStorage";
-          console.log("Carrito cargado desde sessionStorage");
         }
       }
-    } catch (e) {
-      console.error("Error al leer sessionStorage:", e);
-    }
+    } catch {}
   }
 
-  // 3. Intentar desde localStorage
+  // 3) localStorage
   if (!carritoData) {
     try {
-      const localData = localStorage.getItem("carritoCheckout");
-      if (localData) {
-        const parsedData = JSON.parse(localData);
-        // Verificar que los datos vengan del mismo origen y sean válidos
+      const v = localStorage.getItem("carritoCheckout");
+      if (v) {
+        const parsed = JSON.parse(v);
         if (
-          (!parsedData.origin || parsedData.origin === window.location.origin) &&
-          validarDatosCarrito(parsedData)
+          (!parsed.origin || parsed.origin === window.location.origin) &&
+          validarDatosCarrito(parsed)
         ) {
-          carritoData = parsedData;
+          carritoData = parsed;
           fuente = "localStorage";
-          console.log("Carrito cargado desde localStorage");
         }
       }
-    } catch (e) {
-      console.error("Error al leer localStorage:", e);
-    }
+    } catch {}
   }
 
-  // 4. Intentar desde cookies
+  // 4) cookie
   if (!carritoData) {
     try {
       const cookieValue = document.cookie
         .split("; ")
         .find((row) => row.startsWith("carritoCheckout="))
         ?.split("=")[1];
-
       if (cookieValue) {
-        const parsedData = JSON.parse(decodeURIComponent(cookieValue));
+        const parsed = JSON.parse(decodeURIComponent(cookieValue));
         if (
-          (!parsedData.origin || parsedData.origin === window.location.origin) &&
-          validarDatosCarrito(parsedData)
+          (!parsed.origin || parsed.origin === window.location.origin) &&
+          validarDatosCarrito(parsed)
         ) {
-          carritoData = parsedData;
+          carritoData = parsed;
           fuente = "cookie";
-          console.log("Carrito cargado desde cookies");
         }
       }
+    } catch {}
+  }
+
+  // 5) Fallback desde API
+  if (!carritoData) {
+    try {
+      const apiCart = await window.api.getMyCart();
+
+      const raw =
+        (Array.isArray(apiCart?.Items) && apiCart.Items) ||
+        (Array.isArray(apiCart?.items) && apiCart.items) ||
+        (Array.isArray(apiCart?.Data?.Items) && apiCart.Data.Items) ||
+        (Array.isArray(apiCart?.data?.items) && apiCart.data.items) ||
+        [];
+
+      const items = raw
+        .map((it) => {
+          const pid = Number(it.ProductId ?? it.productId ?? it.productID ?? it.pid);
+
+          const rawPrice = it.UnitPrice ?? it.unitPrice ?? it.Precio ?? it.price ?? 0;
+          const precioNum = Number(String(rawPrice).replace(",", "."));
+          const precio = Number.isFinite(precioNum) ? precioNum : 0;
+
+          const cantidad = Number(it.Quantity ?? it.quantity ?? it.Cantidad ?? 0);
+          const nombre = String(it.Nombre ?? it.nombre ?? `Producto ${pid}`) || `Producto ${pid}`;
+          const imagen = String(it.Imagen ?? it.imagen ?? "");
+
+          return { id: pid, nombre, precio, cantidad, imagen };
+        })
+        .filter((x) => x.cantidad > 0);
+
+      if (items.length > 0) {
+        const ahora = Date.now();
+        const checksum = items.reduce((acc, x) => acc + x.id * x.cantidad + x.precio, 0) % 1000;
+        carritoData = { items, origin: window.location.origin, timestamp: ahora, checksum };
+        fuente = "api";
+        try {
+          sessionStorage.setItem("carritoCheckout", JSON.stringify(carritoData));
+        } catch {}
+      }
     } catch (e) {
-      console.error("Error al leer cookies:", e);
+      console.warn("No se pudo cargar carrito desde API:", e);
     }
   }
 
-  console.log("Datos del carrito cargados desde:", fuente);
+  console.log("Datos del carrito cargados desde:", fuente || "ninguna");
 
-  // Verificar si los datos son válidos y recientes (menos de 5 minutos)
-  const ahora = new Date().getTime();
+  const ahora = Date.now();
   if (
     !carritoData ||
     !carritoData.items ||
@@ -319,7 +335,6 @@ function cargarResumenPedido() {
     (carritoData.timestamp && ahora - carritoData.timestamp > 300000) ||
     !validarDatosCarrito(carritoData)
   ) {
-    console.log("Datos del carrito no válidos o expirados");
     mostrarCarritoVacio();
     return;
   }
@@ -329,38 +344,34 @@ function cargarResumenPedido() {
   const subtotalElement = document.getElementById("subtotal");
   const totalElement = document.getElementById("total");
 
-  if (carrito.length === 0) {
+  if (!carrito.length) {
     mostrarCarritoVacio();
     return;
   }
 
-  // Calcular totales
   let subtotal = 0;
   let html = "";
 
   carrito.forEach((item) => {
     const itemTotal = item.precio * item.cantidad;
     subtotal += itemTotal;
-
     html += `
-        <div class="summary-item">
-            <img src="${resolveImagePath(item.imagen)}"
-                alt="${item.nombre}"
-                onerror="this.onerror=null; this.src='../assets/productos/imgtest.jpg'">
-            <div class="summary-item-info">
-            <div class="summary-item-name">${item.nombre}</div>
-            <div class="summary-item-details">
-                <span>${item.cantidad} x $${item.precio.toFixed(2)}</span>
-                <span>$${itemTotal.toFixed(2)}</span>
-            </div>
-            </div>
+      <div class="summary-item">
+        <img src="${resolveImagePath(item.imagen)}"
+             alt="${item.nombre || "Producto " + item.id}"
+             onerror="this.onerror=null; this.src='../assets/productos/imgtest.jpg'">
+        <div class="summary-item-info">
+          <div class="summary-item-name">${item.nombre || "Producto " + item.id}</div>
+          <div class="summary-item-details">
+            <span>${item.cantidad} x $${item.precio.toFixed(2)}</span>
+            <span>$${itemTotal.toFixed(2)}</span>
+          </div>
         </div>
-        `;
+      </div>`;
   });
 
   summaryItems.innerHTML = html;
 
-  // Calcular envío y total
   const shipping = 5.0;
   const total = subtotal + shipping;
 
@@ -437,75 +448,61 @@ function configurarSubidaArchivos() {
   });
 }
 
-// Procesar el checkout
-function procesarCheckout(e) {
+// Procesar el checkout REAL con PlaceToPay
+async function procesarCheckout(e) {
   e.preventDefault();
 
-  // Validar formulario
   if (!validarFormulario()) {
     mostrarNotificacion("Por favor, completa todos los campos obligatorios", "error");
     return;
   }
 
-  // Mostrar loading
   const submitBtn = document.getElementById("submitCheckout");
   const originalText = submitBtn.innerHTML;
   submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
   submitBtn.disabled = true;
 
-  // Simular procesamiento (en una implementación real, aquí se conectaría con PlaceToPay)
-  setTimeout(() => {
-    // Guardar información del pedido
-    const formData = new FormData(document.getElementById("checkoutForm"));
+  let payWin = window.open("about:blank", "_blank");
 
-    // Obtener datos del carrito
-    let cartData = null;
-    try {
-      const localData = localStorage.getItem("carritoCheckout");
-      if (localData) {
-        cartData = JSON.parse(localData);
-      }
-    } catch (e) {
-      console.error("Error al obtener datos del carrito:", e);
+  try {
+    // 1) Crear la orden a partir del carrito
+    const reference = `ORD-${Date.now()}`;
+    const description = "Compra BioFX";
+    const order = await window.api.createOrderFromCart(reference, description);
+
+    // 2) Crear la sesión de PlaceToPay
+    const returnUrl = `${window.location.origin}/confirmacion_pago/confirmacion_pago.html?orderId=${order.OrderId}`;
+    const session = await window.api.createPlacetoPaySession(order.OrderId, returnUrl);
+
+    if (!session?.processUrl) {
+      try {
+        if (payWin && !payWin.closed) payWin.close();
+      } catch {}
+      throw new Error("No se pudo crear la sesión de pago");
     }
 
-    const orderData = {
-      customer: {
-        nombres: formData.get("nombres"),
-        apellidos: formData.get("apellidos"),
-        tipoDocumento: formData.get("tipoDocumento"),
-        numeroDocumento: formData.get("numeroDocumento"),
-        email: formData.get("email"),
-        telefono: formData.get("telefono"),
-        whatsapp: formData.get("whatsapp"),
-      },
-      medico: formData.get("nombreMedico"),
-      shipping: {
-        direccion: formData.get("direccion"),
-        ciudad: formData.get("ciudad"),
-        provincia: formData.get("provincia"),
-        codigoPostal: formData.get("codigoPostal"),
-        pais: formData.get("pais"),
-      },
-      cart: cartData ? cartData.items : [],
-      timestamp: new Date().toISOString(),
-    };
+    // 3) Persistir IDs ANTES de navegar
+    localStorage.setItem("lastOrderId", order.OrderId);
+    localStorage.setItem("lastRequestId", session.requestId);
 
-    localStorage.setItem("orderData", JSON.stringify(orderData));
+    mostrarNotificacion("Redirigiendo a PlaceToPay...", "success");
 
-    // Aquí iría la integración con PlaceToPay
-    // Por ahora, simulamos una redirección
-    mostrarNotificacion("¡Pedido procesado con éxito! Redirigiendo a PlaceToPay...", "success");
-
-    // Limpiar carrito después de la compra
-    setTimeout(() => {
-      localStorage.removeItem("carrito");
-      localStorage.removeItem("carritoCheckout");
-      sessionStorage.removeItem("carritoCheckout");
-      document.cookie = "carritoCheckout=; max-age=0; path=/";
-      window.location.href = "../index.html"; // En una implementación real, redirigir a PlaceToPay
-    }, 2000);
-  }, 2000);
+    // 4) Redirigir a PlaceToPay
+    if (payWin && !payWin.closed) {
+      payWin.location = session.processUrl; // evita bloqueadores
+    } else {
+      window.location.href = session.processUrl; // fallback
+    }
+  } catch (err) {
+    console.error(err);
+    try {
+      if (payWin && !payWin.closed) payWin.close();
+    } catch {}
+    mostrarNotificacion("Error al procesar el pago: " + (err?.message || "desconocido"), "error");
+  } finally {
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
+  }
 }
 
 // Validar formulario
