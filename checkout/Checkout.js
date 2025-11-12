@@ -469,10 +469,14 @@ async function procesarCheckout(e) {
     const reference = `ORD-${Date.now()}`;
     const description = "Compra BioFX";
     const order = await window.api.createOrderFromCart(reference, description);
+    const orderId = Number(order?.orderId ?? order?.OrderId ?? order?.id);
+    if (!Number.isFinite(orderId)) {
+      throw new Error("Orden inválida: no se obtuvo un ID");
+    }
 
     // 2) Crear la sesión de PlaceToPay
-    const returnUrl = `${window.location.origin}/confirmacion_pago/confirmacion_pago.html?orderId=${order.OrderId}`;
-    const session = await window.api.createPlacetoPaySession(order.OrderId, returnUrl);
+    const returnUrl = `${window.location.origin}/confirmacion_pago/confirmacion_pago.html?orderId=${orderId}`;
+    const session = await window.api.createPlacetoPaySession(orderId, returnUrl);
 
     if (!session?.processUrl) {
       try {
@@ -482,8 +486,8 @@ async function procesarCheckout(e) {
     }
 
     // 3) Persistir IDs ANTES de navegar
-    localStorage.setItem("lastOrderId", order.OrderId);
-    localStorage.setItem("lastRequestId", session.requestId);
+    localStorage.setItem("lastOrderId", String(orderId));
+    localStorage.setItem("lastRequestId", String(session.requestId));
 
     mostrarNotificacion("Redirigiendo a PlaceToPay...", "success");
 

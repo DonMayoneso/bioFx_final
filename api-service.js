@@ -116,11 +116,13 @@ class ApiService {
     });
   }
   createPlacetoPaySession(orderId, returnUrl) {
-    return this.request(`/api/Orders/${orderId}/placetopay/session`, {
+    const oid = Number(orderId);
+    return this.request(`/api/Orders/${oid}/placetopay/session`, {
       method: "POST",
       body: { returnUrl },
     });
   }
+
   getOrderStatus(orderId) {
     return this.request(`/api/Orders/${orderId}/status`);
   }
