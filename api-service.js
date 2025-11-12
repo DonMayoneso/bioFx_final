@@ -130,11 +130,13 @@ class ApiService {
       const inner =
         r && typeof r === "object" && r.data && typeof r.data === "object" ? r.data : {};
 
-      const oid = Number(
+      let oid = Number(
         top.orderId ?? top.OrderId ?? top.id ?? inner.orderId ?? inner.OrderId ?? inner.id
       );
-
-      // Devuelve el “core” con el ID normalizado SIEMPRE > 0
+      if (!Number.isFinite(oid) || oid <= 0) {
+        const maybe = (top?.raw ?? inner?.raw ?? "").toString().match(/"orderId"\s*:\s*(\d+)/i);
+        if (maybe) oid = Number(maybe[1]);
+      }
       const core = Object.keys(inner).length ? inner : top;
       return { ...core, orderId: oid };
     });
