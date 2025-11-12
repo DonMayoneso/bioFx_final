@@ -121,22 +121,28 @@ class ApiService {
   }
 
   // Orders / Checkout
-  createOrderFromCart(reference, description) {
+  async createOrderFromCart(reference, description) {
     return this.request("/api/Orders/create", {
       method: "POST",
       body: { reference, description },
     }).then((r) => {
-      const core = r?.data ?? r;
-      const oid = Number(core?.orderId ?? core?.OrderId ?? core?.id);
-      return { ...core, orderId: oid }; // garantiza .orderId numérico
+      const top = r ?? {};
+      const inner =
+        r && typeof r === "object" && r.data && typeof r.data === "object" ? r.data : {};
+
+      const oid = Number(
+        top.orderId ?? top.OrderId ?? top.id ?? inner.orderId ?? inner.OrderId ?? inner.id
+      );
+
+      // Devuelve el “core” con el ID normalizado SIEMPRE > 0
+      const core = Object.keys(inner).length ? inner : top;
+      return { ...core, orderId: oid };
     });
   }
 
   createPlacetoPaySession(orderId, returnUrl) {
     const oid = Number(orderId);
-    if (!Number.isFinite(oid) || oid <= 0) {
-      throw new Error("orderId inválido");
-    }
+    if (!Number.isFinite(oid) || oid <= 0) throw new Error("orderId inválido");
     return this.request(`/api/Orders/${oid}/placetopay/session`, {
       method: "POST",
       body: { returnUrl },

@@ -470,7 +470,10 @@ async function procesarCheckout(e) {
     const description = "Compra BioFX";
     const order = await window.api.createOrderFromCart(reference, description);
     const orderId = Number(order?.orderId);
-    if (!Number.isFinite(orderId)) throw new Error("Orden inválida: no se obtuvo un ID");
+    if (!Number.isFinite(orderId) || orderId <= 0) {
+      console.error("Respuesta createOrderFromCart:", order);
+      throw new Error("Orden inválida: no se obtuvo un ID");
+    }
 
     // 2) Crear la sesión de PlaceToPay
     const returnUrl = `${window.location.origin}/confirmacion_pago/confirmacion_pago.html?orderId=${orderId}`;
