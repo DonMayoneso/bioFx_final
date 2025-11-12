@@ -10,6 +10,7 @@ class ApiService {
       body: body ? JSON.stringify(body) : undefined,
       credentials: "include",
     });
+
     if (!res.ok) {
       const err = new Error();
       err.status = res.status;
@@ -25,8 +26,19 @@ class ApiService {
       }
       throw err;
     }
-    // 204 no content
+
     if (res.status === 204) return null;
+
+    // Soporta respuestas no-JSON o envueltas
+    const ct = res.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) {
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch {
+        return { raw: text };
+      }
+    }
     return await res.json();
   }
 
@@ -113,10 +125,18 @@ class ApiService {
     return this.request("/api/Orders/create", {
       method: "POST",
       body: { reference, description },
+    }).then((r) => {
+      const core = r?.data ?? r;
+      const oid = Number(core?.orderId ?? core?.OrderId ?? core?.id);
+      return { ...core, orderId: oid }; // garantiza .orderId numérico
     });
   }
+
   createPlacetoPaySession(orderId, returnUrl) {
     const oid = Number(orderId);
+    if (!Number.isFinite(oid) || oid <= 0) {
+      throw new Error("orderId inválido");
+    }
     return this.request(`/api/Orders/${oid}/placetopay/session`, {
       method: "POST",
       body: { returnUrl },
