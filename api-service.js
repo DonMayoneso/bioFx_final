@@ -134,10 +134,19 @@ class ApiService {
     return { ...r, orderId: oid };
   }
 
-  createPlacetoPaySession(orderId, returnUrl) {
-    const oid = Number(orderId);
-    console.log("createPlacetoPaySession input:", { orderId, oid });
-    if (!Number.isFinite(oid) || oid <= 0) throw new Error("orderId inválido");
+  createPlacetoPaySession(orderOrId, returnUrl) {
+    let oid = Number(orderOrId);
+
+    if ((!Number.isFinite(oid) || oid <= 0) && orderOrId && typeof orderOrId === "object") {
+      oid = Number(orderOrId.orderId ?? orderOrId.id ?? orderOrId.OrderId);
+    }
+
+    console.log("createPlacetoPaySession input:", { orderOrId, oid });
+
+    if (!Number.isFinite(oid) || oid <= 0) {
+      throw new Error("orderId inválido");
+    }
+
     return this.request(`/api/Orders/${oid}/placetopay/session`, {
       method: "POST",
       body: { returnUrl },

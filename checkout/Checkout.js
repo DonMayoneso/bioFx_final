@@ -468,8 +468,9 @@ async function procesarCheckout(e) {
     // 1) Crear la orden a partir del carrito
     const reference = `ORD-${Date.now()}`;
     const description = "Compra BioFX";
+
     const order = await window.api.createOrderFromCart(reference, description);
-    const orderId = Number(order?.orderId);
+    const orderId = Number(order?.orderId ?? order?.id);
     if (!Number.isFinite(orderId) || orderId <= 0) {
       console.error("Respuesta createOrderFromCart:", order);
       throw new Error("Orden inválida: no se obtuvo un ID");
@@ -477,7 +478,7 @@ async function procesarCheckout(e) {
 
     // 2) Crear la sesión de PlaceToPay
     const returnUrl = `${window.location.origin}/confirmacion_pago/confirmacion_pago.html?orderId=${orderId}`;
-    const session = await window.api.createPlacetoPaySession(orderId, returnUrl);
+    const session = await window.api.createPlacetoPaySession(order.orderId ?? order.id, returnUrl);
 
     if (!session?.processUrl) {
       try {
