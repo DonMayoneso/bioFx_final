@@ -122,28 +122,21 @@ class ApiService {
 
   // Orders / Checkout
   async createOrderFromCart(reference, description) {
-    return this.request("/api/Orders/create", {
+    const r = await this.request("/api/Orders/create", {
       method: "POST",
       body: { reference, description },
-    }).then((r) => {
-      const top = r ?? {};
-      const inner =
-        r && typeof r === "object" && r.data && typeof r.data === "object" ? r.data : {};
-
-      let oid = Number(
-        top.orderId ?? top.OrderId ?? top.id ?? inner.orderId ?? inner.OrderId ?? inner.id
-      );
-      if (!Number.isFinite(oid) || oid <= 0) {
-        const maybe = (top?.raw ?? inner?.raw ?? "").toString().match(/"orderId"\s*:\s*(\d+)/i);
-        if (maybe) oid = Number(maybe[1]);
-      }
-      const core = Object.keys(inner).length ? inner : top;
-      return { ...core, orderId: oid };
     });
+
+    // DEBUG opcional, muy útil mientras pruebas:
+    console.log("createOrderFromCart raw response:", r);
+
+    const oid = Number(r?.orderId ?? r?.id ?? r?.OrderId);
+    return { ...r, orderId: oid };
   }
 
   createPlacetoPaySession(orderId, returnUrl) {
     const oid = Number(orderId);
+    console.log("createPlacetoPaySession input:", { orderId, oid });
     if (!Number.isFinite(oid) || oid <= 0) throw new Error("orderId inválido");
     return this.request(`/api/Orders/${oid}/placetopay/session`, {
       method: "POST",
