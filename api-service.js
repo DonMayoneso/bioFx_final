@@ -127,18 +127,32 @@ class ApiService {
       body: { reference, description },
     });
 
-    // DEBUG opcional, muy útil mientras pruebas:
     console.log("createOrderFromCart raw response:", r);
 
     const oid = Number(r?.orderId ?? r?.id ?? r?.OrderId);
+
+    // Guarda el último orderId creado en la instancia
+    if (Number.isFinite(oid) && oid > 0) {
+      this.lastOrderId = oid;
+    } else {
+      this.lastOrderId = undefined;
+    }
+
     return { ...r, orderId: oid };
   }
 
   createPlacetoPaySession(orderOrId, returnUrl) {
+    // 1) Intenta usar el valor que le pasen
     let oid = Number(orderOrId);
 
+    // 2) Si vino un objeto, intenta extraer el id de sus propiedades
     if ((!Number.isFinite(oid) || oid <= 0) && orderOrId && typeof orderOrId === "object") {
       oid = Number(orderOrId.orderId ?? orderOrId.id ?? orderOrId.OrderId);
+    }
+
+    // 3) Si sigue siendo inválido, usa el último orderId creado
+    if (!Number.isFinite(oid) || oid <= 0) {
+      oid = Number(this.lastOrderId);
     }
 
     console.log("createPlacetoPaySession input:", { orderOrId, oid });
