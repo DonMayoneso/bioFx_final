@@ -30,10 +30,11 @@ document.addEventListener("DOMContentLoaded", () => {
   cargarPromociones();
   cargarCategorias();
   cargarProductos();
-  inicializarCategorias();
-  initCartSessionAware();
+  cargarCarrito();
+  actualizarCarrito();
+
+  // Agregar event listeners a los enlaces del footer que tienen data-section
   agregarEventListenersFooter();
-  setCheckoutBtnState();
 
   // Event listeners
   cartButton.addEventListener("click", abrirCarrito);
@@ -75,38 +76,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Cerrar si se hace clic en el overlay
   promoOverlay.addEventListener("click", handleClosePopup);
 });
-
-function setCheckoutBtnState() {
-  if (!checkoutButton) return;
-  const isAuth = document.documentElement.classList.contains("auth-ok");
-  const hasItems = carrito.some((x) => Number(x.cantidad) > 0);
-  checkoutButton.disabled = !(isAuth && hasItems);
-}
-
-window.addEventListener("auth:login", async () => {
-  try {
-    await fetchAndBindCart();
-
-    if (typeof cargarCarritoItems === "function") cargarCarritoItems();
-  } catch (e) {
-    (window.Snackbar?.error || mostrarNotificacion)?.("No se pudo cargar tu carrito.");
-  }
-  setCheckoutBtnState();
-});
-
-window.addEventListener("auth:logout", () => {
-  carrito = [];
-  try { sessionStorage.removeItem("carritoCheckout"); } catch {}
-  actualizarCarrito();
-  setCheckoutBtnState();
-});
-
-// engancha al repintado del contador
-const _oldActualizarCarrito = actualizarCarrito;
-actualizarCarrito = function() {
-  _oldActualizarCarrito.apply(this, arguments);
-  setCheckoutBtnState();
-};
 
 async function cargarCategorias() {
   const list = document.getElementById("categoryList");
@@ -171,31 +140,11 @@ async function cargarCategorias() {
 
     list.appendChild(frag);
     inicializarCategorias();
+    
   } catch (err) {
     console.error("Error cargando categorías:", err);
     // fallback: deja solo “todos”
   }
-}
-
-function buildCheckoutSnapshot(items) {
-  const now = Date.now();
-  const safeItems = (items || []).map((it) => ({
-    id: Number(it.id),
-    nombre: String(it.nombre || ""),
-    precio: Number(it.precio || 0),
-    cantidad: Number(it.cantidad || 0),
-    imagen: String(it.imagen || ""),
-  }));
-
-  // Mismo criterio de checksum que usa Checkout.js: suma (id*cantidad + precio) % 1000
-  const checksum = safeItems.reduce((acc, x) => acc + x.id * x.cantidad + x.precio, 0) % 1000;
-
-  return {
-    items: safeItems,
-    origin: window.location.origin,
-    timestamp: now,
-    checksum,
-  };
 }
 
 // Cargar productos desde el JSON
@@ -246,42 +195,6 @@ async function cargarProductos() {
         <p>${error.message || "Intenta más tarde."}</p>
       </div>`;
   }
-}
-
-async function initCartSessionAware() {
-  const perfil = await window.api.getMiPerfil();
-  if (!perfil) {
-    carrito = []; // sin sesión: no persistir nada local
-    actualizarCarrito();
-    return;
-  }
-  await fetchAndBindCart(); // con sesión: traer del API
-}
-
-async function fetchAndBindCart() {
-  const data = await window.api.getMyCart();
-
-  const rawItems =
-    (Array.isArray(data?.Items) && data.Items) ||
-    (Array.isArray(data?.items) && data.items) ||
-    (Array.isArray(data?.Data?.Items) && data.Data.Items) ||
-    (Array.isArray(data?.data?.items) && data.data.items) ||
-    [];
-
-  carrito = rawItems.map((it) => {
-    const pid = Number(it.ProductId ?? it.productId ?? it.productID ?? it.pid);
-    const prod = productos.find((p) => p.id === pid);
-    return {
-      itemId: Number(it.Id ?? it.id),
-      id: pid,
-      nombre: it.Nombre ?? it.nombre ?? (prod?.nombre || ""),
-      imagen: prod?.imagen || "",
-      precio: Number(it.UnitPrice ?? it.unitPrice ?? it.Precio ?? it.price ?? 0),
-      cantidad: Number(it.Quantity ?? it.quantity ?? it.Cantidad ?? 0),
-    };
-  });
-
-  actualizarCarrito(); // actualiza el badge
 }
 
 // Renderizar productos en la página con efecto flip
@@ -404,7 +317,7 @@ function abrirProducto(id) {
             
             <div class="modal-title-container">
                 <h2 class="modal-title">${producto.nombre}</h2>
-                <span class="product-code">Notificación Sanitaria: ${
+                <span class="product-code">Notificación ${
                   producto.codigo || producto.id
                 }</span>
             </div>
@@ -426,13 +339,6 @@ function abrirProducto(id) {
                     : ""
                 }
             </div>
-            
-            <!-- Disclaimer en la posición correcta - justo antes de las acciones -->
-            ${
-              producto.disclaimer
-                ? `<div class="product-disclaimer">${formatearTexto(producto.disclaimer)}</div>`
-                : ""
-            }
             
             <div class="description-tabs">
                 <div class="description-tab active" data-tab="descripcion">Descripción</div>
@@ -456,6 +362,13 @@ function abrirProducto(id) {
             <div class="description-content" id="otros">
                 ${formatearTexto(producto.descripciones.otros)}
             </div>
+
+            <!-- Disclaimer en la posición correcta - justo antes de las acciones -->
+            ${
+              producto.disclaimer
+                ? `<div class="product-disclaimer">${formatearTexto(producto.disclaimer)}</div>`
+                : ""
+            }
 
             <div class="product-actions">
                 <div class="quantity-control">
@@ -539,48 +452,20 @@ function cerrarModalProducto() {
   document.body.style.overflow = "auto";
 }
 
-async function ensureAuthOrOpenLogin(opts = {}) {
-  const { reason, closeProductModal } = opts;
-  if (document.documentElement.classList.contains("auth-ok")) return true;
+// Agregar al carrito (función de ejemplo - puedes completarla según tus necesidades)
+function agregarAlCarrito(productoId) {
+  const producto = productos.find((p) => p.id === productoId);
+  const cantidad = parseInt(document.getElementById("productQuantity").value) || 1;
 
-  try {
-    const perfil = await window.api.getMiPerfil();
-    if (perfil) return true;
-  } catch {}
+  if (producto) {
+    // Aquí va tu lógica para agregar al carrito
+    console.log(`Agregado al carrito: ${producto.nombre}, Cantidad: ${cantidad}`);
 
-  if (closeProductModal) {
-    try {
-      cerrarModalProducto();
-    } catch {}
-  }
+    // Ejemplo de notificación
+    alert(`¡${cantidad} ${producto.nombre} agregado(s) al carrito!`);
 
-  const loginModal = document.getElementById("loginModal");
-  if (loginModal) loginModal.style.display = "flex";
-
-  const msg = reason || "Inicia sesión para continuar.";
-  if (window.Snackbar?.error) window.Snackbar.error(msg, 2600);
-  else if (window.Snackbar?.show) window.Snackbar.show(msg, { type: "error", ms: 2600 });
-  else mostrarNotificacion?.(msg); // fallback
-  return false;
-}
-
-async function agregarAlCarrito(productoId) {
-  if (
-    !(await ensureAuthOrOpenLogin({
-      reason: "Inicia sesión para añadir productos al carrito.",
-      closeProductModal: true,
-    }))
-  )
-    return;
-
-  const cantidad = parseInt(document.getElementById("productQuantity")?.value) || 1;
-  try {
-    await window.api.addCartItem(productoId, cantidad);
-    await fetchAndBindCart(); // refresca desde servidor
+    // Cerrar modal después de agregar
     cerrarModalProducto();
-    (window.Snackbar?.success || mostrarNotificacion)(`Se agregaron ${cantidad} unidad(es).`);
-  } catch (e) {
-    (window.Snackbar?.error || mostrarNotificacion)(e.message || "Error al agregar.");
   }
 }
 
@@ -620,6 +505,11 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+// Cargar productos cuando la página esté lista
+document.addEventListener("DOMContentLoaded", function () {
+  cargarProductos();
+  inicializarCategorias();
+});
 
 // Función para cambiar categoría desde otros lugares (si es necesario)
 function cambiarCategoria(categoria) {
@@ -630,11 +520,7 @@ function cambiarCategoria(categoria) {
 }
 
 // Abrir modal de carrito
-async function abrirCarrito() {
-  if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para ver tu carrito." })))
-    return;
-
-  await fetchAndBindCart();
+function abrirCarrito() {
   cargarCarritoItems();
   cartModal.style.display = "flex";
   document.body.style.overflow = "hidden";
@@ -644,6 +530,41 @@ async function abrirCarrito() {
 function cerrarModalCarrito() {
   cartModal.style.display = "none";
   document.body.style.overflow = "auto";
+}
+
+// Agregar producto al carrito
+function agregarAlCarrito(id) {
+  const input = document.getElementById("productQuantity");
+  const cantidad = parseInt(input.value) || 1;
+
+  const producto = productos.find((p) => p.id === id);
+  if (!producto) return;
+
+  // Calcular precio con descuento si aplica
+  const tieneDescuento = producto.descuento && producto.descuento > 0;
+  const precioFinal = tieneDescuento
+    ? (producto.precio * (100 - producto.descuento)) / 100
+    : producto.precio;
+
+  const itemIndex = carrito.findIndex((item) => item.id === id);
+
+  if (itemIndex !== -1) {
+    carrito[itemIndex].cantidad += cantidad;
+  } else {
+    carrito.push({
+      id: producto.id,
+      nombre: producto.nombre,
+      precio: precioFinal,
+      imagen: producto.imagen,
+      cantidad: cantidad,
+    });
+  }
+
+  guardarCarrito();
+  actualizarCarrito();
+  cerrarModalProducto();
+
+  mostrarNotificacion(`Se agregaron ${cantidad} unidad(es) de "${producto.nombre}" al carrito.`);
 }
 
 // Cargar items del carrito
@@ -689,65 +610,117 @@ function cargarCarritoItems() {
 }
 
 // Actualizar cantidad en el carrito
-async function actualizarCantidadCarrito(productId, delta) {
-  const item = carrito.find((x) => x.id === productId);
-  if (!item) return;
-  const nueva = Number(item.cantidad) + delta;
+function actualizarCantidadCarrito(id, delta) {
+  const itemIndex = carrito.findIndex((item) => item.id === id);
 
-  try {
-    if (nueva <= 0) {
-      await window.api.removeCartItem(item.itemId);
-    } else {
-      await window.api.updateCartItemQty(item.itemId, nueva);
+  if (itemIndex !== -1) {
+    carrito[itemIndex].cantidad += delta;
+
+    if (carrito[itemIndex].cantidad < 1) {
+      carrito.splice(itemIndex, 1);
     }
-    await fetchAndBindCart();
+
+    guardarCarrito();
+    actualizarCarrito();
     cargarCarritoItems();
-  } catch (e) {
-    (window.Snackbar?.error || mostrarNotificacion)(e.message || "Error al actualizar.");
   }
 }
 
 // Eliminar producto del carrito
-async function eliminarDelCarrito(productId) {
-  const item = carrito.find((x) => x.id === productId);
-  if (!item) return;
-  try {
-    await window.api.removeCartItem(item.itemId);
-    await fetchAndBindCart();
-    cargarCarritoItems();
-  } catch (e) {
-    (window.Snackbar?.error || mostrarNotificacion)(e.message || "Error al eliminar.");
-  }
+function eliminarDelCarrito(id) {
+  carrito = carrito.filter((item) => item.id !== id);
+  guardarCarrito();
+  actualizarCarrito();
+  cargarCarritoItems();
 }
 
-async function finalizarCompra() {
-  // 1) Requiere sesión
-  if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para pagar." }))) return;
-
-  // 2) Sincroniza carrito desde API para evitar cantidades desactualizadas
-  await fetchAndBindCart();
-
-  // 3) Bloquea si vacío
-  const totalItems = carrito.reduce((s, it) => s + Number(it.cantidad || 0), 0);
-  if (!totalItems) {
-    (window.Snackbar?.error || mostrarNotificacion)?.("Tu carrito está vacío.");
+// En la función finalizarCompra, reemplaza con este código:
+function finalizarCompra() {
+  if (carrito.length === 0) {
+    mostrarNotificacion("Tu carrito está vacío");
     return;
   }
 
-  // 4) Snapshot mínimo para Checkout
-  const snapshot = buildCheckoutSnapshot(carrito);
-  try {
-    sessionStorage.setItem("carritoCheckout", JSON.stringify(snapshot));
-  } catch {}
+  // Crear objeto con timestamp para verificar frescura de los datos
+  const carritoConTimestamp = {
+    items: carrito,
+    timestamp: new Date().getTime(),
+    origin: window.location.origin,
+    // Agregar checksum para verificación de integridad
+    checksum: calcularChecksum(carrito),
+  };
 
-  // 5) Redirige
-  window.location.href = "checkout/checkout.html";
+  // Almacenar en múltiples lugares para mayor seguridad
+  try {
+    localStorage.setItem("carritoCheckout", JSON.stringify(carritoConTimestamp));
+    console.log("Carrito guardado en localStorage");
+  } catch (e) {
+    console.error("Error con localStorage:", e);
+  }
+
+  try {
+    sessionStorage.setItem("carritoCheckout", JSON.stringify(carritoConTimestamp));
+    console.log("Carrito guardado en sessionStorage");
+  } catch (e) {
+    console.error("Error con sessionStorage:", e);
+  }
+
+  // Usar cookies como respaldo
+  try {
+    const carritoString = JSON.stringify(carritoConTimestamp);
+    document.cookie = `carritoCheckout=${encodeURIComponent(
+      carritoString
+    )}; max-age=300; path=/; samesite=lax`;
+    console.log("Carrito guardado en cookies");
+  } catch (e) {
+    console.error("Error con cookies:", e);
+  }
+
+  // Redirigir con parámetros URL como último recurso
+  try {
+    const carritoParam = encodeURIComponent(JSON.stringify(carritoConTimestamp));
+    if (carritoParam.length < 2000) {
+      // Límite seguro para URLs
+      window.location.href = `checkout/checkout.html?carrito=${carritoParam}`;
+    } else {
+      window.location.href = "checkout/checkout.html";
+    }
+  } catch (e) {
+    console.error("Error al generar URL:", e);
+    window.location.href = "checkout/checkout.html";
+  }
 }
 
+// Función para calcular checksum de verificación
+function calcularChecksum(carrito) {
+  let checksum = 0;
+  carrito.forEach((item) => {
+    checksum += item.id * item.cantidad + item.precio;
+  });
+  return checksum % 1000; // Simplificado para demostración
+}
 // Actualizar contador de carrito
 function actualizarCarrito() {
-  const totalItems = carrito.reduce((sum, item) => sum + Number(item.cantidad || 0), 0);
+  const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
   cartCount.textContent = totalItems;
+}
+
+// Guardar carrito en localStorage
+function guardarCarrito() {
+  localStorage.setItem("carrito", JSON.stringify(carrito));
+}
+
+// Cargar carrito desde localStorage
+function cargarCarrito() {
+  const carritoGuardado = localStorage.getItem("carrito");
+  if (carritoGuardado) {
+    try {
+      carrito = JSON.parse(carritoGuardado);
+    } catch (e) {
+      console.error("Error al parsear el carrito:", e);
+      carrito = [];
+    }
+  }
 }
 
 // Mostrar notificación
