@@ -465,45 +465,35 @@ async function procesarCheckout(e) {
   let payWin = window.open("about:blank", "_blank");
 
   try {
-    // 1) Crear la orden a partir del carrito
     const reference = `ORD-${Date.now()}`;
     const description = "Compra BioFX";
 
     const order = await window.api.createOrderFromCart(reference, description);
     const orderId = Number(order?.orderId ?? order?.id);
+
     if (!Number.isFinite(orderId) || orderId <= 0) {
       console.error("Respuesta createOrderFromCart:", order);
       throw new Error("Orden inválida: no se obtuvo un ID");
     }
 
-    // 2) Crear la sesión de PlaceToPay
     const returnUrl = `${window.location.origin}/confirmacion_pago/confirmacion_pago.html?orderId=${orderId}`;
-    const session = await window.api.createPlacetoPaySession(order.orderId ?? order.id, returnUrl);
+    const session = await window.api.createPlacetoPaySession(orderId, returnUrl);
 
     if (!session?.processUrl) {
-      try {
-        if (payWin && !payWin.closed) payWin.close();
-      } catch {}
       throw new Error("No se pudo crear la sesión de pago");
     }
 
-    // 3) Persistir IDs ANTES de navegar
+    // Guardar IDs antes de redirigir
     localStorage.setItem("lastOrderId", String(orderId));
     localStorage.setItem("lastRequestId", String(session.requestId));
 
     mostrarNotificacion("Redirigiendo a PlaceToPay...", "success");
 
-    // 4) Redirigir a PlaceToPay
-    if (payWin && !payWin.closed) {
-      payWin.location = session.processUrl; // evita bloqueadores
-    } else {
-      window.location.href = session.processUrl; // fallback
-    }
+    // Redirigir al Placetopay
+    window.location.href = session.processUrl;
+    
   } catch (err) {
     console.error(err);
-    try {
-      if (payWin && !payWin.closed) payWin.close();
-    } catch {}
     mostrarNotificacion("Error al procesar el pago: " + (err?.message || "desconocido"), "error");
   } finally {
     submitBtn.innerHTML = originalText;
