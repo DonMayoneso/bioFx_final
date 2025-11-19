@@ -593,7 +593,7 @@ async function procesarCheckout(e) {
     mostrarNotificacion("Redirigiendo a PlaceToPay...", "success");
 
     window.location.href = session.processUrl;
-  } catch (err) {
+  } catch (err)  {
     console.error(err);
     mostrarNotificacion("Error al procesar el pago: " + (err?.message || "desconocido"), "error");
   } finally {
