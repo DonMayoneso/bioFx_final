@@ -396,24 +396,63 @@ function mostrarCarritoVacio() {
 }
 
 // Configurar la subida de archivos
+// Configurar la subida de archivos (PDF o imagen)
 function configurarSubidaArchivos() {
   const fileInput = document.getElementById("recetaMedica");
   const preview = document.getElementById("uploadPreview");
 
   if (!fileInput || !preview) return;
 
-  fileInput.addEventListener("change", function (e) {
+  const resetPreview = () => {
+    preview.innerHTML = `
+      <i class="fas fa-cloud-upload-alt"></i>
+      <p>Arrastra un archivo PDF o una imagen aquí o haz clic para seleccionar</p>
+    `;
+  };
+
+  resetPreview();
+
+  fileInput.addEventListener("change", function () {
     if (this.files && this.files[0]) {
-      const reader = new FileReader();
+      const file = this.files[0];
+      const name = file.name.toLowerCase();
+      const type = file.type;
 
-      reader.onload = function (e) {
+      const isPdf = type === "application/pdf" || name.endsWith(".pdf");
+
+      const isImage =
+        type.startsWith("image/") ||
+        name.endsWith(".png") ||
+        name.endsWith(".jpg") ||
+        name.endsWith(".jpeg");
+
+      if (!isPdf && !isImage) {
+        mostrarNotificacion(
+          "Solo se admiten archivos PDF o imágenes (PNG, JPG, JPEG) para la receta médica.",
+          "error"
+        );
+        this.value = "";
+        resetPreview();
+        return;
+      }
+
+      if (isPdf) {
         preview.innerHTML = `
-                    <img src="${e.target.result}" alt="Vista previa de receta" style="max-width: 100%; max-height: 200px;">
-                    <p>${fileInput.files[0].name}</p>
-                `;
-      };
-
-      reader.readAsDataURL(this.files[0]);
+          <i class="fas fa-file-pdf"></i>
+          <p>${file.name}</p>
+        `;
+      } else if (isImage) {
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          preview.innerHTML = `
+            <img src="${ev.target.result}" alt="Vista previa de receta" style="max-width: 100%; max-height: 200px;">
+            <p>${file.name}</p>
+          `;
+        };
+        reader.readAsDataURL(file);
+      }
+    } else {
+      resetPreview();
     }
   });
 
@@ -462,13 +501,50 @@ async function procesarCheckout(e) {
   submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
   submitBtn.disabled = true;
 
-  let payWin = window.open("about:blank", "_blank");
-
   try {
     const reference = `ORD-${Date.now()}`;
     const description = "Compra BioFX";
 
-    const order = await window.api.createOrderFromCart(reference, description);
+    // Capturar campos  del formulario
+    const tipoDocumento = document.getElementById("tipoDocumento")?.value || "";
+    const numeroDocumento = document.getElementById("numeroDocumento")?.value || "";
+    const direccion = document.getElementById("direccion")?.value || "";
+    const ciudad = document.getElementById("ciudad")?.value || "";
+    const provincia = document.getElementById("provincia")?.value || "";
+    const codigoPostal = document.getElementById("codigoPostal")?.value || "";
+    const pais = document.getElementById("pais")?.value || "";
+    const nombreMedico = document.getElementById("nombreMedico")?.value || "";
+
+    // Normalizar tipoDocumento a algo más "de backend"
+    let documentType = "";
+    switch ((tipoDocumento || "").toLowerCase()) {
+      case "cedula":
+        documentType = "CEDULA";
+        break;
+      case "ruc":
+        documentType = "RUC";
+        break;
+      case "pasaporte":
+        documentType = "PASAPORTE";
+        break;
+      default:
+        documentType = tipoDocumento || "";
+        break;
+    }
+
+    const extraData = {
+      documentType,
+      documentNumber: numeroDocumento,
+      addressLine: direccion,
+      city: ciudad,
+      province: provincia,
+      postalCode: codigoPostal,
+      country: pais,
+      doctorName: nombreMedico,
+    };
+
+    // 1) Crear la orden con los datos completos
+    const order = await window.api.createOrderFromCart(reference, description, extraData);
     const orderId = Number(order?.orderId ?? order?.id);
 
     if (!Number.isFinite(orderId) || orderId <= 0) {
@@ -476,6 +552,33 @@ async function procesarCheckout(e) {
       throw new Error("Orden inválida: no se obtuvo un ID");
     }
 
+    // 2) Si el usuario adjuntó receta médica, subirla
+    const fileInput = document.getElementById("recetaMedica");
+    const hasFile = fileInput && fileInput.files && fileInput.files[0];
+
+    if (hasFile) {
+      const file = fileInput.files[0];
+      const name = file.name.toLowerCase();
+      const type = file.type;
+
+      const isPdf = type === "application/pdf" || name.endsWith(".pdf");
+
+      const isImage =
+        type.startsWith("image/") ||
+        name.endsWith(".png") ||
+        name.endsWith(".jpg") ||
+        name.endsWith(".jpeg");
+
+      if (!isPdf && !isImage) {
+        throw new Error(
+          "Solo se admiten archivos PDF o imágenes (PNG, JPG, JPEG) para la receta médica."
+        );
+      }
+
+      await window.api.uploadOrderAttachment(orderId, file);
+    }
+
+    // 3) Crear sesión en PlaceToPay
     const returnUrl = `${window.location.origin}/confirmacion_pago/confirmacion_pago.html?orderId=${orderId}`;
     const session = await window.api.createPlacetoPaySession(orderId, returnUrl);
 
@@ -489,9 +592,7 @@ async function procesarCheckout(e) {
 
     mostrarNotificacion("Redirigiendo a PlaceToPay...", "success");
 
-    // Redirigir al Placetopay
     window.location.href = session.processUrl;
-    
   } catch (err) {
     console.error(err);
     mostrarNotificacion("Error al procesar el pago: " + (err?.message || "desconocido"), "error");

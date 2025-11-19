@@ -121,10 +121,24 @@ class ApiService {
   }
 
   // Orders / Checkout
-  async createOrderFromCart(reference, description) {
+  async createOrderFromCart(reference, description, extraData = {}) {
+    const body = {
+      reference,
+      description,
+      // campos adicionales opcionales para la orden
+      documentType: extraData.documentType,
+      documentNumber: extraData.documentNumber,
+      addressLine: extraData.addressLine,
+      city: extraData.city,
+      province: extraData.province,
+      postalCode: extraData.postalCode,
+      country: extraData.country,
+      doctorName: extraData.doctorName,
+    };
+
     const r = await this.request("/api/Orders/create", {
       method: "POST",
-      body: { reference, description },
+      body,
     });
 
     console.log("createOrderFromCart raw response:", r);
@@ -139,6 +153,52 @@ class ApiService {
     }
 
     return { ...r, orderId: oid };
+  }
+
+  async uploadOrderAttachment(orderId, file) {
+    const oid = Number(orderId);
+    if (!Number.isFinite(oid) || oid <= 0) {
+      throw new Error("orderId inválido para subir la receta médica.");
+    }
+
+    const formData = new FormData();
+    // El backend espera IFormFile file → nombre del campo: "file"
+    formData.append("file", file);
+
+    const res = await fetch(`${this.baseURL}/api/Orders/${oid}/attachment`, {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+      // Importante: NO poner Content-Type, el navegador añade el boundary
+    });
+
+    if (!res.ok) {
+      const err = new Error();
+      err.status = res.status;
+      try {
+        const j = await res.json();
+        const parts = [];
+        if (j.message) parts.push(j.message);
+        if (j.code) parts.push(`SQL ${j.code}`);
+        if (j.error) parts.push(j.error);
+        err.message = parts.join(" • ") || `HTTP ${res.status} ${res.statusText}`;
+      } catch {
+        err.message = `HTTP ${res.status} ${res.statusText}`;
+      }
+      throw err;
+    }
+
+    const ct = res.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) {
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch {
+        return { raw: text };
+      }
+    }
+
+    return await res.json();
   }
 
   createPlacetoPaySession(orderOrId, returnUrl) {
