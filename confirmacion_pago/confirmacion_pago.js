@@ -26,7 +26,6 @@ function setUI(status, extraMsg) {
   const icon = document.getElementById("icon");
   const title = document.getElementById("title");
   const desc = document.getElementById("desc");
-  const retry = document.getElementById("retry");
 
   const ICONS = {
     APPROVED: '<i class="fas fa-check-circle"></i>',
@@ -40,38 +39,62 @@ function setUI(status, extraMsg) {
   if (status === "APPROVED") {
     title.textContent = "Pago aprobado";
     desc.textContent = extraMsg || "Tu transacción fue procesada correctamente.";
-    retry.style.display = "none";
     limpiarDatosCompra();
   } else if (status === "REJECTED") {
     title.textContent = "Pago rechazado";
     desc.textContent = extraMsg || "Tu transacción no pudo completarse.";
-    retry.style.display = "inline-block";
-  } else if (status === "PENDING") {
+    } else if (status === "PENDING") {
     title.textContent = "Pago en proceso";
     desc.textContent = extraMsg || "Aún estamos esperando confirmación.";
-    retry.style.display = "inline-block";
-  } else {
+    } else {
     title.textContent = "Estado desconocido";
     desc.textContent = extraMsg || "Intenta nuevamente en unos segundos.";
-    retry.style.display = "inline-block";
-  }
+    }
 }
 
 async function consultarEstado(orderId, requestId) {
   try {
-    if (requestId) {
-      try {
-        await window.api.refreshByRequestId(Number(requestId));
-      } catch {}
-    }
-    const res = await window.api.getOrderStatus(Number(orderId)); // { status: "APPROVED"|"REJECTED"|"PENDING"|... }
-    const status = String(res?.status || res?.Status || "").toUpperCase() || "ERROR";
-    setUI(status);
+    const res = await window.api.getOrderStatus(Number(orderId)); // { status: "PAID"|"PENDING"|"REJECTED"|"EXPIRED"|... }
 
-    // autorefresco si está pendiente
-    if (status === "PENDING") {
-      setTimeout(() => consultarEstado(orderId, requestId), 5000);
+    const rawStatus = String(res?.status || res?.Status || "").toUpperCase() || "ERROR";
+    let uiStatus = "ERROR";
+    let extraMsg = "";
+
+    switch (rawStatus) {
+      case "PAID":
+      case "APPROVED":
+      case "OK":
+        uiStatus = "APPROVED";
+        extraMsg = "Tu transacción fue procesada correctamente.";
+        break;
+
+      case "PENDING":
+      case "PENDING_PAYMENT":
+      case "PENDING_VALIDATION":
+        uiStatus = "PENDING";
+        extraMsg = "Tu pago está en proceso. En breve se actualizará el estado.";
+        break;
+
+      case "REJECTED":
+      case "FAILED":
+        uiStatus = "REJECTED";
+        extraMsg =
+          "Tu transacción no pudo completarse. Intenta nuevamente o usa otro método de pago.";
+        break;
+
+      case "EXPIRED":
+        uiStatus = "REJECTED";
+        extraMsg = "Tu sesión de pago ha expirado. Por favor, vuelve a realizar la compra.";
+        break;
+
+      default:
+        uiStatus = "ERROR";
+        extraMsg =
+          "No se pudo determinar el estado de tu transacción. Intenta nuevamente en unos segundos.";
+        break;
     }
+
+    setUI(uiStatus, extraMsg);
   } catch (e) {
     setUI("ERROR", e?.message || "No se pudo consultar el estado.");
   }
@@ -82,12 +105,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!guard) return;
 
   const { orderId, requestId } = guard;
-
-  document.getElementById("retry").addEventListener("click", async (e) => {
-    e.currentTarget.disabled = true;
-    await consultarEstado(orderId, requestId);
-    e.currentTarget.disabled = false;
-  });
 
   setUI("PENDING", "Consultando con el proveedor de pagos...");
   await consultarEstado(orderId, requestId);

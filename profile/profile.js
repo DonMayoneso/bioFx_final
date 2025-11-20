@@ -5,6 +5,92 @@ document.addEventListener("DOMContentLoaded", function () {
   const tabs = document.querySelectorAll(".profile-tabs");
   const homeLink = "../index.html";
 
+  const ordersListEl = document.querySelector("#orders .orders-list");
+
+  function formatOrderDate(isoUtc) {
+    if (!isoUtc) return "";
+    const d = new Date(isoUtc);
+    const opts = { day: "numeric", month: "long", year: "numeric" };
+    return d.toLocaleDateString("es-EC", opts);
+  }
+
+  function buildOrderCard(order) {
+    const card = document.createElement("div");
+    card.className = "order-card";
+
+    const orderNumber = order.orderNumber || order.reference || `ORD-${order.orderId}`;
+    const dateText = formatOrderDate(order.createdAt);
+
+    const paymentInfoParts = [];
+    if (order.paymentMethodName) paymentInfoParts.push(order.paymentMethodName);
+    if (order.issuerName) paymentInfoParts.push(order.issuerName);
+    const paymentInfo = paymentInfoParts.length ? `Pago con ${paymentInfoParts.join(" · ")}` : "";
+
+    const hasAttachmentText = order.hasAttachment ? "Incluye factura adjunta" : "";
+
+    const itemsHtml = (order.items || [])
+      .map(
+        (item) => `
+        <div class="order-product">
+          <img
+            src="../${item.productImage}"
+            alt="${item.productName}"
+            class="order-product-img"
+          />
+          <div class="order-product-info">
+            <h4>${item.productName}</h4>
+            <p>Cantidad: ${item.quantity}</p>
+          </div>
+          <div class="order-price">$${Number(item.totalPrice).toFixed(2)}</div>
+        </div>
+      `
+      )
+      .join("");
+
+    card.innerHTML = `
+      <div class="order-header">
+        <div>
+          <div class="order-id">Pedido #${orderNumber}</div>
+          ${dateText ? `<div class="order-date">Realizado el: ${dateText}</div>` : ""}
+          ${paymentInfo ? `<div class="order-payment">${paymentInfo}</div>` : ""}
+          ${hasAttachmentText ? `<div class="order-invoice">${hasAttachmentText}</div>` : ""}
+        </div>
+      </div>
+
+      <div class="order-products">
+        ${itemsHtml}
+      </div>
+
+      <div class="order-footer">
+        <div class="order-total">Total: $${Number(order.totalAmount).toFixed(2)}</div>
+      </div>
+    `;
+
+    return card;
+  }
+
+  async function loadOrdersHistory() {
+    if (!ordersListEl) return;
+    ordersListEl.innerHTML = `<p class="orders-loading">Cargando tu historial de pedidos...</p>`;
+
+    try {
+      const orders = await window.api.getMyOrdersHistory();
+      if (!orders || !orders.length) {
+        ordersListEl.innerHTML = `<p class="orders-empty">Todavía no has realizado compras pagadas.</p>`;
+        return;
+      }
+
+      ordersListEl.innerHTML = "";
+      orders.forEach((order) => {
+        const card = buildOrderCard(order);
+        ordersListEl.appendChild(card);
+      });
+    } catch (err) {
+      console.error(err);
+      ordersListEl.innerHTML = `<p class="orders-error">No se pudo cargar tu historial de pedidos. Intenta más tarde.</p>`;
+    }
+  }
+
   navLinks.forEach((link) => {
     link.addEventListener("click", function (e) {
       e.preventDefault();
@@ -22,20 +108,6 @@ document.addEventListener("DOMContentLoaded", function () {
       // Mostrar la sección correspondiente
       const targetId = this.getAttribute("data-tab");
       document.getElementById(targetId).classList.add("active");
-    });
-  });
-
-  // Botón para repetir pedido
-  const repeatButtons = document.querySelectorAll(".btn-repeat-order");
-  repeatButtons.forEach((button) => {
-    button.addEventListener("click", function () {
-      const orderId = this.getAttribute("data-order-id");
-      alert(
-        `¡El pedido ${orderId} se ha añadido a tu carrito! Serás redirigido a la página de productos.`
-      );
-      // Aquí iría la lógica para agregar los productos del pedido al carrito
-      // Redirigir a la página principal
-      window.location.href = homeLink;
     });
   });
 
@@ -90,6 +162,9 @@ document.addEventListener("DOMContentLoaded", function () {
       if (lastNameEl) lastNameEl.value = pApellido;
       if (emailInpEl) emailInpEl.value = pEmail;
       if (phoneEl) phoneEl.value = pTelefono;
+
+      // Cargar historial de pedidos pagados
+      await loadOrdersHistory();
     } catch {
       window.location.href = homeLink;
       return;

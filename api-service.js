@@ -121,6 +121,10 @@ class ApiService {
   }
 
   // Orders / Checkout
+  getMyOrdersHistory() {
+    return this.request("/api/Orders/mine/history");
+  }
+
   async createOrderFromCart(reference, description, extraData = {}) {
     const body = {
       reference,

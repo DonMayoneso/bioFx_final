@@ -335,3 +335,22 @@
 .is-invalid {
   border-color: #c62828;
 }
+
+/* ===== Scroll interno para el historial de pedidos ===== */
+#orders .orders-list {
+  max-height: 450px;     
+  overflow-y: auto;      
+  padding-right: 6px;    
+}
+
+/* Scroll más elegante (solo navegadores WebKit) */
+#orders .orders-list::-webkit-scrollbar {
+  width: 8px;
+}
+#orders .orders-list::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+#orders .orders-list::-webkit-scrollbar-track {
+  background: transparent;
+}
