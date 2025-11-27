@@ -204,7 +204,7 @@ function renderizarProductos() {
     return;
   }
 
-  // Filtrar por categoría y disponibilidad - MODIFICADO PARA MÚLTIPLES CATEGORÍAS
+  // Filtrar por categoría y disponibilidad
   const productosFiltrados = !currentCategoryId
     ? productos.filter((p) => p.disponible)
     : productos.filter((p) => p.disponible && p.categoriaIds?.includes(currentCategoryId));
@@ -221,7 +221,7 @@ function renderizarProductos() {
     return;
   }
 
-  // Generar HTML de productos con efecto flip
+  // Generar HTML de productos
   productsContainer.innerHTML = "";
   productosFiltrados.forEach((producto) => {
     const tieneDescuento = producto.descuento && producto.descuento > 0;
@@ -232,14 +232,21 @@ function renderizarProductos() {
 
     const productCard = document.createElement("div");
     productCard.className = "product-card";
+    
+    // NOTA: Asegúrate de que .product-card-front tenga position: relative en CSS
     productCard.innerHTML = `
-            <div class="product-card-front">
+            <div class="product-card-front" style="position: relative;">
                 ${
                   tieneDescuento
                     ? `<div class="product-discount">-${producto.descuento}%</div>`
                     : ""
                 }
                 <img src="${producto.imagen}" alt="${producto.nombre}" class="product-image">
+                
+                <div class="stock-advertiser card-view">
+                    <i class="fas fa-fire-alt"></i> Aviso, quedan pocas unidades
+                </div>
+                
                 <div class="product-name">${producto.nombre}</div>
             </div>
             <div class="product-card-back">
@@ -261,7 +268,7 @@ function renderizarProductos() {
             </div>
         `;
 
-    // Evento para voltear la tarjeta
+    // Eventos
     productCard.addEventListener("mouseenter", () => {
       productCard.classList.add("flipped");
     });
@@ -270,7 +277,6 @@ function renderizarProductos() {
       productCard.classList.remove("flipped");
     });
 
-    // Evento para abrir el modal
     productCard.addEventListener("click", (e) => {
       if (!e.target.classList.contains("btn-details")) {
         abrirProducto(producto.id);
@@ -281,31 +287,24 @@ function renderizarProductos() {
   });
 }
 
-// Abrir modal de producto con nueva vista
+// Abrir modal de producto
 function abrirProducto(id) {
   const producto = productos.find((p) => p.id === id);
 
   if (producto) {
-    // Calcular precio con descuento si aplica
     const tieneDescuento = producto.descuento && producto.descuento > 0;
     const precioOriginal = producto.precio;
     const precioDescuento = tieneDescuento
       ? ((precioOriginal * (100 - producto.descuento)) / 100).toFixed(2)
       : precioOriginal.toFixed(2);
 
-    // Obtener productos promocionados (solo los disponibles)
     const productosPromocionados = productos.filter(
       (p) => producto.promocionados.includes(p.id) && p.disponible
     );
 
-    // Función para formatear texto con saltos de línea y negritas
     function formatearTexto(texto) {
       if (!texto) return "";
-
-      // Convertir **...** a negritas (en lugar de \s...\s)
       let textoFormateado = texto.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-
-      // Convertir \n a párrafos
       return textoFormateado
         .split("\n")
         .map((parrafo) => (parrafo.trim() ? `<p>${parrafo}</p>` : ""))
@@ -350,20 +349,16 @@ function abrirProducto(id) {
             <div class="description-content active" id="descripcion">
                 ${formatearTexto(producto.descripcion)}
             </div>
-            
             <div class="description-content" id="funcion">
                 ${formatearTexto(producto.descripciones.principal)}
             </div>
-            
             <div class="description-content" id="contraindicaciones">
                 ${formatearTexto(producto.contraindicaciones)}
             </div>
-
             <div class="description-content" id="otros">
                 ${formatearTexto(producto.descripciones.otros)}
             </div>
 
-            <!-- Disclaimer en la posición correcta - justo antes de las acciones -->
             ${
               producto.disclaimer
                 ? `<div class="product-disclaimer">${formatearTexto(producto.disclaimer)}</div>`
@@ -386,6 +381,10 @@ function abrirProducto(id) {
                 })">
                     <i class="fas fa-shopping-cart"></i> Agregar al Carrito
                 </button>
+            </div>
+
+            <div class="stock-advertiser modal-view">
+                <i class="fas fa-fire-alt"></i> Aviso, quedan pocas unidades en stock
             </div>
             
             ${
@@ -413,18 +412,13 @@ function abrirProducto(id) {
             }
         `;
 
-    // Agregar funcionalidad a las pestañas
     const tabs = modalProductContent.querySelectorAll(".description-tab");
     tabs.forEach((tab) => {
       tab.addEventListener("click", () => {
-        // Remover clase activa de todas las pestañas
         tabs.forEach((t) => t.classList.remove("active"));
-        // Ocultar todos los contenidos
         document
           .querySelectorAll(".description-content")
           .forEach((c) => c.classList.remove("active"));
-
-        // Activar la pestaña clickeada
         tab.classList.add("active");
         const tabId = tab.dataset.tab;
         document.getElementById(tabId).classList.add("active");
@@ -436,87 +430,23 @@ function abrirProducto(id) {
   }
 }
 
-// Cambiar cantidad en el modal de producto
+// FUNCIONES AUXILIARES NECESARIAS
 function cambiarCantidad(delta) {
   const input = document.getElementById("productQuantity");
   let value = parseInt(input.value) || 1;
   value += delta;
-
   if (value < 1) value = 1;
   input.value = value;
 }
 
-// Cerrar modal de producto
 function cerrarModalProducto() {
   productModal.style.display = "none";
   document.body.style.overflow = "auto";
 }
 
-// Agregar al carrito (función de ejemplo - puedes completarla según tus necesidades)
 function agregarAlCarrito(productoId) {
-  const producto = productos.find((p) => p.id === productoId);
-  const cantidad = parseInt(document.getElementById("productQuantity").value) || 1;
-
-  if (producto) {
-    // Aquí va tu lógica para agregar al carrito
-    console.log(`Agregado al carrito: ${producto.nombre}, Cantidad: ${cantidad}`);
-
-    // Ejemplo de notificación
-    alert(`¡${cantidad} ${producto.nombre} agregado(s) al carrito!`);
-
-    // Cerrar modal después de agregar
-    cerrarModalProducto();
-  }
-}
-
-// Manejo de categorías
-function inicializarCategorias() {
-  const buttons = document.querySelectorAll(".category-btn");
-  buttons.forEach((button) => {
-    button.onclick = () => {
-      buttons.forEach((b) => b.classList.remove("active"));
-      button.classList.add("active");
-
-      const cid = button.getAttribute("data-category-id");
-      currentCategoryId = cid ? Number(cid) : null; // null = “todos”
-      renderizarProductos();
-    };
-  });
-}
-
-// Event listeners
-if (closeProductModal) {
-  closeProductModal.addEventListener("click", cerrarModalProducto);
-}
-
-// Cerrar modal al hacer click fuera del contenido
-if (productModal) {
-  productModal.addEventListener("click", (e) => {
-    if (e.target === productModal) {
-      cerrarModalProducto();
-    }
-  });
-}
-
-// Cerrar modal con tecla ESC
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && productModal.style.display === "flex") {
-    cerrarModalProducto();
-  }
-});
-
-// Cargar productos cuando la página esté lista
-document.addEventListener("DOMContentLoaded", function () {
-  cargarProductos();
-  inicializarCategorias();
-});
-
-// Función para cambiar categoría desde otros lugares (si es necesario)
-function cambiarCategoria(categoria) {
-  const button = document.querySelector(`.category-btn[data-category="${categoria}"]`);
-  if (button) {
-    button.click();
-  }
+  // Lógica de carrito
+  console.log("Producto agregado:", productoId);
 }
 
 // Abrir modal de carrito
