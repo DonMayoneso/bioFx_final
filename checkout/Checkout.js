@@ -1,3 +1,4 @@
+// Verificar si estamos en un entorno con restricciones de almacenamiento
 function verificarAlmacenamiento() {
   try {
     localStorage.setItem("test", "test");
@@ -7,14 +8,6 @@ function verificarAlmacenamiento() {
     console.warn("localStorage no está disponible:", e);
     return false;
   }
-}
-
-function resolveImagePath(p) {
-  if (!p) return "../assets/productos/placeholder.png";
-  if (/^https?:\/\//i.test(p)) return p; // absoluta http(s)
-  if (p.startsWith("/")) return p; // absoluta del host
-  if (p.startsWith("../")) return p; // ya relativa correcta
-  return "../" + p.replace(/^\.?\//, ""); // assets/... -> ../assets/...
 }
 
 // Función para calcular checksum
@@ -41,9 +34,9 @@ function validarDatosCarrito(carritoData) {
     }
   }
 
+  // Verificar que todos los items tengan la estructura correcta
   for (const item of carritoData.items) {
-    const precioOk = Number.isFinite(Number(item.precio)) && Number(item.precio) >= 0;
-    if (!item.id || !item.nombre || !precioOk || !Number(item.cantidad)) {
+    if (!item.id || !item.nombre || !item.precio || !item.cantidad) {
       return false;
     }
   }
@@ -51,88 +44,60 @@ function validarDatosCarrito(carritoData) {
   return true;
 }
 
-async function prefillPersonalInfo() {
-  let perfil = null;
-  try {
-    perfil = await window.api.getMiPerfil();
-  } catch {
-    return;
-  }
-  if (!perfil) return;
+// Variables para descuentos
+let descuentos = {
+  porReceta: 0, // 2% por receta médica
+  porMonto: 0, // Descuento automático por monto
+};
 
-  const setIfEmpty = (id, val) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (!el.value) el.value = val ?? "";
-  };
-
-  // nombre y apellido
-  setIfEmpty("nombres", String(perfil.nombre ?? "").trim());
-  setIfEmpty("apellidos", String(perfil.apellido ?? "").trim());
-
-  // email
-  setIfEmpty("email", String(perfil.email ?? "").trim());
-
-  // teléfono: normaliza a dígitos si es ecuatoriano
-  const tel = String(perfil.telefono ?? "").replace(/\D+/g, "");
-  setIfEmpty("telefono", tel);
-
-  const pais = document.getElementById("pais");
-  if (pais && !pais.value) pais.value = "ecuador";
-}
-
-async function guardAccessOrRedirectCheckout() {
-  try {
-    // 1) sesión
-    const perfil = await window.api.getMiPerfil();
-    if (!perfil) throw new Error("NO_SESSION");
-
-    // 2) carrito con items
-    const cart = await window.api.getMyCart(); // crea si no existe
-    const items = Array.isArray(cart?.Items)
-      ? cart.Items
-      : Array.isArray(cart?.items)
-      ? cart.items
-      : [];
-    if (!items || items.length === 0) throw new Error("EMPTY_CART");
-
-    return true; // acceso permitido
-  } catch {
-    // limpia rastros mínimos y regresa a la tienda
-    try {
-      sessionStorage.removeItem("carritoCheckout");
-    } catch {}
-    try {
-      localStorage.removeItem("carritoCheckout");
-    } catch {}
-    document.cookie = "carritoCheckout=; max-age=0; path=/";
-    window.location.replace("../index.html");
-    return false;
-  }
-}
+// CONFIGURACIÓN DE DESCUENTOS - AQUÍ PUEDES MODIFICAR LOS VALORES
+const configDescuentos = {
+  montoMinimo: 50, // CAMBIA ESTE VALOR: Monto mínimo para aplicar descuento automático
+  descuentoMonto: 5, // CAMBIA ESTE VALOR: Valor del descuento automático
+};
 
 // Inicialización del checkout
-document.addEventListener("DOMContentLoaded", async function () {
-  const ok = await guardAccessOrRedirectCheckout();
-  if (!ok) return;
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("Iniciando checkout...");
+  console.log("URL actual:", window.location.href);
+  console.log("Origen:", window.location.origin);
+  console.log("User Agent:", navigator.userAgent);
+  console.log("LocalStorage disponible:", typeof Storage !== "undefined");
 
+  // Mostrar mensaje de carga
   const loadingElement = document.getElementById("loadingCart");
-  if (loadingElement) loadingElement.style.display = "block";
+  if (loadingElement) {
+    loadingElement.style.display = "block";
+  }
 
+  // Verificar disponibilidad de almacenamiento
   const almacenamientoDisponible = verificarAlmacenamiento();
-  if (!almacenamientoDisponible) console.log("Usando métodos alternativos de almacenamiento");
+  if (!almacenamientoDisponible) {
+    console.log("Usando métodos alternativos de almacenamiento");
+  }
 
-  await prefillPersonalInfo();
-
+  // Cargar el resumen del pedido
   cargarResumenPedido();
-  if (loadingElement) loadingElement.style.display = "none";
+
+  // Ocultar loading después de cargar
+  if (loadingElement) {
+    loadingElement.style.display = "none";
+  }
+
+  // Configurar la subida de archivos
   configurarSubidaArchivos();
+
+  // Configurar el envío del formulario
   document.getElementById("checkoutForm").addEventListener("submit", procesarCheckout);
+
+  // Configurar botón de cancelar
   document.getElementById("cancelCheckout").addEventListener("click", function () {
     if (confirm("¿Estás seguro de que deseas cancelar tu compra?")) {
+      // Limpiar datos de checkout
       localStorage.removeItem("carritoCheckout");
       sessionStorage.removeItem("carritoCheckout");
       document.cookie = "carritoCheckout=; max-age=0; path=/";
+
       window.location.href = "../index.html";
     }
   });
@@ -212,122 +177,99 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 // Cargar resumen del pedido desde múltiples fuentes
-async function cargarResumenPedido() {
+function cargarResumenPedido() {
   let carritoData = null;
   let fuente = "";
 
-  // 1) URL ?carrito=...
+  console.log("Buscando datos del carrito...");
+
+  // 1. Intentar desde parámetros URL primero (para entornos restrictivos)
   try {
     const urlParams = new URLSearchParams(window.location.search);
     const carritoParam = urlParams.get("carrito");
     if (carritoParam) {
-      const parsed = JSON.parse(decodeURIComponent(carritoParam));
-      if (validarDatosCarrito(parsed)) {
-        carritoData = parsed;
+      carritoData = JSON.parse(decodeURIComponent(carritoParam));
+      if (validarDatosCarrito(carritoData)) {
         fuente = "URL";
+        console.log("Carrito cargado desde parámetros URL");
+      } else {
+        carritoData = null;
+        console.log("Datos de URL no válidos");
       }
     }
-  } catch {}
-
-  // 2) sessionStorage
-  if (!carritoData) {
-    try {
-      const v = sessionStorage.getItem("carritoCheckout");
-      if (v) {
-        const parsed = JSON.parse(v);
-        if (
-          (!parsed.origin || parsed.origin === window.location.origin) &&
-          validarDatosCarrito(parsed)
-        ) {
-          carritoData = parsed;
-          fuente = "sessionStorage";
-        }
-      }
-    } catch {}
+  } catch (e) {
+    console.error("Error al leer parámetros URL:", e);
   }
 
-  // 3) localStorage
+  // 2. Intentar desde localStorage
   if (!carritoData) {
     try {
-      const v = localStorage.getItem("carritoCheckout");
-      if (v) {
-        const parsed = JSON.parse(v);
+      const localData = localStorage.getItem("carritoCheckout");
+      if (localData) {
+        const parsedData = JSON.parse(localData);
+        // Verificar que los datos vengan del mismo origen y sean válidos
         if (
-          (!parsed.origin || parsed.origin === window.location.origin) &&
-          validarDatosCarrito(parsed)
+          (!parsedData.origin || parsedData.origin === window.location.origin) &&
+          validarDatosCarrito(parsedData)
         ) {
-          carritoData = parsed;
+          carritoData = parsedData;
           fuente = "localStorage";
+          console.log("Carrito cargado desde localStorage");
         }
       }
-    } catch {}
+    } catch (e) {
+      console.error("Error al leer localStorage:", e);
+    }
   }
 
-  // 4) cookie
+  // 3. Intentar desde sessionStorage
+  if (!carritoData) {
+    try {
+      const sessionData = sessionStorage.getItem("carritoCheckout");
+      if (sessionData) {
+        const parsedData = JSON.parse(sessionData);
+        if (
+          (!parsedData.origin || parsedData.origin === window.location.origin) &&
+          validarDatosCarrito(parsedData)
+        ) {
+          carritoData = parsedData;
+          fuente = "sessionStorage";
+          console.log("Carrito cargado desde sessionStorage");
+        }
+      }
+    } catch (e) {
+      console.error("Error al leer sessionStorage:", e);
+    }
+  }
+
+  // 4. Intentar desde cookies
   if (!carritoData) {
     try {
       const cookieValue = document.cookie
         .split("; ")
         .find((row) => row.startsWith("carritoCheckout="))
         ?.split("=")[1];
+
       if (cookieValue) {
-        const parsed = JSON.parse(decodeURIComponent(cookieValue));
+        const parsedData = JSON.parse(decodeURIComponent(cookieValue));
         if (
-          (!parsed.origin || parsed.origin === window.location.origin) &&
-          validarDatosCarrito(parsed)
+          (!parsedData.origin || parsedData.origin === window.location.origin) &&
+          validarDatosCarrito(parsedData)
         ) {
-          carritoData = parsed;
+          carritoData = parsedData;
           fuente = "cookie";
+          console.log("Carrito cargado desde cookies");
         }
       }
-    } catch {}
-  }
-
-  // 5) Fallback desde API
-  if (!carritoData) {
-    try {
-      const apiCart = await window.api.getMyCart();
-
-      const raw =
-        (Array.isArray(apiCart?.Items) && apiCart.Items) ||
-        (Array.isArray(apiCart?.items) && apiCart.items) ||
-        (Array.isArray(apiCart?.Data?.Items) && apiCart.Data.Items) ||
-        (Array.isArray(apiCart?.data?.items) && apiCart.data.items) ||
-        [];
-
-      const items = raw
-        .map((it) => {
-          const pid = Number(it.ProductId ?? it.productId ?? it.productID ?? it.pid);
-
-          const rawPrice = it.UnitPrice ?? it.unitPrice ?? it.Precio ?? it.price ?? 0;
-          const precioNum = Number(String(rawPrice).replace(",", "."));
-          const precio = Number.isFinite(precioNum) ? precioNum : 0;
-
-          const cantidad = Number(it.Quantity ?? it.quantity ?? it.Cantidad ?? 0);
-          const nombre = String(it.Nombre ?? it.nombre ?? `Producto ${pid}`) || `Producto ${pid}`;
-          const imagen = String(it.Imagen ?? it.imagen ?? "");
-
-          return { id: pid, nombre, precio, cantidad, imagen };
-        })
-        .filter((x) => x.cantidad > 0);
-
-      if (items.length > 0) {
-        const ahora = Date.now();
-        const checksum = items.reduce((acc, x) => acc + x.id * x.cantidad + x.precio, 0) % 1000;
-        carritoData = { items, origin: window.location.origin, timestamp: ahora, checksum };
-        fuente = "api";
-        try {
-          sessionStorage.setItem("carritoCheckout", JSON.stringify(carritoData));
-        } catch {}
-      }
     } catch (e) {
-      console.warn("No se pudo cargar carrito desde API:", e);
+      console.error("Error al leer cookies:", e);
     }
   }
 
-  console.log("Datos del carrito cargados desde:", fuente || "ninguna");
+  console.log("Datos del carrito cargados desde:", fuente);
 
-  const ahora = Date.now();
+  // Verificar si los datos son válidos y recientes (menos de 5 minutos)
+  const ahora = new Date().getTime();
   if (
     !carritoData ||
     !carritoData.items ||
@@ -335,62 +277,103 @@ async function cargarResumenPedido() {
     (carritoData.timestamp && ahora - carritoData.timestamp > 300000) ||
     !validarDatosCarrito(carritoData)
   ) {
+    console.log("Datos del carrito no válidos o expirados");
     mostrarCarritoVacio();
     return;
   }
 
   const carrito = carritoData.items;
   const summaryItems = document.getElementById("summaryItems");
-  const subtotalElement = document.getElementById("subtotal");
-  const totalElement = document.getElementById("total");
 
-  if (!carrito.length) {
+  if (carrito.length === 0) {
     mostrarCarritoVacio();
     return;
   }
 
+  // Calcular totales
   let subtotal = 0;
   let html = "";
 
   carrito.forEach((item) => {
     const itemTotal = item.precio * item.cantidad;
     subtotal += itemTotal;
+
     html += `
-      <div class="summary-item">
-        <img src="${resolveImagePath(item.imagen)}"
-             alt="${item.nombre || "Producto " + item.id}"
-             onerror="this.onerror=null; this.src='../assets/productos/imgtest.jpg'">
-        <div class="summary-item-info">
-          <div class="summary-item-name">${item.nombre || "Producto " + item.id}</div>
-          <div class="summary-item-details">
-            <span>${item.cantidad} x $${item.precio.toFixed(2)}</span>
-            <span>$${itemTotal.toFixed(2)}</span>
-          </div>
-        </div>
-      </div>`;
+            <div class="summary-item">
+                <img src="${item.imagen}" alt="${
+      item.nombre
+    }" onerror="this.src='../assets/productos/imgtest.jpg'">
+                <div class="summary-item-info">
+                    <div class="summary-item-name">${item.nombre}</div>
+                    <div class="summary-item-details">
+                        <span>${item.cantidad} x $${item.precio.toFixed(2)}</span>
+                        <span>$${itemTotal.toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
   });
 
   summaryItems.innerHTML = html;
 
-  const shipping = 5.0;
-  const total = subtotal + shipping;
+  // Calcular descuentos y total
+  calcularDescuentosYTotal(subtotal);
+}
 
-  subtotalElement.textContent = `$${subtotal.toFixed(2)}`;
+// Nueva función para calcular descuentos y total CORREGIDA
+function calcularDescuentosYTotal(subtotal) {
+  const shipping = 5.0;
+
+  // Aplicar descuento automático por monto
+  if (subtotal >= configDescuentos.montoMinimo && descuentos.porMonto === 0) {
+    descuentos.porMonto = configDescuentos.descuentoMonto;
+    mostrarNotificacionToast(
+      `¡Descuento de $${configDescuentos.descuentoMonto} aplicado por compra mayor a $${configDescuentos.montoMinimo}!`,
+      "success"
+    );
+  } else if (subtotal < configDescuentos.montoMinimo && descuentos.porMonto > 0) {
+    descuentos.porMonto = 0;
+  }
+
+  // Calcular descuento total
+  const descuentoTotal = descuentos.porReceta + descuentos.porMonto;
+
+  // Calcular total CORREGIDO: subtotal + shipping - descuentoTotal
+  const total = Math.max(0, subtotal + shipping - descuentoTotal);
+
+  console.log("Cálculo de totales:", {
+    subtotal,
+    shipping,
+    descuentoTotal,
+    descuentos,
+    total,
+  });
+
+  // Actualizar elementos HTML
+  document.getElementById("subtotal").textContent = `$${subtotal.toFixed(2)}`;
+  document.getElementById("discount").textContent = `-$${descuentoTotal.toFixed(2)}`;
   document.getElementById("shipping").textContent = `$${shipping.toFixed(2)}`;
-  totalElement.textContent = `$${total.toFixed(2)}`;
+  document.getElementById("total").textContent = `$${total.toFixed(2)}`;
 }
 
 // Función auxiliar para mostrar carrito vacío
 function mostrarCarritoVacio() {
   const summaryItems = document.getElementById("summaryItems");
   summaryItems.innerHTML = `
-    <p class="empty">No hay productos en tu carrito</p>
-    <div style="text-align: center; margin-top: 20px;">
-        <a href="../index.html" class="btn btn-primary">Volver a la tienda</a>
-    </div>
+        <p class="empty">No hay productos en tu carrito</p>
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="../index.html" class="btn btn-primary">Volver a la tienda</a>
+        </div>
     `;
 
+  // Resetear descuentos
+  descuentos = {
+    porReceta: 0,
+    porMonto: 0,
+  };
+
   document.getElementById("subtotal").textContent = "$0.00";
+  document.getElementById("discount").textContent = "-$0.00";
   document.getElementById("shipping").textContent = "$0.00";
   document.getElementById("total").textContent = "$0.00";
 }
@@ -487,119 +470,127 @@ function configurarSubidaArchivos() {
   });
 }
 
-// Procesar el checkout REAL con PlaceToPay
-async function procesarCheckout(e) {
-  e.preventDefault();
+// Función para aplicar descuento por receta médica
+function aplicarDescuentoPorReceta() {
+  const subtotal = parseFloat(document.getElementById("subtotal").textContent.replace("$", ""));
+  descuentos.porReceta = subtotal * 0.02; // 2% de descuento
 
-  if (!validarFormulario()) {
-    mostrarNotificacion("Por favor, completa todos los campos obligatorios", "error");
-    return;
+  // Recalcular totales
+  calcularDescuentosYTotal(subtotal);
+
+  mostrarNotificacionToast("¡Descuento del 2% aplicado por subir receta médica!", "success");
+}
+
+// Función para remover descuento por receta médica
+function removerDescuentoPorReceta() {
+  descuentos.porReceta = 0;
+  const subtotal = parseFloat(document.getElementById("subtotal").textContent.replace("$", ""));
+  calcularDescuentosYTotal(subtotal);
+}
+
+const submitBtn = document.getElementById("submitCheckout");
+const originalText = submitBtn.innerHTML;
+submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+submitBtn.disabled = true;
+
+try {
+  const reference = `ORD-${Date.now()}`;
+  const description = "Compra BioFX";
+
+  // Capturar campos  del formulario
+  const tipoDocumento = document.getElementById("tipoDocumento")?.value || "";
+  const numeroDocumento = document.getElementById("numeroDocumento")?.value || "";
+  const direccion = document.getElementById("direccion")?.value || "";
+  const ciudad = document.getElementById("ciudad")?.value || "";
+  const provincia = document.getElementById("provincia")?.value || "";
+  const codigoPostal = document.getElementById("codigoPostal")?.value || "";
+  const pais = document.getElementById("pais")?.value || "";
+  const nombreMedico = document.getElementById("nombreMedico")?.value || "";
+
+  // Normalizar tipoDocumento a algo más "de backend"
+  let documentType = "";
+  switch ((tipoDocumento || "").toLowerCase()) {
+    case "cedula":
+      documentType = "CEDULA";
+      break;
+    case "ruc":
+      documentType = "RUC";
+      break;
+    case "pasaporte":
+      documentType = "PASAPORTE";
+      break;
+    default:
+      documentType = tipoDocumento || "";
+      break;
   }
 
-  const submitBtn = document.getElementById("submitCheckout");
-  const originalText = submitBtn.innerHTML;
-  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-  submitBtn.disabled = true;
+  const extraData = {
+    documentType,
+    documentNumber: numeroDocumento,
+    addressLine: direccion,
+    city: ciudad,
+    province: provincia,
+    postalCode: codigoPostal,
+    country: pais,
+    doctorName: nombreMedico,
+  };
 
-  try {
-    const reference = `ORD-${Date.now()}`;
-    const description = "Compra BioFX";
+  // 1) Crear la orden con los datos completos
+  const order = await window.api.createOrderFromCart(reference, description, extraData);
+  const orderId = Number(order?.orderId ?? order?.id);
 
-    // Capturar campos  del formulario
-    const tipoDocumento = document.getElementById("tipoDocumento")?.value || "";
-    const numeroDocumento = document.getElementById("numeroDocumento")?.value || "";
-    const direccion = document.getElementById("direccion")?.value || "";
-    const ciudad = document.getElementById("ciudad")?.value || "";
-    const provincia = document.getElementById("provincia")?.value || "";
-    const codigoPostal = document.getElementById("codigoPostal")?.value || "";
-    const pais = document.getElementById("pais")?.value || "";
-    const nombreMedico = document.getElementById("nombreMedico")?.value || "";
-
-    // Normalizar tipoDocumento a algo más "de backend"
-    let documentType = "";
-    switch ((tipoDocumento || "").toLowerCase()) {
-      case "cedula":
-        documentType = "CEDULA";
-        break;
-      case "ruc":
-        documentType = "RUC";
-        break;
-      case "pasaporte":
-        documentType = "PASAPORTE";
-        break;
-      default:
-        documentType = tipoDocumento || "";
-        break;
-    }
-
-    const extraData = {
-      documentType,
-      documentNumber: numeroDocumento,
-      addressLine: direccion,
-      city: ciudad,
-      province: provincia,
-      postalCode: codigoPostal,
-      country: pais,
-      doctorName: nombreMedico,
-    };
-
-    // 1) Crear la orden con los datos completos
-    const order = await window.api.createOrderFromCart(reference, description, extraData);
-    const orderId = Number(order?.orderId ?? order?.id);
-
-    if (!Number.isFinite(orderId) || orderId <= 0) {
-      console.error("Respuesta createOrderFromCart:", order);
-      throw new Error("Orden inválida: no se obtuvo un ID");
-    }
-
-    // 2) Si el usuario adjuntó receta médica, subirla
-    const fileInput = document.getElementById("recetaMedica");
-    const hasFile = fileInput && fileInput.files && fileInput.files[0];
-
-    if (hasFile) {
-      const file = fileInput.files[0];
-      const name = file.name.toLowerCase();
-      const type = file.type;
-
-      const isPdf = type === "application/pdf" || name.endsWith(".pdf");
-
-      const isImage =
-        type.startsWith("image/") ||
-        name.endsWith(".png") ||
-        name.endsWith(".jpg") ||
-        name.endsWith(".jpeg");
-
-      if (!isPdf && !isImage) {
-        throw new Error(
-          "Solo se admiten archivos PDF o imágenes (PNG, JPG, JPEG) para la receta médica."
-        );
-      }
-
-      await window.api.uploadOrderAttachment(orderId, file);
-    }
-
-    // 3) Crear sesión en PlaceToPay
-    const returnUrl = `${window.location.origin}/confirmacion_pago/confirmacion_pago.html?orderId=${orderId}`;
-    const session = await window.api.createPlacetoPaySession(orderId, returnUrl);
-
-    if (!session?.processUrl) {
-      throw new Error("No se pudo crear la sesión de pago");
-    }
-
-    // Guardar IDs antes de redirigir
-    localStorage.setItem("lastOrderId", String(orderId));
-    localStorage.setItem("lastRequestId", String(session.requestId));
-
-    mostrarNotificacion("Redirigiendo a PlaceToPay...", "success");
-
-    window.location.href = session.processUrl;
-  } catch (err)  {
-    console.error(err);
-    mostrarNotificacion("Error al procesar el pago: " + (err?.message || "desconocido"), "error");
-  } finally {
-    submitBtn.innerHTML = originalText;
-    submitBtn.disabled = false;
+  if (!Number.isFinite(orderId) || orderId <= 0) {
+    console.error("Respuesta createOrderFromCart:", order);
+    throw new Error("Orden inválida: no se obtuvo un ID");
   }
+
+  // 2) Si el usuario adjuntó receta médica, subirla
+  const fileInput = document.getElementById("recetaMedica");
+  const hasFile = fileInput && fileInput.files && fileInput.files[0];
+
+  if (hasFile) {
+    const file = fileInput.files[0];
+    const name = file.name.toLowerCase();
+    const type = file.type;
+
+    const isPdf = type === "application/pdf" || name.endsWith(".pdf");
+
+    const isImage =
+      type.startsWith("image/") ||
+      name.endsWith(".png") ||
+      name.endsWith(".jpg") ||
+      name.endsWith(".jpeg");
+
+    if (!isPdf && !isImage) {
+      throw new Error(
+        "Solo se admiten archivos PDF o imágenes (PNG, JPG, JPEG) para la receta médica."
+      );
+    }
+
+    await window.api.uploadOrderAttachment(orderId, file);
+  }
+
+  // 3) Crear sesión en PlaceToPay
+  const returnUrl = `${window.location.origin}/confirmacion_pago/confirmacion_pago.html?orderId=${orderId}`;
+  const session = await window.api.createPlacetoPaySession(orderId, returnUrl);
+
+  if (!session?.processUrl) {
+    throw new Error("No se pudo crear la sesión de pago");
+  }
+
+  // Guardar IDs antes de redirigir
+  localStorage.setItem("lastOrderId", String(orderId));
+  localStorage.setItem("lastRequestId", String(session.requestId));
+
+  mostrarNotificacion("Redirigiendo a PlaceToPay...", "success");
+
+  window.location.href = session.processUrl;
+} catch (err) {
+  console.error(err);
+  mostrarNotificacion("Error al procesar el pago: " + (err?.message || "desconocido"), "error");
+} finally {
+  submitBtn.innerHTML = originalText;
+  submitBtn.disabled = false;
 }
 
 // Validar formulario
@@ -688,51 +679,36 @@ function validarFormulario() {
   return isValid;
 }
 
-// Mostrar notificación
-function mostrarNotificacion(mensaje, tipo = "success") {
+// Mostrar notificación mejorada con toast
+function mostrarNotificacionToast(mensaje, tipo = "success") {
+  // Crear elemento de notificación
   const notificacion = document.createElement("div");
-  notificacion.className = `notificacion ${tipo}`;
+  notificacion.className = `notification-toast ${tipo}`;
   notificacion.innerHTML = `
         <i class="fas ${tipo === "success" ? "fa-check-circle" : "fa-exclamation-circle"}"></i>
-        <span>${mensaje}</span>
+        <div class="message">${mensaje}</div>
     `;
 
-  // Estilos para la notificación
-  notificacion.style.position = "fixed";
-  notificacion.style.top = "20px";
-  notificacion.style.right = "20px";
-  notificacion.style.left = "20px";
-  notificacion.style.maxWidth = "400px";
-  notificacion.style.margin = "0 auto";
-  notificacion.style.padding = "15px 20px";
-  notificacion.style.borderRadius = "6px";
-  notificacion.style.backgroundColor = tipo === "success" ? "var(--success)" : "var(--danger)";
-  notificacion.style.color = "white";
-  notificacion.style.boxShadow = "0 5px 15px rgba(0, 0, 0, 0.15)";
-  notificacion.style.zIndex = "10000";
-  notificacion.style.display = "flex";
-  notificacion.style.alignItems = "center";
-  notificacion.style.gap = "10px";
-  notificacion.style.opacity = "0";
-  notificacion.style.transform = "translateY(-20px)";
-  notificacion.style.transition = "all 0.3s ease";
-
+  // Agregar al body
   document.body.appendChild(notificacion);
 
-  // Mostrar
+  // Mostrar con animación
   setTimeout(() => {
-    notificacion.style.opacity = "1";
-    notificacion.style.transform = "translateY(0)";
+    notificacion.classList.add("show");
   }, 10);
 
-  // Ocultar después de 3 segundos
+  // Ocultar después de 4 segundos
   setTimeout(() => {
-    notificacion.style.opacity = "0";
-    notificacion.style.transform = "translateY(-20px)";
+    notificacion.classList.remove("show");
+    notificacion.classList.add("hiding");
+
+    // Remover del DOM después de la animación
     setTimeout(() => {
-      document.body.removeChild(notificacion);
+      if (document.body.contains(notificacion)) {
+        document.body.removeChild(notificacion);
+      }
     }, 300);
-  }, 3000);
+  }, 4000);
 }
 
 // Funciones de respaldo con IndexedDB
