@@ -96,14 +96,16 @@ window.addEventListener("auth:login", async () => {
 
 window.addEventListener("auth:logout", () => {
   carrito = [];
-  try { sessionStorage.removeItem("carritoCheckout"); } catch {}
+  try {
+    sessionStorage.removeItem("carritoCheckout");
+  } catch {}
   actualizarCarrito();
   setCheckoutBtnState();
 });
 
 // engancha al repintado del contador
 const _oldActualizarCarrito = actualizarCarrito;
-actualizarCarrito = function() {
+actualizarCarrito = function () {
   _oldActualizarCarrito.apply(this, arguments);
   setCheckoutBtnState();
 };
@@ -373,6 +375,11 @@ function abrirProducto(id) {
   const producto = productos.find((p) => p.id === id);
 
   if (producto) {
+    const idsConRegistro = [13, 17];
+    const etiquetaSanitaria = idsConRegistro.includes(producto.id)
+      ? "Registro Sanitario"
+      : "Notificación Sanitaria";
+
     // Calcular precio con descuento si aplica
     const tieneDescuento = producto.descuento && producto.descuento > 0;
     const precioOriginal = producto.precio;
@@ -404,9 +411,9 @@ function abrirProducto(id) {
             
             <div class="modal-title-container">
                 <h2 class="modal-title">${producto.nombre}</h2>
-                <span class="product-code">Notificación Sanitaria: ${
-                  producto.codigo || producto.id
-                }</span>
+                <span class="product-code">${etiquetaSanitaria}: ${
+      producto.codigo || producto.id
+    }</span>
             </div>
             
             <div class="modal-price-container">
@@ -427,13 +434,6 @@ function abrirProducto(id) {
                 }
             </div>
             
-            <!-- Disclaimer en la posición correcta - justo antes de las acciones -->
-            ${
-              producto.disclaimer
-                ? `<div class="product-disclaimer">${formatearTexto(producto.disclaimer)}</div>`
-                : ""
-            }
-            
             <div class="description-tabs">
                 <div class="description-tab active" data-tab="descripcion">Descripción</div>
                 <div class="description-tab" data-tab="funcion">Para qué funciona</div>
@@ -444,18 +444,21 @@ function abrirProducto(id) {
             <div class="description-content active" id="descripcion">
                 ${formatearTexto(producto.descripcion)}
             </div>
-            
             <div class="description-content" id="funcion">
                 ${formatearTexto(producto.descripciones.principal)}
             </div>
-            
             <div class="description-content" id="contraindicaciones">
                 ${formatearTexto(producto.contraindicaciones)}
             </div>
-
             <div class="description-content" id="otros">
                 ${formatearTexto(producto.descripciones.otros)}
             </div>
+
+            ${
+              producto.disclaimer
+                ? `<div class="product-disclaimer">${formatearTexto(producto.disclaimer)}</div>`
+                : ""
+            }
 
             <div class="product-actions">
                 <div class="quantity-control">
@@ -473,6 +476,10 @@ function abrirProducto(id) {
                 })">
                     <i class="fas fa-shopping-cart"></i> Agregar al Carrito
                 </button>
+            </div>
+
+            <div class="stock-advertiser modal-view">
+                <i class="fas fa-fire-alt"></i> Aviso, quedan pocas unidades en stock
             </div>
             
             ${
@@ -619,7 +626,6 @@ document.addEventListener("keydown", (e) => {
     cerrarModalProducto();
   }
 });
-
 
 // Función para cambiar categoría desde otros lugares (si es necesario)
 function cambiarCategoria(categoria) {
