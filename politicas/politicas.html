@@ -35,6 +35,20 @@
             text-align: center;
             color: white;
             margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .isotipo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
         }
         
         .policy-header h1 {
@@ -46,6 +60,27 @@
             font-size: 1.2rem;
             max-width: 800px;
             margin: 0 auto;
+        }
+        
+        /* Botón regresar */
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
         }
         
         /* Navegación entre políticas */
@@ -83,19 +118,50 @@
         }
         
         .policy-section {
-            margin-bottom: 30px;
+            margin-bottom: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
         }
         
-        .policy-section h2 {
+        .policy-section-header {
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+        
+        .policy-section-header:hover {
+            background-color: #e9ecef;
+        }
+        
+        .policy-section-header h3 {
             color: #1a5276;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #9bc431;
+            margin: 0;
+            font-size: 1.2rem;
         }
         
-        .policy-section h3 {
-            color: #2eb198;
-            margin: 20px 0 10px;
+        .policy-section-content {
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        
+        .policy-section.active .policy-section-content {
+            padding: 20px;
+            max-height: 5000px;
+        }
+        
+        .policy-section.active .toggle-icon {
+            transform: rotate(180deg);
+        }
+        
+        .toggle-icon {
+            transition: transform 0.3s ease;
         }
         
         .policy-section p {
@@ -140,6 +206,11 @@
                 font-size: 2.2rem;
             }
             
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
             .policy-nav {
                 flex-direction: column;
                 align-items: center;
@@ -148,15 +219,32 @@
             .policy-content {
                 padding: 25px;
             }
+            
+            .back-button {
+                position: relative;
+                top: auto;
+                left: auto;
+                margin-bottom: 20px;
+                display: inline-flex;
+            }
         }
     </style>
 </head>
 <body>
     <!-- Header -->
     <header class="policy-header">
+        <a href="../index.html" class="back-button">
+            <i class="fas fa-arrow-left"></i> Regresar al Comercio
+        </a>
         <div class="container">
-            <h1>Políticas y Términos de BioFX</h1>
-            <p>Comprometidos con la transparencia y tu bienestar</p>
+            <div class="header-content">
+                <!-- Aquí debes reemplazar la ruta con la correcta para tu isotipo -->
+                <img src="../assets/logos/isotipo.png" alt="BioFX Isotipo" class="isotipo">
+                <div>
+                    <h1>Políticas y Términos de BioFX</h1>
+                    <p>Comprometidos con la transparencia y tu bienestar</p>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -173,138 +261,244 @@
         <!-- Políticas de Privacidad -->
         <section id="privacy" class="policy-content">
             <h2>Política de Privacidad y Cookies</h2>
-            <p>Última actualización: [15/09/2025]</p>
+            <p>Última actualización: [16/11/2025]</p>
             
             <div class="policy-section">
-                <h3>1. Introducción</h3>
-                <p>En BioFX, valoramos y respetamos tu privacidad. Esta política describe cómo recopilamos, usamos y protegemos tu información personal cuando utilizas nuestros servicios y sitio web.</p>
+                <div class="policy-section-header">
+                    <h3>1. Introducción</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>En BioFX, valoramos y respetamos tu privacidad. Esta política describe cómo recopilamos, usamos y protegemos tu información personal cuando utilizas nuestros servicios y sitio web.</p>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>2. Información que recopilamos</h3>
-                <p>Podemos recopilar los siguientes tipos de información:</p>
-                <ul>
-                    <li>Información de contacto (nombre, dirección de correo electrónico, teléfono)</li>
-                    <li>Información de entrega (dirección, ciudad, código postal)</li>
-                    <li>Información de pago (datos de tarjeta de crédito procesados de forma segura mediante Placetopay)</li>
-                    <li>Datos de navegación y cookies</li>
-                    <li>Comunicaciones que mantienes con nosotros</li>
-                </ul>
+                <div class="policy-section-header">
+                    <h3>2. Información que recopilamos</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Podemos recopilar los siguientes tipos de información:</p>
+                    <ul>
+                        <li>Información de contacto (nombre, dirección de correo electrónico, teléfono)</li>
+                        <li>Información de entrega (dirección, ciudad, código postal)</li>
+                        <li>Información de pago (datos de tarjeta de crédito procesados de forma segura mediante Placetopay)</li>
+                        <li>Datos de navegación y cookies</li>
+                        <li>Comunicaciones que mantienes con nosotros</li>
+                    </ul>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>3. Uso de cookies</h3>
-                <p>Utilizamos cookies para mejorar tu experiencia en nuestro sitio web. Las cookies nos permiten:</p>
-                <ul>
-                    <li>Recordar tus preferencias y configuración</li>
-                    <li>Analizar el tráfico y uso de nuestro sitio web</li>
-                    <li>Personalizar contenido y anuncios</li>
-                </ul>
-                <p>Puedes gestionar tus preferencias de cookies en la configuración de tu navegador.</p>
+                <div class="policy-section-header">
+                    <h3>3. Uso de cookies</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Utilizamos cookies para mejorar tu experiencia en nuestro sitio web. Las cookies nos permiten:</p>
+                    <ul>
+                        <li>Recordar tus preferencias y configuración</li>
+                        <li>Analizar el tráfico y uso de nuestro sitio web</li>
+                        <li>Personalizar contenido y anuncios</li>
+                    </ul>
+                    <p>Puedes gestionar tus preferencias de cookies en la configuración de tu navegador.</p>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>4. Cómo utilizamos tu información</h3>
-                <p>Utilizamos tu información para:</p>
-                <ul>
-                    <li>Procesar tus pedidos y gestionar tu cuenta</li>
-                    <li>Mejorar nuestros productos y servicios</li>
-                    <li>Enviar comunicaciones sobre productos, ofertas y promociones</li>
-                    <li>Cumplir con obligaciones legales y regulatorias</li>
-                </ul>
+                <div class="policy-section-header">
+                    <h3>4. Cómo utilizamos tu información</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Utilizamos tu información para:</p>
+                    <ul>
+                        <li>Procesar tus pedidos y gestionar tu cuenta</li>
+                        <li>Mejorar nuestros productos y servicios</li>
+                        <li>Enviar comunicaciones sobre productos, ofertas y promociones</li>
+                        <li>Cumplir con obligaciones legales y regulatorias</li>
+                    </ul>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>5. Protección de datos</h3>
-                <p>Implementamos medidas de seguridad técnicas y organizativas para proteger tu información personal contra accesos no autorizados, pérdida o alteración.</p>
+                <div class="policy-section-header">
+                    <h3>5. Protección de datos</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Implementamos medidas de seguridad técnicas y organizativas para proteger tu información personal contra accesos no autorizados, pérdida o alteración.</p>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>6. Tus derechos</h3>
-                <p>Tienes derecho a:</p>
-                <ul>
-                    <li>Acceder a tu información personal</li>
-                    <li>Solicitar la corrección de datos inexactos</li>
-                    <li>Solicitar la eliminación de tus datos personales</li>
-                    <li>Oponerte al procesamiento de tus datos</li>
-                    <li>Solicitar la portabilidad de tus datos</li>
-                </ul>
-                <p>Para ejercer estos derechos, contáctanos en <a href="mailto:contacto@biofx.com.ec">contacto@biofx.com.ec</a>.</p>
+                <div class="policy-section-header">
+                    <h3>6. Protección de datos personales</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>El titular de los datos acepta y emite su consentimiento unilateral de manera libre y voluntaria para el tratamiento de sus datos personales para que sean: recolectados a través de nuestros canales electrónicos o por cualquier medio, almacenados, procesados, transmitidos y eliminados o para ser objeto de cualquier tratamiento o conjunto de tratamientos a realizar, ya sea por procedimientos técnicos de carácter automatizado, parcialmente automatizado o no automatizados por el Comercio o su delegado, con la finalidad de identificar, actualizar sus datos y ofrecerle servicios y/o productos a través de los canales digitales o cualquier otro medio.</p>
+                    
+                    <p>La transmisión y almacenamiento de la información recopilada por el Comercio o su delegado, será realizada en la infraestructura que este administre, dentro o fuera del territorio ecuatoriano. Esta infraestructura puede ser implementada en servidores físicos o en la nube de proveedores que cuenten con las debidas certificaciones internacionales para el tratamiento de Seguridad de la Información.</p>
+                    
+                    <p>Adicionalmente, mediante la presente el titular de los datos declara conocer y aceptar el Aviso de Política de Privacidad de Placetopay en la cual se indican sus derechos, datos tratados y las actividades comerciales de los aliados, así como otros datos de interés respecto a la protección de datos personales, que se encuentran detallados en el sitio web de Placetopay en la ruta <a href="https://www.placetopay.com/web/politicas-de-privacidad/" target="_blank">https://www.placetopay.com/web/politicas-de-privacidad/</a>, mediante la cual, se podrá solicitar la gestión de derechos o consentimientos.</p>
+                    
+                    <p>El Comercio o su delegado notificará sobre las actualizaciones del Aviso de Política de Privacidad antes mencionado por medio de los diferentes canales digitales.</p>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>7. Contacto</h3>
-                <p>Si tienes preguntas sobre esta política de privacidad, puedes contactarnos en:</p>
-                <p>Email: <a href="mailto:contacto@biofx.com.ec">contacto@biofx.com.ec</a></p>
-                <p>Dirección: [Dirección de la empresa, ciudad, país]</p>
+                <div class="policy-section-header">
+                    <h3>7. Tus derechos</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Tienes derecho a:</p>
+                    <ul>
+                        <li>Acceder a tu información personal</li>
+                        <li>Solicitar la corrección de datos inexactos</li>
+                        <li>Solicitar la eliminación de tus datos personales</li>
+                        <li>Oponerte al procesamiento de tus datos</li>
+                        <li>Solicitar la portabilidad de tus datos</li>
+                    </ul>
+                    <p>Para ejercer estos derechos, contáctanos en <a href="mailto:info@biofx.com.ec">info@biofx.com.ec</a>.</p>
+                </div>
+            </div>
+            
+            <div class="policy-section">
+                <div class="policy-section-header">
+                    <h3>8. Contacto</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Si tienes preguntas sobre esta política de privacidad, puedes contactarnos en:</p>
+                    <p>Email: <a href="mailto:info@biofx.com.ec">info@biofx.com.ec</a></p>
+                    <p>Dirección: Centro Comercial Plaza del Rancho, Cumbayá, Ecuador</p>
+                </div>
             </div>
         </section>
 
         <!-- Términos y Condiciones -->
         <section id="terms" class="policy-content" style="display: none;">
             <h2>Términos y Condiciones de Uso</h2>
-            <p>Última actualización: [15/09/2025]</p>
+            <p>Última actualización: [16/11/2025]</p>
             
             <div class="policy-section">
-                <h3>1. Aceptación de los términos</h3>
-                <p>Al acceder y utilizar nuestro sitio web, aceptas cumplir con estos términos y condiciones y con nuestra política de privacidad.</p>
+                <div class="policy-section-header">
+                    <h3>1. Aceptación de los términos</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Al acceder y utilizar nuestro sitio web, aceptas cumplir con estos términos y condiciones y con nuestra política de privacidad.</p>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>2. Productos y servicios</h3>
-                <p>BioFX ofrece suplementos dietarios y productos de medicina funcional. Toda la información proporcionada sobre nuestros productos tiene fines informativos y no sustituye el consejo médico profesional.</p>
+                <div class="policy-section-header">
+                    <h3>2. Productos y servicios</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>BioFX ofrece suplementos dietarios y productos de medicina funcional. Toda la información proporcionada sobre nuestros productos tiene fines informativos y no sustituye el consejo médico profesional.</p>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>3. Registro de cuenta</h3>
-                <p>Para realizar compras, deberás crear una cuenta proporcionando información veraz y completa. Eres responsable de mantener la confidencialidad de tu contraseña.</p>
+                <div class="policy-section-header">
+                    <h3>3. Registro de cuenta</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Para realizar compras, deberás crear una cuenta proporcionando información veraz y completa. Eres responsable de mantener la confidencialidad de tu contraseña.</p>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>4. Proceso de compra</h3>
-                <p>Al realizar un pedido, aceptas que:</p>
-                <ul>
-                    <li>Proporcionas información de pago precisa y completa</li>
-                    <li>Eres el titular legítimo del método de pago utilizado</li>
-                    <li>Los precios están sujetos a cambios sin previo aviso</li>
-                </ul>
+                <div class="policy-section-header">
+                    <h3>4. Proceso de compra</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Al realizar un pedido, aceptas que:</p>
+                    <ul>
+                        <li>Proporcionas información de pago precisa y completa</li>
+                        <li>Eres el titular legítimo del método de pago utilizado</li>
+                        <li>Los precios están sujetos a cambios sin previo aviso</li>
+                    </ul>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>5. Política de entrega</h3>
-                <p>Realizamos entregas en un plazo de 24-48 horas. No nos hacemos responsables por retrasos causados por factores fuera de nuestro control.</p>
+                <div class="policy-section-header">
+                    <h3>5. Política de entrega</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Realizamos entregas en un plazo de 24-48 horas. No nos hacemos responsables por retrasos causados por factores fuera de nuestro control.</p>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>6. Devoluciones y reembolsos</h3>
-                <p>Aceptamos devoluciones dentro de los 15 días posteriores a la recepción del producto, siempre que esté en su empaque original y sin abrir.</p>
+                <div class="policy-section-header">
+                    <h3>6. Devoluciones y reembolsos</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Aceptamos devoluciones dentro de los 15 días posteriores a la recepción del producto, siempre que esté en su empaque original y sin abrir.</p>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>7. Propiedad intelectual</h3>
-                <p>Todo el contenido de este sitio web (textos, imágenes, logotipos, etc.) es propiedad de BioFX y está protegido por leyes de propiedad intelectual.</p>
+                <div class="policy-section-header">
+                    <h3>7. Propiedad intelectual</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Todo el contenido de este sitio web (textos, imágenes, logotipos, etc.) es propiedad de BioFX y está protegido por leyes de propiedad intelectual.</p>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>8. Limitación de responsabilidad</h3>
-                <p>BioFX no se hace responsable por daños indirectos, incidentales o consecuentes resultantes del uso de nuestros productos o servicios.</p>
+                <div class="policy-section-header">
+                    <h3>8. Limitación de responsabilidad</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>BioFX no se hace responsable por daños indirectos, incidentales o consecuentes resultantes del uso de nuestros productos o servicios.</p>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>9. Modificaciones</h3>
-                <p>Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigor tras su publicación en el sitio web.</p>
+                <div class="policy-section-header">
+                    <h3>9. Modificaciones</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigor tras su publicación en el sitio web.</p>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>10. Ley aplicable</h3>
-                <p>Estos términos se rigen por las leyes de Ecuador. Cualquier disputa se resolverá en los tribunales competentes de [ciudad, país].</p>
+                <div class="policy-section-header">
+                    <h3>10. Ley aplicable</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Estos términos se rigen por las leyes de Ecuador. Cualquier disputa se resolverá en los tribunales competentes de Quito, Ecuador.</p>
+                </div>
             </div>
             
             <div class="policy-section">
-                <h3>11. Contacto</h3>
-                <p>Para preguntas sobre estos términos y condiciones, contáctanos en:</p>
-                <p>Email: <a href="mailto:contacto@biofx.com.ec">contacto@biofx.com.ec</a></p>
-                <p>Teléfono: [+593 98 499 8324]</p>
+                <div class="policy-section-header">
+                    <h3>11. Contacto</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Para preguntas sobre estos términos y condiciones, contáctanos en:</p>
+                    <p>Email: <a href="mailto:info@biofx.com.ec">info@biofx.com.ec</a></p>
+                    <p>Teléfono: [+593 98 499 8324]</p>
+                </div>
             </div>
         </section>
     </div>
@@ -312,10 +506,10 @@
     <!-- Footer -->
     <footer class="policy-footer">
         <div class="container">
-            <div class="footer-bottom">
-                <p>&copy; 2025 BioFX. Todos los derechos reservados. | Diseñado y desarrollado por <a href="mailto:ninblustd@gmail.com" style="color: inherit; text-decoration:underline;">Ninblu.</a></p>
-            </div>
-            <p><a href="mailto:contacto@biofx.com.ec">contacto@biofx.com.ec</a> | <a href="../index.html">Volver al sitio principal</a></p>
+            <p><a href="mailto:info@biofx.com.ec">info@biofx.com.ec</a> | <a href="../index.html">Volver al sitio principal</a></p>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 BioFX. Todos los derechos reservados. | Diseñado y desarrollado por <a href="mailto:ninblustd@gmail.com" style="color: inherit; text-decoration:underline;">Ninblu.</a></p>
         </div>
     </footer>
 
@@ -342,6 +536,21 @@
                 privacyLink.classList.remove('active');
                 termsLink.classList.add('active');
             });
+            
+            // Funcionalidad para acordeón
+            const sectionHeaders = document.querySelectorAll('.policy-section-header');
+            
+            sectionHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const section = this.parentElement;
+                    section.classList.toggle('active');
+                });
+            });
+            
+            // Abrir la primera sección por defecto
+            if (document.querySelector('.policy-section')) {
+                document.querySelector('.policy-section').classList.add('active');
+            }
         });
     </script>
 </body>
