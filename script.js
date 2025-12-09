@@ -24,6 +24,7 @@ let carrito = [];
 let currentCategoryId = null;
 const categoriasIndex = new Map();
 let isMinimized = false;
+const cantidadStockMinimo = 5;
 
 // Inicialización
 document.addEventListener("DOMContentLoaded", () => {
@@ -203,7 +204,7 @@ function buildCheckoutSnapshot(items) {
 // Cargar productos desde el JSON
 async function cargarProductos() {
   try {
-    const data = await window.api.getProductos(); // GET /api/Productos
+    const data = await window.api.getProductos(); 
 
     // Normaliza objeto recibido del API
     productos = (Array.isArray(data) ? data : []).map((p, i) => {
@@ -219,7 +220,7 @@ async function cargarProductos() {
         : [];
 
       return {
-        id: Number(p.id ?? p.Id ?? i + 1),
+        id: Number(p.id ?? p.Id),
         codigo: p.codigo ?? p.Codigo ?? "",
         disponible: (p.disponible ?? p.Disponible) !== false,
         nombre: p.nombre ?? p.Nombre ?? "",
@@ -234,8 +235,10 @@ async function cargarProductos() {
         contraindicaciones: p.contraindicaciones ?? p.Contraindicaciones ?? "",
         descuento: Number(p.descuento ?? p.Descuento ?? 0),
         disclaimer: p.disclaimer ?? p.Disclaimer ?? "",
-        categoriaIds, // ← lo usaremos para filtrar
+        categoriaIds,
         promocionados: promo,
+        stock: p.stock ?? p.Stock ?? "",
+        stockReservado: p.stockReservado ?? p.StockReservado ?? "",
       };
     });
 
@@ -476,11 +479,10 @@ function abrirProducto(id) {
                 })">
                     <i class="fas fa-shopping-cart"></i> Agregar al Carrito
                 </button>
-            </div>
-
-            <div class="stock-advertiser modal-view">
+            </div>            
+            ${ producto.stock <= cantidadStockMinimo ?  `<div class="stock-advertiser modal-view">
                 <i class="fas fa-fire-alt"></i> Aviso, quedan pocas unidades en stock
-            </div>
+            </div>` : ``}           
             
             ${
               productosPromocionados.length > 0
