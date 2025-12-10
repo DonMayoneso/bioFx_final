@@ -57,11 +57,11 @@
                 <div class="form-row">
                   <div class="form-group">
                     <label for="nombres">Nombres Completos *</label>
-                    <input type="text" id="nombres" name="nombres" required disabled />
+                    <input type="text" id="nombres" name="nombres" required />
                   </div>
                   <div class="form-group">
                     <label for="apellidos">Apellidos Completos *</label>
-                    <input type="text" id="apellidos" name="apellidos" required disabled />
+                    <input type="text" id="apellidos" name="apellidos" required />
                   </div>
                 </div>
 
@@ -84,14 +84,15 @@
                 <div class="form-row">
                   <div class="form-group">
                     <label for="email">Correo Electrónico *</label>
-                    <input type="email" id="email" name="email" required disabled />
+                    <input type="email" id="email" name="email" required />
                   </div>
                   <div class="form-group">
                     <label for="telefono">Teléfono de Contacto/Whatsapp*</label>
-                    <input type="tel" id="telefono" name="telefono" required disabled />
+                    <input type="tel" id="telefono" name="telefono" required />
                   </div>
                 </div>
               </fieldset>
+
               <!-- Dirección de Envío -->
               <fieldset class="form-section">
                 <legend><i class="fas fa-truck"></i> Dirección de Envío</legend>
@@ -132,20 +133,16 @@
 
                 <div class="form-group">
                   <div class="file-upload">
-                    <label for="recetaMedica">Subir receta médica (PDF o imagen, opcional)</label>
-                    <input
-                      type="file"
-                      id="recetaMedica"
-                      name="recetaMedica"
-                      accept="application/pdf,image/*"
-                    />
+                    <label for="recetaMedica">Subir receta médica (PDF o imágen)</label>
+                    <input type="file" id="recetaMedica" name="recetaMedica" accept="image/*" />
                     <div class="upload-preview" id="uploadPreview">
                       <i class="fas fa-cloud-upload-alt"></i>
-                      <p>Arrastra un archivo PDF o una imagen aquí o haz clic para seleccionar</p>
+                      <p>Arrastra una imagen aquí o haz clic para seleccionar</p>
                     </div>
                   </div>
                 </div>
               </fieldset>
+
               <fieldset class="form-section">
                 <legend><i class="fas fa-user-md"></i> Información del Médico</legend>
                 <div class="form-group">
@@ -172,11 +169,16 @@
                         Serás redirigido a PlaceToPay para completar tu pago de forma segura.
                         Aceptamos tarjetas de crédito, débito y transferencias bancarias.
                       </p>
-                      <div class="payment-icons">
-                        <i class="fab fa-cc-visa"></i>
-                        <i class="fab fa-cc-mastercard"></i>
-                        <i class="fab fa-cc-amex"></i>
-                        <i class="fas fa-university"></i>
+                      <div class="payment-logo">
+                        <img src="../assets/logos/placetopay.png" alt="PlaceToPay" />
+                      </div>
+                      <div class="payment-terms">
+                        <small
+                          >En caso de dudas sobre el manejo de su información bancaria ver
+                          <a href="../politicas/politicas.html" target="_blank"
+                            >Términos y condiciones</a
+                          ></small
+                        >
                       </div>
                     </div>
                   </div>
@@ -203,6 +205,10 @@
               <div class="summary-row">
                 <span>Subtotal</span>
                 <span id="subtotal">$0.00</span>
+              </div>
+              <div class="summary-row discount">
+                <span>Descuentos</span>
+                <span id="discount">-$0.00</span>
               </div>
               <div class="summary-row">
                 <span>Envío</span>
@@ -255,8 +261,8 @@
                 >
               </li>
               <li>
-                <a href="https://wa.me/+593984998324" target="_blank" class="whatsapp-link"
-                  >Información de Envíos</a
+                <a href="../politicas/politicas.html" class="whatsapp-link"
+                  >Términos y Condiciones</a
                 >
               </li>
             </ul>
@@ -268,8 +274,8 @@
             <p><i class="fas fa-map-marker-alt"></i> Centro Comercial Plaza del Rancho</p>
             <p><i class="fas fa-phone"></i> +593 98 499 8324</p>
             <p>
-              <a href="mailto:contacto@biofx.com.ec" style="color: inherit; text-decoration: none">
-                <i class="fas fa-envelope"></i> contacto@biofx.com.ec
+              <a href="mailto:info@biofx.com.ec" style="color: inherit; text-decoration: none">
+                <i class="fas fa-envelope"></i> info@biofx.com.ec
               </a>
             </p>
           </div>
