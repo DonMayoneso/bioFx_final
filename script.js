@@ -15,6 +15,7 @@ const searchInput = document.getElementById("searchInput");
 const searchButton = document.getElementById("searchButton");
 const searchResults = document.getElementById("searchResults");
 const promoPopup = document.getElementById("promoPopup");
+const promoOverlay = document.getElementById("promoOverlay"); // Agregado para corregir error de referencia
 const closePopup = document.getElementById("closePopup");
 const linkProfile = "profile/profile.html";
 
@@ -204,7 +205,7 @@ function buildCheckoutSnapshot(items) {
 // Cargar productos desde el JSON
 async function cargarProductos() {
   try {
-    const data = await window.api.getProductos(); 
+    const data = await window.api.getProductos();
 
     // Normaliza objeto recibido del API
     productos = (Array.isArray(data) ? data : []).map((p, i) => {
@@ -325,13 +326,18 @@ function renderizarProductos() {
     const productCard = document.createElement("div");
     productCard.className = "product-card";
     productCard.innerHTML = `
-            <div class="product-card-front">
+            <div class="product-card-front" style="position: relative;">
                 ${
                   tieneDescuento
                     ? `<div class="product-discount">-${producto.descuento}%</div>`
                     : ""
                 }
                 <img src="${producto.imagen}" alt="${producto.nombre}" class="product-image">
+                ${
+                  producto.stock <= cantidadStockMinimo
+                    ? `<div class="stock-advertiser card-view"><i class="fas fa-fire-alt"></i> Aviso, quedan pocas unidades</div>`
+                    : ``
+                }
                 <div class="product-name">${producto.nombre}</div>
             </div>
             <div class="product-card-back">
@@ -480,9 +486,13 @@ function abrirProducto(id) {
                     <i class="fas fa-shopping-cart"></i> Agregar al Carrito
                 </button>
             </div>            
-            ${ producto.stock <= cantidadStockMinimo ?  `<div class="stock-advertiser modal-view">
+            ${
+              producto.stock <= cantidadStockMinimo
+                ? `<div class="stock-advertiser modal-view">
                 <i class="fas fa-fire-alt"></i> Aviso, quedan pocas unidades en stock
-            </div>` : ``}           
+            </div>`
+                : ``
+            }           
             
             ${
               productosPromocionados.length > 0
