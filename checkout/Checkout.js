@@ -466,7 +466,7 @@ function configurarSubidaArchivos() {
         name.endsWith(".jpeg");
 
       if (!isPdf && !isImage) {
-        mostrarNotificacion(
+        mostrarNotificacionToast(
           "Solo se admiten archivos PDF o imágenes (PNG, JPG, JPEG) para la receta médica.",
           "error"
         );
@@ -551,7 +551,7 @@ async function procesarCheckout(e) {
   e.preventDefault();
 
   if (!validarFormulario()) {
-    mostrarNotificacion("Por favor, completa todos los campos obligatorios", "error");
+    mostrarNotificacionToast("Por favor, completa todos los campos obligatorios", "error");
     return;
   }
 
@@ -654,7 +654,7 @@ async function procesarCheckout(e) {
     window.location.href = session.processUrl;
   } catch (err) {
     console.error(err);
-    mostrarNotificacion("Error al procesar el pago: " + (err?.message || "desconocido"), "error");
+    mostrarNotificacionToast("Error al procesar el pago: " + (err?.message || "desconocido"), "error");
   } finally {
     submitBtn.innerHTML = originalText;
     submitBtn.disabled = false;
@@ -747,7 +747,7 @@ function validarFormulario() {
   return isValid;
 }
 
-// Mostrar notificación
+// Mostrar notificación de toda la pantalla
 function mostrarNotificacion(mensaje, tipo = "success") {
   const notificacion = document.createElement("div");
   notificacion.className = `notificacion ${tipo}`;
@@ -792,6 +792,38 @@ function mostrarNotificacion(mensaje, tipo = "success") {
       document.body.removeChild(notificacion);
     }, 300);
   }, 3000);
+}
+
+// Mostrar notificación mejorada con toast
+function mostrarNotificacionToast(mensaje, tipo = "success") {
+  // Crear elemento de notificación
+  const notificacion = document.createElement("div");
+  notificacion.className = `notification-toast ${tipo}`;
+  notificacion.innerHTML = `
+        <i class="fas ${tipo === "success" ? "fa-check-circle" : "fa-exclamation-circle"}"></i>
+        <div class="message">${mensaje}</div>
+    `;
+
+  // Agregar al body
+  document.body.appendChild(notificacion);
+
+  // Mostrar con animación
+  setTimeout(() => {
+    notificacion.classList.add("show");
+  }, 10);
+
+  // Ocultar después de 4 segundos
+  setTimeout(() => {
+    notificacion.classList.remove("show");
+    notificacion.classList.add("hiding");
+
+    // Remover del DOM después de la animación
+    setTimeout(() => {
+      if (document.body.contains(notificacion)) {
+        document.body.removeChild(notificacion);
+      }
+    }, 300);
+  }, 4000);
 }
 
 // Funciones de respaldo con IndexedDB
