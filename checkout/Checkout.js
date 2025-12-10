@@ -111,10 +111,25 @@ async function guardAccessOrRedirectCheckout() {
   }
 }
 
+// Variables para descuentos
+  let descuentos = {
+    porReceta: 0, // 2% por receta médica
+    porMonto: 0, // Descuento automático por monto
+  };
+
+  // CONFIGURACIÓN DE DESCUENTOS
+  const configDescuentos = {
+    montoMinimo: 50, // CAMBIA ESTE VALOR: Monto mínimo para aplicar descuento automático
+    descuentoMonto: 5, // CAMBIA ESTE VALOR: Valor del descuento automático
+  };
+
+
 // Inicialización del checkout
 document.addEventListener("DOMContentLoaded", async function () {
   const ok = await guardAccessOrRedirectCheckout();
   if (!ok) return;
+
+  
 
   const loadingElement = document.getElementById("loadingCart");
   if (loadingElement) loadingElement.style.display = "block";
@@ -325,8 +340,6 @@ async function cargarResumenPedido() {
     }
   }
 
-  console.log("Datos del carrito cargados desde:", fuente || "ninguna");
-
   const ahora = Date.now();
   if (
     !carritoData ||
@@ -341,8 +354,6 @@ async function cargarResumenPedido() {
 
   const carrito = carritoData.items;
   const summaryItems = document.getElementById("summaryItems");
-  const subtotalElement = document.getElementById("subtotal");
-  const totalElement = document.getElementById("total");
 
   if (!carrito.length) {
     mostrarCarritoVacio();
@@ -371,26 +382,54 @@ async function cargarResumenPedido() {
   });
 
   summaryItems.innerHTML = html;
+  calcularDescuentosYTotal(subtotal);
+}
 
+function calcularDescuentosYTotal(subtotal) {
   const shipping = 5.0;
-  const total = subtotal + shipping;
 
-  subtotalElement.textContent = `$${subtotal.toFixed(2)}`;
+  // Aplicar descuento automático por monto
+  if (subtotal >= configDescuentos.montoMinimo && descuentos.porMonto === 0) {
+    descuentos.porMonto = configDescuentos.descuentoMonto;
+    mostrarNotificacionToast(
+      `¡Descuento de $${configDescuentos.descuentoMonto} aplicado por compra mayor a $${configDescuentos.montoMinimo}!`,
+      "success"
+    );
+  } else if (subtotal < configDescuentos.montoMinimo && descuentos.porMonto > 0) {
+    descuentos.porMonto = 0;
+  }
+
+  // Calcular descuento total
+  const descuentoTotal = descuentos.porReceta + descuentos.porMonto;
+
+  // Calcular total CORREGIDO: subtotal + shipping - descuentoTotal
+  const total = Math.max(0, subtotal + shipping - descuentoTotal);
+
+  // Actualizar elementos HTML
+  document.getElementById("subtotal").textContent = `$${subtotal.toFixed(2)}`;
+  document.getElementById("discount").textContent = `-$${descuentoTotal.toFixed(2)}`;
   document.getElementById("shipping").textContent = `$${shipping.toFixed(2)}`;
-  totalElement.textContent = `$${total.toFixed(2)}`;
+  document.getElementById("total").textContent = `$${total.toFixed(2)}`;
 }
 
 // Función auxiliar para mostrar carrito vacío
 function mostrarCarritoVacio() {
   const summaryItems = document.getElementById("summaryItems");
   summaryItems.innerHTML = `
-    <p class="empty">No hay productos en tu carrito</p>
-    <div style="text-align: center; margin-top: 20px;">
-        <a href="../index.html" class="btn btn-primary">Volver a la tienda</a>
-    </div>
+        <p class="empty">No hay productos en tu carrito</p>
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="../index.html" class="btn btn-primary">Volver a la tienda</a>
+        </div>
     `;
 
+  // Resetear descuentos
+  descuentos = {
+    porReceta: 0,
+    porMonto: 0,
+  };
+
   document.getElementById("subtotal").textContent = "$0.00";
+  document.getElementById("discount").textContent = "-$0.00";
   document.getElementById("shipping").textContent = "$0.00";
   document.getElementById("total").textContent = "$0.00";
 }
@@ -431,7 +470,7 @@ function configurarSubidaArchivos() {
           "Solo se admiten archivos PDF o imágenes (PNG, JPG, JPEG) para la receta médica.",
           "error"
         );
-        this.value = "";
+        this.value = "";                
         resetPreview();
         return;
       }
@@ -451,8 +490,10 @@ function configurarSubidaArchivos() {
         };
         reader.readAsDataURL(file);
       }
+      aplicarDescuentoPorReceta();
     } else {
       resetPreview();
+      removerDescuentoPorReceta();
     }
   });
 
@@ -485,6 +526,24 @@ function configurarSubidaArchivos() {
   preview.addEventListener("click", function () {
     fileInput.click();
   });
+}
+
+// Función para aplicar descuento por receta médica
+function aplicarDescuentoPorReceta() {
+  const subtotal = parseFloat(document.getElementById("subtotal").textContent.replace("$", ""));
+  descuentos.porReceta = subtotal * 0.02; // 2% de descuento
+
+  // Recalcular totales
+  calcularDescuentosYTotal(subtotal);
+
+  mostrarNotificacionToast("¡Descuento del 2% aplicado por subir receta médica!", "success");
+}
+
+// Función para remover descuento por receta médica
+function removerDescuentoPorReceta() {
+  descuentos.porReceta = 0;
+  const subtotal = parseFloat(document.getElementById("subtotal").textContent.replace("$", ""));
+  calcularDescuentosYTotal(subtotal);
 }
 
 // Procesar el checkout REAL con PlaceToPay
@@ -593,7 +652,7 @@ async function procesarCheckout(e) {
     mostrarNotificacion("Redirigiendo a PlaceToPay...", "success");
 
     window.location.href = session.processUrl;
-  } catch (err)  {
+  } catch (err) {
     console.error(err);
     mostrarNotificacion("Error al procesar el pago: " + (err?.message || "desconocido"), "error");
   } finally {
