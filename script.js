@@ -26,6 +26,13 @@ let currentCategoryId = null;
 const categoriasIndex = new Map();
 let isMinimized = false;
 const cantidadStockMinimo = 5;
+const FEATURED_PRODUCTS_IDS = [9, 21, 23];
+
+const FEATURED_CONFIG = {
+  9: { badgeClass: "bestseller", badgeText: "Más vendido" },
+  21: { badgeClass: "new", badgeText: "Favorito" },
+  23: { badgeClass: "bestseller", badgeText: "Descúbrelo" },
+};
 
 // Inicialización
 document.addEventListener("DOMContentLoaded", () => {
@@ -244,6 +251,7 @@ async function cargarProductos() {
     });
 
     renderizarProductos();
+    renderizarProductosDestacados();
   } catch (error) {
     console.error("Error al cargar productos:", error);
     productsContainer.innerHTML = `
@@ -378,6 +386,74 @@ function renderizarProductos() {
     productsContainer.appendChild(productCard);
   });
 }
+
+
+
+function renderizarProductosDestacados() {
+  const cont =
+    document.getElementById("featuredProductsGrid") ||
+    document.querySelector(".featured-products .featured-grid");
+
+  if (!cont) return;
+
+  cont.innerHTML = "";
+
+  FEATURED_PRODUCTS_IDS.forEach((id) => {
+    const producto = productos.find((p) => p.id === id && p.disponible);
+    if (!producto) return;
+
+    const cfg = FEATURED_CONFIG[id] || {};
+    const tieneDescuento = producto.descuento && producto.descuento > 0;
+    const precioOriginal = producto.precio;
+    const precioDescuento = tieneDescuento
+      ? ((precioOriginal * (100 - producto.descuento)) / 100).toFixed(2)
+      : precioOriginal.toFixed(2);
+
+    const card = document.createElement("div");
+    card.className = "featured-product";
+    card.innerHTML = `
+      ${
+        cfg.badgeText
+          ? `<div class="product-badge ${cfg.badgeClass || ""}">${cfg.badgeText}</div>`
+          : ""
+      }
+      <div class="product-image">
+        <img src="${producto.imagen}" alt="${producto.nombre}">
+      </div>
+      <div class="product-info">
+        <h3>${producto.nombre}</h3>
+        <div class="price-container">
+          ${
+            tieneDescuento
+              ? `
+                <span class="original-price">$${precioOriginal.toFixed(2)}</span>
+                <span class="discounted-price">$${precioDescuento}</span>
+              `
+              : `
+                <span class="current-price">$${precioDescuento}</span>
+              `
+          }
+        </div>
+      </div>
+    `;
+
+    card.addEventListener("click", () => {
+      abrirProducto(producto.id);
+    });
+
+    cont.appendChild(card);
+  });
+
+  // Si por algún motivo ninguno de los IDs existe o está disponible
+  if (!cont.children.length) {
+    cont.innerHTML = `
+      <div class="empty">
+        <h3>No hay productos destacados disponibles en este momento.</h3>
+      </div>
+    `;
+  }
+}
+
 
 // Abrir modal de producto con nueva vista
 function abrirProducto(id) {
