@@ -1,6 +1,6 @@
-/* =============================================
+/*
    VARIABLES Y ESTILOS GENERALES
-   ============================================= */
+ */
 :root {
     --primary: #2a7f8c;
     --primary-dark: #1d5d67;
@@ -27,7 +27,7 @@ body {
     font-weight: 400;
     line-height: 1.6;
     color: #333;
-    background-color: #f5f7fa;
+    background-color: #edf3f3;
     min-height: 100vh;
 }
 
@@ -94,17 +94,18 @@ body {
     color: var(--white);
 }
 
-/* =============================================
+/*
    HEADER Y NAVEGACIÓN
-   ============================================= */
+*/
 .header {
     background-color: var(--white);
     box-shadow: var(--shadow);
     position: sticky;
     top: 0;
     z-index: 1000;
-    padding: 15px 0;
+    padding: 5px 0; /* MODIFICADO: Reducido de 15px a 5px */
     transition: all 0.3s ease;
+    height: auto;
 }
 
 .header .container {
@@ -112,12 +113,13 @@ body {
     justify-content: space-between;
     align-items: center;
     transition: all 0.3s ease;
+    min-height: 60px; /* MODIFICADO: Altura mínima controlada */
 }
 
 /* Contenedor del logo */
 .logo {
     position: relative;
-    height: 65px;
+    height: 50px; /* MODIFICADO: Reducido de 65px a 50px */
     display: flex;
     align-items: center;
 }
@@ -129,7 +131,7 @@ body {
 
 /* Logo completo - visible por defecto */
 .logo-full {
-    height: 65px;
+    height: 50px; /* MODIFICADO: Ajustado a 50px */
     width: auto;
     opacity: 1;
     visibility: visible;
@@ -141,7 +143,7 @@ body {
     top: 50%;
     left: 0;
     transform: translateY(-50%);
-    height: 45px;
+    height: 40px; /* MODIFICADO: Ajustado a 40px */
     width: auto;
     opacity: 0;
     visibility: hidden;
@@ -149,11 +151,12 @@ body {
 
 /* Estado reducido del header al hacer scroll */
 .header.shrink {
-    padding: 8px 0;
+    padding: 0; /* MODIFICADO: Sin padding extra */
 }
 
 .header.shrink .container {
     padding: 0 20px;
+    min-height: 50px;
 }
 
 .header.shrink .logo-full {
@@ -165,14 +168,14 @@ body {
 .header.shrink .logo-isotipo {
     opacity: 1;
     visibility: visible;
-    height: 45px;
+    height: 35px;
 }
 
 .header.shrink .logo {
-    height: 45px; 
+    height: 35px; 
 }
 
-/* Resto de estilos se mantienen igual */
+/* Resto de estilos de navegación */
 .main-nav ul {
     display: flex;
     gap: 20px;
@@ -196,190 +199,236 @@ body {
     align-items: center;
     gap: 15px;
 }
+
 .cart-icon {
     position: relative;
     cursor: pointer;
     font-size: 20px;
     color: var(--dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
 }
 
 .cart-count {
     position: absolute;
-    top: -8px;
-    right: -8px;
+    top: 0;
+    right: 0;
     background-color: var(--danger);
     color: white;
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 12px;
+    width: 18px;
+    height: 18px;
+    font-size: 11px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
-        /* Estilos para el modal de login */
-        .login-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .login-content {
-            background-color: var(--white);
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-            padding: 30px;
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-        
-        .login-header {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        
-        .login-header h2 {
-            color: var(--primary);
-            margin-bottom: 10px;
-        }
-        
-        .login-header p {
-            color: var(--gray);
-        }
-        
-        .google-login-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            padding: 12px 20px;
-            background-color: #4285F4;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            margin-bottom: 20px;
-        }
-        
-        .google-login-btn:hover {
-            background-color: #357ae8;
-        }
-        
-        .google-login-btn i {
-            margin-right: 10px;
-            font-size: 18px;
-        }
-        
-        .login-divider {
-            display: flex;
-            align-items: center;
-            margin: 20px 0;
-        }
-        
-        .login-divider::before,
-        .login-divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background-color: var(--light-gray);
-        }
-        
-        .login-divider span {
-            padding: 0 15px;
-            color: var(--gray);
-            font-size: 14px;
-        }
-        
-        .login-form .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .login-form label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--dark);
-        }
-        
-        .login-form input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--light-gray);
-            border-radius: 4px;
-            font-size: 16px;
-            transition: var(--transition);
-        }
-        
-        .login-form input:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(42, 127, 140, 0.1);
-        }
-        
-        .login-options {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        
-        .remember-me {
-            display: flex;
-            align-items: center;
-        }
-        
-        .remember-me input {
-            margin-right: 8px;
-        }
-        
-        .forgot-password {
-            color: var(--primary);
-            text-decoration: none;
-        }
-        
-        .login-form .btn {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-        
-        .login-footer {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 14px;
-            color: var(--gray);
-        }
-        
-        .login-footer a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-        }
-        
-        .login-switcher {
-            display: none;
-        }
 
-/* =============================================
+.user-icon {
+    cursor: pointer;
+    font-size: 20px;
+    color: var(--dark);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* RESPONSIVE HEADER - Ajustes críticos para móvil */
+@media (max-width: 768px) {
+    .header .container {
+        flex-direction: row; /* Forzar fila para evitar altura excesiva */
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 5px 15px;
+    }
+
+    .logo {
+        height: 40px;
+    }
+
+    .logo-full {
+        height: 40px;
+    }
+
+    .search-container {
+        order: 3;
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    .header-actions {
+        order: 2;
+    }
+}
+
+/* Estilos para el modal de login (Intactos) */
+.login-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-content {
+    background-color: var(--white);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    padding: 30px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.login-header h2 {
+    color: var(--primary);
+    margin-bottom: 10px;
+}
+
+.login-header p {
+    color: var(--gray);
+}
+
+.google-login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 12px 20px;
+    background-color: #4285F4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 20px;
+}
+
+.google-login-btn:hover {
+    background-color: #357ae8;
+}
+
+.google-login-btn i {
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+.login-divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: var(--light-gray);
+}
+
+.login-divider span {
+    padding: 0 15px;
+    color: var(--gray);
+    font-size: 14px;
+}
+
+.login-form .form-group {
+    margin-bottom: 20px;
+}
+
+.login-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.login-form input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--light-gray);
+    border-radius: 4px;
+    font-size: 16px;
+    transition: var(--transition);
+}
+
+.login-form input:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(42, 127, 140, 0.1);
+}
+
+.login-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+}
+
+.remember-me input {
+    margin-right: 8px;
+}
+
+.forgot-password {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.login-form .btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.login-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--gray);
+}
+
+.login-footer a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login-switcher {
+    display: none;
+}
+
+/*
    HERO SECTION - CARRUSEL
-   ============================================= */
+*/
 .hero {
     position: relative;
     height: 500px;
     overflow: hidden;
-    margin-bottom: 40px;
+    margin-bottom: 0;
 }
 
 .hero-carousel {
@@ -413,7 +462,6 @@ body {
     background-repeat: no-repeat;
 }
 
-/* Overlay para mejor legibilidad del texto */
 .carousel-slide.imagen::before {
     content: '';
     position: absolute;
@@ -442,28 +490,14 @@ body {
     z-index: 3;
 }
 
-/* Alineación del texto (dentro del contenedor) */
-.carousel-text.alineacion-izquierda {
-    text-align: left;
-}
+/* Alineación del texto */
+.carousel-text.alineacion-izquierda { text-align: left; }
+.carousel-text.alineacion-derecha { text-align: right; }
+.carousel-text.alineacion-centro { text-align: center; width: 100%; }
 
-.carousel-text.alineacion-derecha {
-    text-align: right;
-}
-
-.carousel-text.alineacion-centro {
-    text-align: center;
-    width: 100%;
-}
-
-/* Posición del texto (en el layout) */
-.carousel-text.posicion-izquierda {
-    order: 1;
-}
-
-.carousel-text.posicion-derecha {
-    order: 2;
-}
+/* Posición del texto */
+.carousel-text.posicion-izquierda { order: 1; }
+.carousel-text.posicion-derecha { order: 2; }
 
 .carousel-image {
     flex: 1;
@@ -471,28 +505,20 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 2;
+    max-width: 100%; 
 }
 
-/* Posición de la imagen (en el layout) */
-.carousel-image.posicion-izquierda {
-    order: 1;
-    justify-content: flex-start;
-}
-
-.carousel-image.posicion-derecha {
-    order: 2;
-    justify-content: flex-end;
-}
-
-.carousel-image.posicion-centro {
-    order: 2;
-    justify-content: center;
-}
+/* Posición de la imagen  */
+.carousel-image.posicion-izquierda { order: 1; justify-content: flex-start; }
+.carousel-image.posicion-derecha { order: 2; justify-content: flex-end; }
+.carousel-image.posicion-centro { order: 2; justify-content: center; }
 
 /* IMÁGENES */
 .carousel-image img {
     max-height: 350px;
     width: auto;
+    max-width: 100%;
+    object-fit: contain;
     transition: transform 0.5s ease;
 }
 
@@ -582,7 +608,7 @@ body {
     background-color: white;
 }
 
-/* Efectos especiales para las imágenes */
+/* Efectos especiales */
 .floating {
     animation: floating 6s ease-in-out infinite;
 }
@@ -593,7 +619,8 @@ body {
     100% { transform: translateY(0px); }
 }
 
-/* Responsive */
+/* RESPONSIVE OPTIMIZADO PARA IMÁGENES
+*/
 @media (max-width: 968px) {
     .hero {
         height: auto;
@@ -603,21 +630,35 @@ body {
     .carousel-content {
         flex-direction: column;
         text-align: center;
-        padding: 40px 0;
-    }
-    
-    .carousel-text, .carousel-image {
-        order: 1 !important;
-        text-align: center !important;
-        justify-content: center !important;
+        padding: 40px 0 60px 0;
+        justify-content: center;
     }
     
     .carousel-image {
-        margin-top: 30px;
+        order: 1 !important;
+        flex: none;
+        width: 100%;
+        margin-bottom: 20px;
+        min-height: 200px;
+    }
+
+    .carousel-text {
+        order: 2 !important;
+        flex: none;
+        width: 100%;
+        padding: 0;
+    }
+    
+    .carousel-text, 
+    .carousel-text.alineacion-izquierda, 
+    .carousel-text.alineacion-derecha {
+        text-align: center !important;
     }
     
     .carousel-image img {
         max-height: 250px;
+        width: auto;
+        max-width: 80%;
     }
     
     .carousel-text h2 {
@@ -647,13 +688,13 @@ body {
     }
     
     .carousel-slide {
-        padding: 0 10px;
+        padding: 0 15px;
     }
 }
 
-/* =============================================
+/*
    PRODUCTOS DESTACADOS
-   ============================================= */
+ */
 .featured-products {
     padding: 80px 0;
     background: linear-gradient(135deg, rgba(155, 196, 49, 0.05) 0%, rgba(46, 177, 152, 0.05) 100%);
@@ -845,9 +886,9 @@ body {
     }
 }
 
-/* =============================================
+/*
    CATEGORÍAS
-   ============================================= */
+ */
 .categories {
     margin: 40px 0;
 }
@@ -894,9 +935,9 @@ body {
     font-size: 0.9rem;
 }
 
-/* =============================================
+/*
    PRODUCTOS - EFECTO FLIP
-   ============================================= */
+ */
 .products-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -969,9 +1010,9 @@ body {
     flex: 1;
 }
 
-/* =============================================
+/*
    MODAL - VISTA DE PRODUCTO
-   ============================================= */
+ */
 .modal {
     display: none;
     position: fixed;
@@ -1225,9 +1266,9 @@ body {
     font-weight: 600;
 }
 
-/* =============================================
+/*
    RESPONSIVE
-   ============================================= */
+ */
 
 @media (max-width: 768px) {
     .products-grid {
@@ -1414,9 +1455,9 @@ body {
 .related-product:hover .related-product-overlay {
     opacity: 1;
 }
-/* =============================================
+/*
             AVISO STOCK BAJO
-   ============================================= */
+ */
 
 /* Estilo Base del Aviso */
 .stock-advertiser {
@@ -1518,9 +1559,9 @@ body {
         padding: 6px;
     }
 }
-/* =============================================
+/*
    CARRITO
-   ============================================= */
+ */
 .cart-modal .modal-content {
     max-width: 600px;
 }
@@ -1615,9 +1656,9 @@ body {
     color: var(--gray);
 }
 
-/* =============================================
+/*
    FOOTER ACTUALIZADO
-   ============================================= */
+ */
 
 /* Estilos para enlaces de texto */
 .text-link {
@@ -1800,9 +1841,9 @@ body {
     color: #999;
 }
 
-/* =============================================
+/*
    LOGO DEL FOOTER
-   ============================================= */
+ */
 .footer-logo {
     text-align: center;
     margin-bottom: 20px;
@@ -1858,9 +1899,9 @@ body {
         height: 28px;
     }
 }
-/* =============================================
+/*
    ESTILOS PARA PLACETOPAY EN EL FOOTER
-   ============================================= */
+ */
 .payment-logo {
     text-align: center;
     margin: 15px 0;
@@ -1920,9 +1961,9 @@ body {
     }
 }
 
-/* =============================================
+/*
    NOTIFICACIONES
-   ============================================= */
+ */
 .notificacion {
     position: fixed;
     bottom: 20px;
@@ -1937,9 +1978,9 @@ body {
     transition: opacity 0.3s;
 }
 
-/* =============================================
+/*
    RESPONSIVE
-   ============================================= */
+ */
 @media (max-width: 768px) {
     .header .container {
         flex-direction: column;
@@ -2046,9 +2087,9 @@ body {
     }
 }
 
-/* =============================================
+/*
    ESTILOS ADICIONALES PARA ERRORES Y ESTADOS
-   ============================================= */
+ */
 .error {
     text-align: center;
     padding: 40px 0;
@@ -2067,9 +2108,9 @@ body {
     color: var(--gray);
     font-style: italic;
 }
-/* =============================================
+/*
    VARIABLES ACTUALIZADAS CON NUEVOS COLORES
-   ============================================= */
+ */
 :root {
     --primary: #2a7f8c;
     --primary-dark: #1d5d67;
@@ -2088,9 +2129,9 @@ body {
     --transition: all 0.3s ease;
 }
 
-/* =============================================
+/*
    SECCIÓN ¿POR QUÉ ELEGIRNOS? - CON IMAGEN VERTICAL
-   ============================================= */
+ */
 .why-choose-us {
     padding: 70px 0;
     background: linear-gradient(135deg, rgba(155, 196, 49, 0.05) 0%, rgba(46, 177, 152, 0.05) 100%);
@@ -2395,9 +2436,9 @@ body {
 }
 
 
-/* =============================================
+/*
    FILTROS DE CATEGORÍA MEJORADOS
-   ============================================= */
+ */
 .category-list {
     display: flex;
     justify-content: center;
@@ -2443,9 +2484,9 @@ body {
     transform: scale(1.1);
 }
 
-/* =============================================
+/*
    RESPONSIVE
-   ============================================= */
+ */
 @media (max-width: 992px) {
     .why-content {
         flex-direction: column-reverse;
@@ -2562,9 +2603,9 @@ body {
     opacity: 1;
     transform: translateY(0);
 }
-/* =============================================
+/*
    SECCIÓN DE TESTIMONIOS CREATIVA
-   ============================================= */
+ */
 .testimonials-section {
     padding: 80px 0;
     background: linear-gradient(135deg, rgba(155, 196, 49, 0.05) 0%, rgba(46, 177, 152, 0.05) 100%);
@@ -2917,22 +2958,26 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-/* =============================================
+/*
    BANNER PROMOCIONES DESLIZANTE
-   ============================================= */
+*/
 .promo-banner {
     background: linear-gradient(90deg, #1a5276, #2e86c1);
     color: white;
-    padding: 12px 0;
+    padding: 10px 0;
     overflow: hidden;
     position: fixed;
-    top: 95px;
+
+    top: 55px; 
     left: 0;
     right: 0;
     z-index: 999;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     white-space: nowrap;
     transition: top 0.3s ease;
+    height: 40px;
+    display: flex;
+    align-items: center;
 }
 
 .promo-track {
@@ -2943,47 +2988,45 @@ body {
 
 .promo-content {
     display: flex;
+    align-items: center;
 }
 
 .promo-text {
     font-weight: 600;
-    font-size: 16px;
+    font-size: 14px;
     letter-spacing: 0.5px;
     margin-right: 50px;
 }
 
-/* Animación suave y repetitiva */
 @keyframes moveText {
     0%   { transform: translateX(0); }
     100% { transform: translateX(-50%); }
 }
 
-/* Ajuste del contenido principal para compensar el banner fijo */
 .main-content {
-    margin-top: 119px; 
+    margin-top: 40px !important; 
 }
 
 .header.shrink ~ .promo-banner {
-    top: 61px;
+    top: 50px; 
 }
 
 .header.shrink ~ .main-content {
-    margin-top: 85px;
+    margin-top: 50px !important;
 }
 
+/* RESPONSIVE */
 @media (max-width: 768px) {
     .promo-text {
-        font-size: 14px;
+        font-size: 13px;
     }
-    .promo-track {
-        animation-duration: 15s;
-    }
+    
     .promo-banner {
-        top: 80px;
+        top: 105px; 
     }
     
     .main-content {
-        margin-top: 104px;
+        margin-top: 105px !important; 
     }
     
     .header.shrink ~ .promo-banner {
@@ -2991,14 +3034,13 @@ body {
     }
     
     .header.shrink ~ .main-content {
-        margin-top: 74px;
+        margin-top: 50px !important;
     }
 }
 
-
-/* =============================================
+/*
    ESTADÍSTICAS
-   ============================================= */
+ */
 
 /* Sección de estadísticas */
 .stats-section {
@@ -3376,11 +3418,7 @@ body {
     transform: scale(1.1);
 }
 
-/* =============================================
-   POPUP PROMOCIONAL
-   ============================================= */
-
-/* Fondo oscuro */
+/* INICIO BLOQUE POPUP */
 .promo-overlay {
     position: fixed;
     top: 0;
@@ -3388,11 +3426,10 @@ body {
     width: 100%;
     height: 100%;
     background: rgba(0,0,0,0.6);
-    z-index: 998;
+    z-index: 3000;
     display: none;
 }
 
-/* Popup grande en el centro */
 .promo-popup {
     position: fixed;
     top: 50%;
@@ -3403,7 +3440,7 @@ body {
     background-color: rgba(255, 255, 255, 0);
     border-radius: 10px;
     box-shadow: 0 6px 15px rgba(0,0,0,0.3);
-    z-index: 999;
+    z-index: 3001;
     padding: 10px;
     transition: all 0.4s ease-in-out;
     display: none;
@@ -3437,7 +3474,6 @@ body {
     background-color: #c82333;
 }
 
-/*RESPONSIVE */
 @media (max-width: 768px) {
     .promo-popup {
         width: 90%;
@@ -3445,9 +3481,8 @@ body {
         max-height: 80%;
     }
     
-    /* Ajustes para móviles */
     .promo-popup.minimized {
-        bottom: 90px; /* Ajustado para móviles */
+        bottom: 90px;
         right: 20px;
         width: 120px;
         height: 120px;
@@ -3461,7 +3496,6 @@ body {
         font-size: 25px;
     }
 }
-
 
 /* Responsive para barra de búsqueda */
 @media (max-width: 768px) {
