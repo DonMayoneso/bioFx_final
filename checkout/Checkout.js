@@ -10,7 +10,7 @@ function verificarAlmacenamiento() {
 }
 
 function resolveImagePath(p) {
-  if (!p) return "../assets/productos/placeholder.png";
+  if (!p) return "../assets/productos/placeholder.webp";
   if (/^https?:\/\//i.test(p)) return p; // absoluta http(s)
   if (p.startsWith("/")) return p; // absoluta del host
   if (p.startsWith("../")) return p; // ya relativa correcta
@@ -370,7 +370,7 @@ async function cargarResumenPedido() {
       <div class="summary-item">
         <img src="${resolveImagePath(item.imagen)}"
              alt="${item.nombre || "Producto " + item.id}"
-             onerror="this.onerror=null; this.src='../assets/productos/imgtest.jpg'">
+             onerror="this.onerror=null; this.src='../assets/productos/imgtest.webp'">
         <div class="summary-item-info">
           <div class="summary-item-name">${item.nombre || "Producto " + item.id}</div>
           <div class="summary-item-details">
@@ -461,8 +461,8 @@ function configurarSubidaArchivos() {
 
       const isImage =
         type.startsWith("image/") ||
-        name.endsWith(".png") ||
-        name.endsWith(".jpg") ||
+        name.endsWith(".webp") ||
+        name.endsWith(".webp") ||
         name.endsWith(".jpeg");
 
       if (!isPdf && !isImage) {
@@ -624,8 +624,8 @@ async function procesarCheckout(e) {
 
       const isImage =
         type.startsWith("image/") ||
-        name.endsWith(".png") ||
-        name.endsWith(".jpg") ||
+        name.endsWith(".webp") ||
+        name.endsWith(".webp") ||
         name.endsWith(".jpeg");
 
       if (!isPdf && !isImage) {
