@@ -387,8 +387,6 @@ function renderizarProductos() {
   });
 }
 
-
-
 function renderizarProductosDestacados() {
   const cont =
     document.getElementById("featuredProductsGrid") ||
@@ -453,7 +451,6 @@ function renderizarProductosDestacados() {
     `;
   }
 }
-
 
 // Abrir modal de producto con nueva vista
 function abrirProducto(id) {
@@ -917,7 +914,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function cargarTestimoniosCreativos() {
   const cont = document.getElementById("testimonialsCreative");
   try {
-    const data = await window.api.getTestimonios(); // GET /api/Testimonios    
+    const data = await window.api.getTestimonios(); // GET /api/Testimonios
     const testimonios = (Array.isArray(data) ? data : []).map((t, i) => {
       const nombre = t.nombre ?? t.Nombre ?? "Cliente";
       const testimonio = t.testimonio ?? t.Testimonio ?? "";
@@ -936,7 +933,6 @@ async function cargarTestimoniosCreativos() {
       cont.innerHTML = `<div class="empty">Aún no hay testimonios.</div>`;
       return;
     }
-    
 
     renderizarTestimoniosCreativos(testimonios);
   } catch (error) {
