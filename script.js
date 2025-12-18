@@ -416,7 +416,7 @@ function renderizarProductosDestacados() {
           : ""
       }
       <div class="product-image">
-        <img src="${producto.imagen}" alt="${producto.nombre}">
+        <img src="${producto.imagen}" loading="lazy" alt="${producto.nombre}">
       </div>
       <div class="product-info">
         <h3>${producto.nombre}</h3>
@@ -954,7 +954,7 @@ function renderizarTestimoniosCreativos(testimonios) {
     card.className = "testimonial-creative-card";
     card.innerHTML = `
             <div class="testimonial-image-wrapper">
-                <img src="${testimonio.imagen}" alt="${
+                <img src="${testimonio.imagen}" loading="lazy" alt="${
       testimonio.nombre
     }" class="testimonial-image">
                 <div class="testimonial-overlay">
