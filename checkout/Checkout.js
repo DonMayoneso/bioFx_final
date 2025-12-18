@@ -615,9 +615,10 @@ async function procesarCheckout(e) {
 
       const isImage =
         type.startsWith("image/") ||
-        name.endsWith(".webp") ||
-        name.endsWith(".webp") ||
-        name.endsWith(".jpeg");
+        name.endsWith(".png") ||
+        name.endsWith(".jpg") ||
+        name.endsWith(".jpeg") ||
+        name.endsWith(".webp");
 
       if (!isPdf && !isImage) {
         throw new Error(
