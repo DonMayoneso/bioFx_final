@@ -1,28 +1,28 @@
 document.addEventListener("submit", async (ev) => {
   const form = ev.target.closest("#loginForm");
-  if (!form) return; // no es el formulario de login
+  if (!form) return;
   ev.preventDefault();
 
   const emailEl = form.querySelector('input[type="email"], input[name="email"]');
   const passEl = form.querySelector('input[type="password"], input[name="password"]');
   const submitBtn = form.querySelector('button[type="submit"], .btn');
+  const errBox = document.getElementById("loginError");    
 
   const email = emailEl?.value?.trim();
   const password = passEl?.value ?? "";
   if (!email || !password) {
-    const errBox = document.getElementById("loginError");
+    
     if (errBox) {
       errBox.textContent = "Ingresa correo y contraseña.";
       errBox.classList.remove("hidden");
     }
     return;
   }
-
-  const errBox = document.getElementById("loginError");
-  const setErr = (m) => {
+  
+  const setErr = (m) => {    
     if (errBox) {
       errBox.textContent = m || "";
-      errBox.classList.toggle("hidden", !m);
+      errBox.classList.toggle("hidden", !m);      
     }
   };
 
@@ -35,13 +35,9 @@ document.addEventListener("submit", async (ev) => {
     form.reset();
     setErr(""); // limpia
     window.Snackbar?.success("Has iniciado sesión.");
-  } catch (err) {
-    if (err.status === 401) setErr("Correo o contraseña no válidas.");
-    else if (err.status === 403) setErr("Cuenta bloqueada temporalmente. Intenta más tarde.");
-    else if ((err.message || "").toLowerCase().includes("confirma"))
-      setErr("Debes confirmar tu correo antes de iniciar sesión.");
-    else setErr(err.message || "No se pudo iniciar sesión.");
-    console.error(err);
+  } catch (err) {    
+    setErr(err);
+    
   } finally {
     submitBtn && (submitBtn.disabled = false);
   }
