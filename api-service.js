@@ -99,7 +99,7 @@ class ApiService {
 
   // Carrito
   getMyCart() {
-    return this.request("/api/ShoppingCart/mine"); // crea si no existe
+    return this.request("/api/ShoppingCart/mine"); 
   }
   clearMyCart() {
     return this.request("/api/ShoppingCart/clear", { method: "POST" });
@@ -129,7 +129,6 @@ class ApiService {
     const body = {
       reference,
       description,
-      // campos adicionales opcionales para la orden
       documentType: extraData.documentType,
       documentNumber: extraData.documentNumber,
       addressLine: extraData.addressLine,
@@ -138,6 +137,7 @@ class ApiService {
       postalCode: extraData.postalCode,
       country: extraData.country,
       doctorName: extraData.doctorName,
+      tieneReceta: Boolean(extraData.tieneReceta),
     };
 
     const r = await this.request("/api/Orders/create", {
@@ -145,16 +145,9 @@ class ApiService {
       body,
     });
 
-    console.log("createOrderFromCart raw response:", r);
-
     const oid = Number(r?.orderId ?? r?.id ?? r?.OrderId);
-
-    // Guarda el último orderId creado en la instancia
-    if (Number.isFinite(oid) && oid > 0) {
-      this.lastOrderId = oid;
-    } else {
-      this.lastOrderId = undefined;
-    }
+    if (Number.isFinite(oid) && oid > 0) this.lastOrderId = oid;
+    else this.lastOrderId = undefined;
 
     return { ...r, orderId: oid };
   }
