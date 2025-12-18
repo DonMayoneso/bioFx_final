@@ -340,7 +340,7 @@ function renderizarProductos() {
                     ? `<div class="product-discount">-${producto.descuento}%</div>`
                     : ""
                 }
-                <img src="${producto.imagen}" loading="lazy" alt="${producto.nombre}" class="product-image">
+                <img src="${producto.imagen}" alt="${producto.nombre}" class="product-image">
                 ${
                   producto.stock <= cantidadStockMinimo
                     ? `<div class="stock-advertiser card-view"><i class="fas fa-fire-alt"></i> Aviso, quedan pocas unidades</div>`
