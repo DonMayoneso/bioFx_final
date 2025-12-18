@@ -240,7 +240,7 @@ async function cargarProductos() {
           principal: p.desc_Principal ?? p.Desc_Principal ?? "",
           otros: p.desc_Otros ?? p.Desc_Otros ?? "",
         },
-        contraindicaciones: p.contraindicaciones ?? p.Contraindicaciones ?? "",
+        contraindicaciones: p.contraindicaciones ?? p.Contraindicaciones ?? "", //a
         descuento: Number(p.descuento ?? p.Descuento ?? 0),
         disclaimer: p.disclaimer ?? p.Disclaimer ?? "",
         categoriaIds,
@@ -340,7 +340,7 @@ function renderizarProductos() {
                     ? `<div class="product-discount">-${producto.descuento}%</div>`
                     : ""
                 }
-                <img src="${producto.imagen}" alt="${producto.nombre}" class="product-image">
+                <img src="${producto.imagen}" loading="lazy" alt="${producto.nombre}" class="product-image">
                 ${
                   producto.stock <= cantidadStockMinimo
                     ? `<div class="stock-advertiser card-view"><i class="fas fa-fire-alt"></i> Aviso, quedan pocas unidades</div>`
@@ -416,7 +416,7 @@ function renderizarProductosDestacados() {
           : ""
       }
       <div class="product-image">
-        <img src="${producto.imagen}" alt="${producto.nombre}">
+        <img src="${producto.imagen}" loading="lazy" alt="${producto.nombre}">
       </div>
       <div class="product-info">
         <h3>${producto.nombre}</h3>
@@ -954,7 +954,7 @@ function renderizarTestimoniosCreativos(testimonios) {
     card.className = "testimonial-creative-card";
     card.innerHTML = `
             <div class="testimonial-image-wrapper">
-                <img src="${testimonio.imagen}" alt="${
+                <img src="${testimonio.imagen}" loading="lazy" alt="${
       testimonio.nombre
     }" class="testimonial-image">
                 <div class="testimonial-overlay">
