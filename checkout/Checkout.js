@@ -260,7 +260,7 @@ async function cargarResumenPedido() {
   }
 
   // 4) cookie
-  if (!carritoData) {    
+  if (!carritoData) {
     try {
       const cookieValue = document.cookie
         .split("; ")
@@ -281,7 +281,6 @@ async function cargarResumenPedido() {
 
   // 5) Fallback desde API
   if (!carritoData) {
-    
     try {
       const apiCart = await window.api.getMyCart();
 
@@ -397,8 +396,6 @@ function getTieneRecetaUI() {
 }
 
 function calcularTotalesCheckout(items, tieneReceta) {
-  const shipping = 5.0;
-
   const subtotalBase = items.reduce((acc, it) => acc + it.precioBase * it.cantidad, 0);
 
   const descuentoProductos = items.reduce((acc, it) => {
@@ -406,6 +403,7 @@ function calcularTotalesCheckout(items, tieneReceta) {
   }, 0);
 
   const subtotalNeto = Math.max(0, subtotalBase - descuentoProductos);
+  const shipping = subtotalNeto >= 50 ? 0 : 5;
   const descuentoReceta = tieneReceta ? subtotalNeto * 0.02 : 0;
 
   const descuentoTotal = descuentoProductos + descuentoReceta;
