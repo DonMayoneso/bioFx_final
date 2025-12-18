@@ -240,7 +240,7 @@ async function cargarProductos() {
           principal: p.desc_Principal ?? p.Desc_Principal ?? "",
           otros: p.desc_Otros ?? p.Desc_Otros ?? "",
         },
-        contraindicaciones: p.contraindicaciones ?? p.Contraindicaciones ?? "",
+        contraindicaciones: p.contraindicaciones ?? p.Contraindicaciones ?? "", //a
         descuento: Number(p.descuento ?? p.Descuento ?? 0),
         disclaimer: p.disclaimer ?? p.Disclaimer ?? "",
         categoriaIds,
