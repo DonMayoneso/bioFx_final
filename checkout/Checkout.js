@@ -563,17 +563,16 @@ async function procesarCheckout(e) {
     const pais = document.getElementById("pais")?.value || "";
     const nombreMedico = document.getElementById("nombreMedico")?.value || "";
 
-    // Normalizar tipoDocumento a algo más "de backend"
     let documentType = "";
     switch ((tipoDocumento || "").toLowerCase()) {
       case "cedula":
-        documentType = "CEDULA";
+        documentType = "CI";
         break;
       case "ruc":
         documentType = "RUC";
         break;
       case "pasaporte":
-        documentType = "PASAPORTE";
+        documentType = "PPN";
         break;
       default:
         documentType = tipoDocumento || "";
