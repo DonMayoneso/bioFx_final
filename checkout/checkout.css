@@ -1,6 +1,4 @@
-/* =============================================
-   ESTILOS ESPECÍFICOS PARA CHECKOUT
-   ============================================= */
+/* ESTILOS ESPECÍFICOS PARA CHECKOUT */
 .checkout-container {
     padding: 40px 0;
     background-color: #f8f9fa;
@@ -219,7 +217,7 @@
     color: var(--gray);
 }
 
-/* Logo de PlaceToPay */
+/* Logo de Placetopay */
 .payment-logo {
     text-align: center;
     margin: 15px 0;
@@ -230,22 +228,46 @@
     height: auto;
 }
 
-.payment-terms {
-    text-align: center;
-    margin-top: 10px;
+/* NUEVO: Estilos para la sección de aceptación */
+.acceptance-section {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 25px;
+    border-left: 3px solid var(--accent);
 }
 
-.payment-terms small {
-    font-size: 0.75rem;
-    color: var(--gray);
+.checkbox-group {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 10px;
 }
 
-.payment-terms a {
+.checkbox-group:last-child {
+    margin-bottom: 0;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 10px;
+    margin-top: 4px;
+    cursor: pointer;
+}
+
+.checkbox-group label {
+    font-size: 0.9rem;
+    color: var(--dark);
+    cursor: pointer;
+    line-height: 1.4;
+}
+
+.checkbox-group a {
     color: var(--accent);
     text-decoration: none;
+    font-weight: 500;
 }
 
-.payment-terms a:hover {
+.checkbox-group a:hover {
     text-decoration: underline;
 }
 
@@ -469,17 +491,13 @@ img[onerror] {
     font-size: 1rem;
 }
 
-/* =============================================
-   FOOTER ACTUALIZADO
-   ============================================= */
-/* Estilos para enlaces de texto (sin subrayado) */
+/* FOOTER ACTUALIZADO */
 .text-link {
     color: #ccc;
     cursor: default;
     font-size: 14px;
 }
 
-/* Estilos para el footer (manteniendo los existentes) */
 .footer {
     background-color: var(--dark);
     color: var(--white);
@@ -557,100 +575,69 @@ img[onerror] {
     color: var(--primary);
 }
 
-.payment-methods {
-    margin-top: 20px;
-}
-
-.payment-methods h4 {
-    font-size: 16px;
-    margin-bottom: 10px;
-    color: var(--white);
-}
-
-.payment-icons {
-    display: flex;
-    gap: 15px;
-    margin-top: 10px;
-}
-
-.payment-icons i {
-    font-size: 32px;
-    color: #fff;
-    opacity: 0.8;
-    transition: opacity 0.3s;
-}
-
-.payment-icons i:hover {
-    opacity: 1;
-}
-
-.social-media {
-    margin-top: 25px;
-}
-
-.social-media h4 {
-    font-size: 16px;
-    margin-bottom: 15px;
-    color: var(--white);
-}
-
-.social-icons {
-    display: flex;
-    gap: 12px;
-}
-
-.social-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    background-color: transparent;
-}
-
-.social-icon:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    border-color: transparent;
-}
-
-.social-icon i {
-    font-size: 18px;
-    margin-right: 0;
-    color: white;
-    transition: color 0.3s;
-}
-
-/* Estilos específicos para cada red social */
-.social-icon.facebook:hover {
-    background-color: #3b5998;
-}
-
-.social-icon.instagram:hover {
-    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-}
-
-.social-icon.whatsapp:hover {
-    background-color: #25D366;
-}
-
-.social-icon:hover i {
-    color: white;
-}
-
-.hidden {
-    display: none;
-}
-
 .footer-bottom {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding: 20px 0;
     text-align: center;
     font-size: 14px;
     color: #999;
+}
+
+/* NOTIFICACIONES MEJORADAS */
+.notification-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    max-width: 300px;
+    opacity: 0;
+    transform: translateY(100px);
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.notification-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.notification-toast.success {
+    background-color: #28a745;
+    border-left-color: #1e7e34;
+}
+
+.notification-toast.error {
+    background-color: #dc3545;
+    border-left-color: #c82333;
+}
+
+.notification-toast.info {
+    background-color: #17a2b8;
+    border-left-color: #138496;
+}
+
+.notification-toast i {
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.notification-toast .message {
+    flex: 1;
+    line-height: 1.4;
+}
+
+/* Efecto de desvanecimiento al ocultar */
+.notification-toast.hiding {
+    opacity: 0;
+    transform: translateY(100px);
 }
 
 /* Responsive */
@@ -706,62 +693,4 @@ img[onerror] {
     .form-actions button {
         width: 100%;
     }
-}
-/* =============================================
-   NOTIFICACIONES MEJORADAS
-   ============================================= */
-.notification-toast {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    padding: 12px 16px;
-    border-radius: 8px;
-    color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.8rem;
-    max-width: 300px;
-    opacity: 0;
-    transform: translateY(100px);
-    transition: all 0.3s ease;
-    border-left: 4px solid transparent;
-}
-
-.notification-toast.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.notification-toast.success {
-    background-color: #28a745;
-    border-left-color: #1e7e34;
-}
-
-.notification-toast.error {
-    background-color: #dc3545;
-    border-left-color: #c82333;
-}
-
-.notification-toast.info {
-    background-color: #17a2b8;
-    border-left-color: #138496;
-}
-
-.notification-toast i {
-    font-size: 0.9rem;
-    flex-shrink: 0;
-}
-
-.notification-toast .message {
-    flex: 1;
-    line-height: 1.4;
-}
-
-/* Efecto de desvanecimiento al ocultar */
-.notification-toast.hiding {
-    opacity: 0;
-    transform: translateY(100px);
 }

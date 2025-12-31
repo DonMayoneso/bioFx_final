@@ -11,10 +11,10 @@ function verificarAlmacenamiento() {
 
 function resolveImagePath(p) {
   if (!p) return "../assets/productos/placeholder.png";
-  if (/^https?:\/\//i.test(p)) return p; // absoluta http(s)
-  if (p.startsWith("/")) return p; // absoluta del host
-  if (p.startsWith("../")) return p; // ya relativa correcta
-  return "../" + p.replace(/^\.?\//, ""); // assets/... -> ../assets/...
+  if (/^https?:\/\//i.test(p)) return p;
+  if (p.startsWith("/")) return p;
+  if (p.startsWith("../")) return p;
+  return "../" + p.replace(/^\.?\//, "");
 }
 
 // Función para calcular checksum
@@ -88,7 +88,7 @@ async function guardAccessOrRedirectCheckout() {
     if (!perfil) throw new Error("NO_SESSION");
 
     // 2) carrito con items
-    const cart = await window.api.getMyCart(); // crea si no existe
+    const cart = await window.api.getMyCart();
     const items = Array.isArray(cart?.Items)
       ? cart.Items
       : Array.isArray(cart?.items)
@@ -129,8 +129,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   const ok = await guardAccessOrRedirectCheckout();
   if (!ok) return;
 
-  
-
   const loadingElement = document.getElementById("loadingCart");
   if (loadingElement) loadingElement.style.display = "block";
 
@@ -151,6 +149,15 @@ document.addEventListener("DOMContentLoaded", async function () {
       window.location.href = "../index.html";
     }
   });
+
+  // CAMBIO 3: Validar que el teléfono solo acepte números en tiempo real
+  const inputTelefono = document.getElementById("telefono");
+  if (inputTelefono) {
+    inputTelefono.addEventListener("input", function(e) {
+        // Reemplaza cualquier caracter que NO sea dígito por vacío
+        this.value = this.value.replace(/\D/g, '');
+    });
+  }
 
   // Limpiar validación de documento cuando cambie el tipo
   document.getElementById("tipoDocumento").addEventListener("change", function () {
@@ -550,8 +557,12 @@ function removerDescuentoPorReceta() {
 async function procesarCheckout(e) {
   e.preventDefault();
 
-  if (!validarFormulario()) {
-    mostrarNotificacionToast("Por favor, completa todos los campos obligatorios", "error");
+  // CAMBIO 4: Manejar el mensaje de error específico retornado por la validación
+  const errorValidacion = validarFormulario();
+  if (errorValidacion) {
+    // Si validarFormulario retorna un string, es el mensaje de error. Si retorna null, todo ok.
+    // OJO: validarFormulario devuelve el mensaje de error si falla, o null si éxito.
+    mostrarNotificacionToast(errorValidacion, "error");
     return;
   }
 
@@ -649,7 +660,7 @@ async function procesarCheckout(e) {
     localStorage.setItem("lastOrderId", String(orderId));
     localStorage.setItem("lastRequestId", String(session.requestId));
 
-    mostrarNotificacion("Redirigiendo a PlaceToPay...", "success");
+    mostrarNotificacion("Redirigiendo a Placetopay...", "success");
 
     window.location.href = session.processUrl;
   } catch (err) {
@@ -661,35 +672,39 @@ async function procesarCheckout(e) {
   }
 }
 
-// Validar formulario
+// CAMBIO 5: Modificada la validación para retornar mensajes específicos y validar los nuevos campos
 function validarFormulario() {
   const requiredFields = document.querySelectorAll("#checkoutForm [required]");
-  let isValid = true;
+  let mensajeError = null;
 
-  requiredFields.forEach((field) => {
-    if (!field.value.trim()) {
-      field.style.borderColor = "var(--danger)";
-      isValid = false;
-
-      // Remover el estilo cuando el usuario comience a escribir
-      field.addEventListener("input", function () {
-        this.style.borderColor = "";
-      });
+  // 1. Validar campos vacíos
+  for (const field of requiredFields) {
+    if (!field.value.trim() && field.type !== 'checkbox') {
+        field.style.borderColor = "var(--danger)";
+        // Listener para limpiar error
+        field.addEventListener("input", function () { this.style.borderColor = ""; }, {once: true});
+        if(!mensajeError) mensajeError = "Por favor, completa todos los campos obligatorios";
     }
-  });
+    // Validar checkboxes requeridos
+    if (field.type === 'checkbox' && !field.checked) {
+        if(!mensajeError) mensajeError = "Debes aceptar los Términos y Condiciones y la Política de Privacidad para continuar.";
+    }
+  }
 
-  // Validar email
+  // Si ya hay error de campos vacíos, retornarlo para no sobrecargar al usuario
+  if(mensajeError) return mensajeError;
+
+  // 2. Validar email (CAMBIO: Mensaje específico)
   const emailField = document.getElementById("email");
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (emailField.value && !emailRegex.test(emailField.value)) {
     emailField.style.borderColor = "var(--danger)";
-    isValid = false;
-
     emailField.addEventListener("input", function () {
       if (emailRegex.test(this.value)) {
         this.style.borderColor = "";
       }
     });
+    return "El formato del correo electrónico no es válido.";
   }
 
   // Validar número de documento según el tipo
@@ -698,27 +713,25 @@ function validarFormulario() {
 
   if (tipoDocumento && numeroDocumento) {
     let valido = true;
-    let mensajeError = "";
+    let mensajeDoc = "";
 
     if (tipoDocumento === "cedula") {
       const regexCedula = /^\d{10}$/;
       if (!regexCedula.test(numeroDocumento)) {
         valido = false;
-        mensajeError = "La cédula debe tener exactamente 10 dígitos numéricos";
+        mensajeDoc = "La cédula debe tener exactamente 10 dígitos numéricos";
       }
     } else if (tipoDocumento === "ruc") {
       const regexRuc = /^\d{13}$/;
       if (!regexRuc.test(numeroDocumento)) {
         valido = false;
-        mensajeError = "El RUC debe tener exactamente 13 dígitos numéricos";
+        mensajeDoc = "El RUC debe tener exactamente 13 dígitos numéricos";
       }
     }
-    // Pasaporte no tiene restricciones
 
     if (!valido) {
       document.getElementById("numeroDocumento").style.borderColor = "var(--danger)";
 
-      // Mostrar mensaje de error
       let errorElement = document.getElementById("documentoError");
       if (!errorElement) {
         errorElement = document.createElement("div");
@@ -726,9 +739,9 @@ function validarFormulario() {
         errorElement.className = "error-message";
         document.getElementById("numeroDocumento").parentNode.appendChild(errorElement);
       }
-      errorElement.textContent = mensajeError;
+      errorElement.textContent = mensajeDoc;
 
-      isValid = false;
+      return mensajeDoc;
     }
   }
 
@@ -736,15 +749,11 @@ function validarFormulario() {
   const nombreMedico = document.getElementById("nombreMedico");
   if (nombreMedico && !nombreMedico.value.trim()) {
     nombreMedico.style.borderColor = "var(--danger)";
-    isValid = false;
-
-    // Remover el estilo cuando el usuario comience a escribir
-    nombreMedico.addEventListener("input", function () {
-      this.style.borderColor = "";
-    });
+    nombreMedico.addEventListener("input", function () { this.style.borderColor = ""; }, {once: true});
+    return "Por favor, complete la información del médico.";
   }
 
-  return isValid;
+  return null; // Retorna null si NO hay errores
 }
 
 // Mostrar notificación de toda la pantalla

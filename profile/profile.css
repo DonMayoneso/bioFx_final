@@ -336,7 +336,7 @@
   border-color: #c62828;
 }
 
-/* ===== Scroll interno para el historial de pedidos ===== */
+/* Scroll interno para el historial de pedidos */
 #orders .orders-list {
   max-height: 450px;     
   overflow-y: auto;      
@@ -353,4 +353,94 @@
 }
 #orders .orders-list::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* ESTILOS PARA ESTADOS DE ÓRDENES */
+
+.order-header-info {
+  flex: 1;
+}
+
+.order-status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+
+/* Estado: APROBADA */
+.status-approved {
+  background-color: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+/* Estado: RECHAZADA */
+.status-rejected {
+  background-color: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+  border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+/* Estado: PENDIENTE */
+.status-pending {
+  background-color: rgba(255, 193, 7, 0.15);
+  color: #856404;
+  border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.auth-code {
+  font-family: monospace;
+  background-color: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--dark);
+  font-size: 0.9em;
+  margin-left: 5px;
+}
+
+/* Alerta de Pago Pendiente */
+.pending-order-alert {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  animation: fadeIn 0.5s ease;
+}
+
+.pending-order-alert i {
+  font-size: 1.5rem;
+}
+
+.pending-actions {
+  margin-left: auto;
+}
+
+.btn-check-status {
+  background-color: #856404;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: opacity 0.3s;
+}
+
+.btn-check-status:hover {
+  opacity: 0.9;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

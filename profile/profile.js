@@ -10,22 +10,70 @@ document.addEventListener("DOMContentLoaded", function () {
   function formatOrderDate(isoUtc) {
     if (!isoUtc) return "";
     const d = new Date(isoUtc);
-    const opts = { day: "numeric", month: "long", year: "numeric" };
+    const opts = { day: "numeric", month: "long", year: "numeric", hour: '2-digit', minute: '2-digit' };
     return d.toLocaleDateString("es-EC", opts);
+  }
+
+  // Función auxiliar para traducir y estilizar estados
+  function getStatusConfig(status) {
+    // Normalizamos el string para evitar errores de mayúsculas/minúsculas
+    const s = (status || "").toUpperCase();
+    
+    switch (s) {
+      case "APPROVED":
+      case "APROBADA":
+        return { 
+          label: "Aprobada", 
+          class: "status-approved", 
+          icon: "fa-check-circle" 
+        };
+      case "REJECTED":
+      case "RECHAZADA":
+      case "FAILED":
+        return { 
+          label: "Rechazada", 
+          class: "status-rejected", 
+          icon: "fa-times-circle" 
+        };
+      case "PENDING":
+      case "PENDIENTE":
+        return { 
+          label: "Pendiente", 
+          class: "status-pending", 
+          icon: "fa-clock" 
+        };
+      default:
+        return { 
+          label: status || "Desconocido", 
+          class: "", 
+          icon: "fa-info-circle" 
+        };
+    }
   }
 
   function buildOrderCard(order) {
     const card = document.createElement("div");
     card.className = "order-card";
 
+    // 1. Obtener configuración del estado
+    // Asumimos que el backend envía 'status' o 'paymentStatus'
+    const statusRaw = order.status || order.paymentStatus || "PENDING";
+    const statusConfig = getStatusConfig(statusRaw);
+
+    // 2. Obtener código de autorización (si existe)
+    // Placetopay suele devolver 'authorization' o 'authCode'
+    const authCode = order.authorization || order.authorizationCode || order.authCode || null;
+
     const orderNumber = order.orderNumber || order.reference || `ORD-${order.orderId}`;
     const dateText = formatOrderDate(order.createdAt);
 
     const paymentInfoParts = [];
     if (order.paymentMethodName) paymentInfoParts.push(order.paymentMethodName);
-    if (order.issuerName) paymentInfoParts.push(order.issuerName);
+    
+    // Solo mostramos emisor si no es rechazado (opcional, pero estético)
+    if (order.issuerName && statusRaw !== 'REJECTED') paymentInfoParts.push(order.issuerName);
+    
     const paymentInfo = paymentInfoParts.length ? `Pago con ${paymentInfoParts.join(" · ")}` : "";
-
     const hasAttachmentText = order.hasAttachment ? "Incluye factura adjunta" : "";
 
     const itemsHtml = (order.items || [])
@@ -36,6 +84,7 @@ document.addEventListener("DOMContentLoaded", function () {
             src="../${item.productImage}"
             alt="${item.productName}"
             class="order-product-img"
+            onerror="this.onerror=null;this.src='../assets/productos/placeholder.png';" 
           />
           <div class="order-product-info">
             <h4>${item.productName}</h4>
@@ -47,13 +96,22 @@ document.addEventListener("DOMContentLoaded", function () {
       )
       .join("");
 
+    // HTML Construido con Estado y Auth Code
     card.innerHTML = `
       <div class="order-header">
-        <div>
+        <div class="order-header-info">
           <div class="order-id">Pedido #${orderNumber}</div>
           ${dateText ? `<div class="order-date">Realizado el: ${dateText}</div>` : ""}
-          ${paymentInfo ? `<div class="order-payment">${paymentInfo}</div>` : ""}
-          ${hasAttachmentText ? `<div class="order-invoice">${hasAttachmentText}</div>` : ""}
+          
+          <div class="order-status-badge ${statusConfig.class}">
+            <i class="fas ${statusConfig.icon}"></i>
+            ${statusConfig.label}
+          </div>
+
+          ${authCode ? `<div style="margin-top:5px; font-size: 0.9em; color: var(--gray);">Cód. Autorización: <span class="auth-code">${authCode}</span></div>` : ""}
+
+          ${paymentInfo ? `<div class="order-payment" style="margin-top:5px; font-size:0.9em;">${paymentInfo}</div>` : ""}
+          ${hasAttachmentText ? `<div class="order-invoice" style="margin-top:5px; color: var(--primary);"><i class="fas fa-paperclip"></i> ${hasAttachmentText}</div>` : ""}
         </div>
       </div>
 
@@ -63,34 +121,92 @@ document.addEventListener("DOMContentLoaded", function () {
 
       <div class="order-footer">
         <div class="order-total">Total: $${Number(order.totalAmount).toFixed(2)}</div>
+        
+        ${statusConfig.label === 'Rechazada' ? 
+          `<div class="order-actions">
+              <a href="../index.html" class="btn-repeat-order">Intentar nuevamente</a>
+           </div>` : ''
+        }
       </div>
     `;
 
     return card;
   }
 
+  // Función para mostrar alerta de pago pendiente
+  function showPendingAlert() {
+    // Busca si ya existe para no duplicar
+    if(document.querySelector('.pending-order-alert')) return;
+
+    const container = document.querySelector('#orders');
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'pending-order-alert';
+    alertDiv.innerHTML = `
+      <i class="fas fa-exclamation-triangle"></i>
+      <div>
+        <strong>Pago Pendiente Detectado</strong>
+        <p style="margin:0; font-size:0.9rem;">Tu banco está procesando una transacción. Por favor espera la confirmación antes de realizar una nueva compra.</p>
+      </div>
+      <div class="pending-actions">
+        <button class="btn-check-status" onclick="location.reload()">Actualizar Estado</button>
+      </div>
+    `;
+    
+    // Insertar después del título
+    const title = container.querySelector('.section-title');
+    title.insertAdjacentElement('afterend', alertDiv);
+  }
+
   async function loadOrdersHistory() {
     if (!ordersListEl) return;
-    ordersListEl.innerHTML = `<p class="orders-loading">Cargando tu historial de pedidos...</p>`;
+    ordersListEl.innerHTML = `<p class="orders-loading"><i class="fas fa-spinner fa-spin"></i> Cargando tu historial de pedidos...</p>`;
 
     try {
+      // Se asume que getMyOrdersHistory trae TODAS las órdenes (aprobadas, rechazadas, pendientes)
+      // Si el backend filtra, habría que ajustar el backend. Asumimos que trae todo.
       const orders = await window.api.getMyOrdersHistory();
+      
       if (!orders || !orders.length) {
-        ordersListEl.innerHTML = `<p class="orders-empty">Todavía no has realizado compras pagadas.</p>`;
+        ordersListEl.innerHTML = `<div class="empty-orders">
+            <i class="fas fa-box-open"></i>
+            <p>Todavía no tienes pedidos registrados.</p>
+            <a href="../index.html" class="btn btn-primary">Ir a la tienda</a>
+        </div>`;
         return;
       }
 
       ordersListEl.innerHTML = "";
+      
+      // Variable para detectar si hay pendientes
+      let hasPending = false;
+
+      // Ordenar: Las más recientes primero
+      orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
       orders.forEach((order) => {
         const card = buildOrderCard(order);
         ordersListEl.appendChild(card);
+
+        // Chequear estado para la lógica de "Bloqueo/Alerta"
+        const status = (order.status || order.paymentStatus || "").toUpperCase();
+        if (status === 'PENDING' || status === 'PENDIENTE') {
+          hasPending = true;
+        }
       });
+
+      // Si hay pendientes, mostramos la alerta recomendada
+      if(hasPending) {
+        showPendingAlert();
+      }
+
     } catch (err) {
       console.error(err);
       ordersListEl.innerHTML = `<p class="orders-error">No se pudo cargar tu historial de pedidos. Intenta más tarde.</p>`;
     }
   }
 
+  // ... (El resto del código JS existente se mantiene igual: navLinks, forms submit, etc.) ...
+  
   navLinks.forEach((link) => {
     link.addEventListener("click", function (e) {
       e.preventDefault();

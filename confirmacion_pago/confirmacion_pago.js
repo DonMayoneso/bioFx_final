@@ -22,10 +22,16 @@ async function guardAccessOrRedirect() {
   }
 }
 
-function setUI(status, extraMsg) {
+// NUEVO: Se agregó parámetro 'orderData' para recibir referencia y total
+function setUI(status, extraMsg, orderData = null) {
   const icon = document.getElementById("icon");
   const title = document.getElementById("title");
   const desc = document.getElementById("desc");
+
+  // Elementos nuevos
+  const orderInfo = document.getElementById("orderInfo");
+  const orderReference = document.getElementById("orderReference");
+  const orderTotal = document.getElementById("orderTotal");
 
   const ICONS = {
     APPROVED: '<i class="fas fa-check-circle"></i>',
@@ -36,25 +42,40 @@ function setUI(status, extraMsg) {
 
   icon.innerHTML = ICONS[status] || ICONS.ERROR;
 
+  // Actualizar datos de la orden si existen
+  if (orderData) {
+      orderInfo.style.display = "block";
+      // Intentamos obtener referencia u orderNumber
+      orderReference.textContent = orderData.reference || orderData.orderNumber || orderData.id || "---";
+      
+      // Formatear total
+      const total = Number(orderData.totalAmount || orderData.total || 0);
+      orderTotal.textContent = `$${total.toFixed(2)}`;
+  }
+
   if (status === "APPROVED") {
     title.textContent = "Pago aprobado";
     desc.textContent = extraMsg || "Tu transacción fue procesada correctamente.";
+    icon.style.color = "var(--success)"; // Verde
     limpiarDatosCompra();
   } else if (status === "REJECTED") {
     title.textContent = "Pago rechazado";
     desc.textContent = extraMsg || "Tu transacción no pudo completarse.";
-    } else if (status === "PENDING") {
+    icon.style.color = "#dc3545"; // Rojo
+  } else if (status === "PENDING") {
     title.textContent = "Pago en proceso";
     desc.textContent = extraMsg || "Aún estamos esperando confirmación.";
-    } else {
+    icon.style.color = "#ffc107"; // Amarillo
+  } else {
     title.textContent = "Estado desconocido";
     desc.textContent = extraMsg || "Intenta nuevamente en unos segundos.";
-    }
+    icon.style.color = "var(--gris)";
+  }
 }
 
 async function consultarEstado(orderId, requestId) {
   try {
-    const res = await window.api.getOrderStatus(Number(orderId)); // { status: "PAID"|"PENDING"|"REJECTED"|"EXPIRED"|... }
+    const res = await window.api.getOrderStatus(Number(orderId)); // { status: "PAID"|..., totalAmount: 100, reference: "ORD-123" }
 
     const rawStatus = String(res?.status || res?.Status || "").toUpperCase() || "ERROR";
     let uiStatus = "ERROR";
@@ -94,7 +115,8 @@ async function consultarEstado(orderId, requestId) {
         break;
     }
 
-    setUI(uiStatus, extraMsg);
+    // Pasamos el objeto 'res' completo como tercer parámetro para extraer datos
+    setUI(uiStatus, extraMsg, res);
   } catch (e) {
     setUI("ERROR", e?.message || "No se pudo consultar el estado.");
   }
@@ -106,7 +128,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const { orderId, requestId } = guard;
 
+  // Estado inicial visual (sin datos aun)
   setUI("PENDING", "Consultando con el proveedor de pagos...");
+  
   await consultarEstado(orderId, requestId);
 });
 
