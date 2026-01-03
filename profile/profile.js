@@ -162,7 +162,6 @@ document.addEventListener("DOMContentLoaded", function () {
     ordersListEl.innerHTML = `<p class="orders-loading"><i class="fas fa-spinner fa-spin"></i> Cargando tu historial de pedidos...</p>`;
 
     try {
-      // Se asume que getMyOrdersHistory trae TODAS las órdenes (aprobadas, rechazadas, pendientes)
       // Si el backend filtra, habría que ajustar el backend. Asumimos que trae todo.
       const orders = await window.api.getMyOrdersHistory();
       

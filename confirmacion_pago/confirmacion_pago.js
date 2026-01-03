@@ -46,10 +46,10 @@ function setUI(status, extraMsg, orderData = null) {
   if (orderData) {
       orderInfo.style.display = "block";
       // Intentamos obtener referencia u orderNumber
-      orderReference.textContent = orderData.reference || orderData.orderNumber || orderData.id || "---";
+      orderReference.textContent = orderData.reference || "---";
       
       // Formatear total
-      const total = Number(orderData.totalAmount || orderData.total || 0);
+      const total = Number(orderData.total || 0);
       orderTotal.textContent = `$${total.toFixed(2)}`;
   }
 
