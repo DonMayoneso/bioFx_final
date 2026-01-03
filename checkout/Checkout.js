@@ -10,44 +10,41 @@ function verificarAlmacenamiento() {
 }
 
 function resolveImagePath(p) {
-  if (!p) return "../assets/productos/placeholder.png";
-  if (/^https?:\/\//i.test(p)) return p;
-  if (p.startsWith("/")) return p;
-  if (p.startsWith("../")) return p;
-  return "../" + p.replace(/^\.?\//, "");
+  if (!p) return "../assets/productos/placeholder.webp";
+  if (/^https?:\/\//i.test(p)) return p; // absoluta http(s)
+  if (p.startsWith("/")) return p; // absoluta del host
+  if (p.startsWith("../")) return p; // ya relativa correcta
+  return "../" + p.replace(/^\.?\//, ""); // assets/... -> ../assets/...
 }
 
 // Función para calcular checksum
 function calcularChecksum(items) {
   let checksum = 0;
   items.forEach((item) => {
-    checksum += item.id * item.cantidad + item.precio;
+    const p = Number(item.precioBase ?? item.precio ?? 0);
+    checksum += item.id * item.cantidad + p;
   });
   return checksum % 1000;
 }
 
 // Función para validar integridad de los datos del carrito
 function validarDatosCarrito(carritoData) {
-  if (!carritoData || !carritoData.items || !Array.isArray(carritoData.items)) {
-    return false;
-  }
+  if (!carritoData || !carritoData.items || !Array.isArray(carritoData.items)) return false;
 
-  // Verificar checksum si existe
   if (carritoData.checksum) {
     const checksumCalculado = calcularChecksum(carritoData.items);
-    if (checksumCalculado !== carritoData.checksum) {
-      console.error("Checksum no coincide");
-      return false;
-    }
+    if (checksumCalculado !== carritoData.checksum) return false;
   }
 
   for (const item of carritoData.items) {
-    const precioOk = Number.isFinite(Number(item.precio)) && Number(item.precio) >= 0;
-    if (!item.id || !item.nombre || !precioOk || !Number(item.cantidad)) {
-      return false;
-    }
-  }
+    const p = Number(item.precioBase ?? item.precio ?? NaN);
+    const precioOk = Number.isFinite(p) && p >= 0;
 
+    const qty = Number(item.cantidad ?? item.quantity ?? NaN);
+    const qtyOk = Number.isFinite(qty) && qty > 0;
+
+    if (!item.id || !item.nombre || !precioOk || !qtyOk) return false;
+  }
   return true;
 }
 
@@ -110,19 +107,6 @@ async function guardAccessOrRedirectCheckout() {
     return false;
   }
 }
-
-// Variables para descuentos
-  let descuentos = {
-    porReceta: 0, // 2% por receta médica
-    porMonto: 0, // Descuento automático por monto
-  };
-
-  // CONFIGURACIÓN DE DESCUENTOS
-  const configDescuentos = {
-    montoMinimo: 50, // CAMBIA ESTE VALOR: Monto mínimo para aplicar descuento automático
-    descuentoMonto: 5, // CAMBIA ESTE VALOR: Valor del descuento automático
-  };
-
 
 // Inicialización del checkout
 document.addEventListener("DOMContentLoaded", async function () {
@@ -236,7 +220,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 // Cargar resumen del pedido desde múltiples fuentes
 async function cargarResumenPedido() {
   let carritoData = null;
-  let fuente = "";
 
   // 1) URL ?carrito=...
   try {
@@ -321,21 +304,27 @@ async function cargarResumenPedido() {
         .map((it) => {
           const pid = Number(it.ProductId ?? it.productId ?? it.productID ?? it.pid);
 
-          const rawPrice = it.UnitPrice ?? it.unitPrice ?? it.Precio ?? it.price ?? 0;
-          const precioNum = Number(String(rawPrice).replace(",", "."));
-          const precio = Number.isFinite(precioNum) ? precioNum : 0;
-
           const cantidad = Number(it.Quantity ?? it.quantity ?? it.Cantidad ?? 0);
           const nombre = String(it.Nombre ?? it.nombre ?? `Producto ${pid}`) || `Producto ${pid}`;
           const imagen = String(it.Imagen ?? it.imagen ?? "");
 
-          return { id: pid, nombre, precio, cantidad, imagen };
+          // Precio base (sin descuento)
+          const rawPriceBase = it.UnitPrice ?? it.unitPrice ?? it.Precio ?? it.price ?? 0;
+          const precioBaseNum = Number(String(rawPriceBase).replace(",", "."));
+          const precioBase = Number.isFinite(precioBaseNum) ? precioBaseNum : 0;
+
+          // % descuento (entero)
+          const rawPct = it.Discount ?? it.discount ?? it.Descuento ?? it.descuento ?? 0;
+          const descuentoPctNum = Number(String(rawPct).replace(",", "."));
+          const descuentoPct = Number.isFinite(descuentoPctNum) ? descuentoPctNum : 0;
+
+          return { id: pid, nombre, precioBase, descuentoPct, cantidad, imagen };
         })
         .filter((x) => x.cantidad > 0);
 
       if (items.length > 0) {
         const ahora = Date.now();
-        const checksum = items.reduce((acc, x) => acc + x.id * x.cantidad + x.precio, 0) % 1000;
+        const checksum = items.reduce((acc, x) => acc + x.id * x.cantidad + x.precioBase, 0) % 1000;
         carritoData = { items, origin: window.location.origin, timestamp: ahora, checksum };
         fuente = "api";
         try {
@@ -367,56 +356,83 @@ async function cargarResumenPedido() {
     return;
   }
 
-  let subtotal = 0;
   let html = "";
 
-  carrito.forEach((item) => {
-    const itemTotal = item.precio * item.cantidad;
-    subtotal += itemTotal;
+  // Normaliza campos para cálculo nuevo
+  const itemsCalc = carrito.map((item) => {
+    const precioBase = Number(item.precioBase ?? item.precio ?? 0);
+    const descuentoPct = Number(
+      item.descuentoPct ?? item.descuentoPct ?? item.discountPct ?? item.DiscountPRC ?? 0
+    );
+    const cantidad = Number(item.cantidad ?? item.quantity ?? 0);
+
+    return {
+      ...item,
+      precioBase: Number.isFinite(precioBase) ? precioBase : 0,
+      descuentoPct: Number.isFinite(descuentoPct) ? descuentoPct : 0,
+      cantidad: Number.isFinite(cantidad) ? cantidad : 0,
+    };
+  });
+
+  itemsCalc.forEach((item) => {
+    const itemTotal = item.precioBase * item.cantidad;
+
     html += `
-      <div class="summary-item">
-        <img src="${resolveImagePath(item.imagen)}"
-             alt="${item.nombre || "Producto " + item.id}"
-             onerror="this.onerror=null; this.src='../assets/productos/imgtest.jpg'">
-        <div class="summary-item-info">
-          <div class="summary-item-name">${item.nombre || "Producto " + item.id}</div>
-          <div class="summary-item-details">
-            <span>${item.cantidad} x $${item.precio.toFixed(2)}</span>
-            <span>$${itemTotal.toFixed(2)}</span>
-          </div>
+    <div class="summary-item">
+      <img src="${resolveImagePath(item.imagen)}"
+           alt="${item.nombre || "Producto " + item.id}"
+           onerror="this.onerror=null; this.src='../assets/productos/imgtest.webp'">
+      <div class="summary-item-info">
+        <div class="summary-item-name">${item.nombre || "Producto " + item.id}</div>
+        <div class="summary-item-details">
+          <span>${item.cantidad} x $${item.precioBase.toFixed(2)}</span>
+          <span>$${itemTotal.toFixed(2)}</span>
         </div>
-      </div>`;
+      </div>
+    </div>`;
   });
 
   summaryItems.innerHTML = html;
-  calcularDescuentosYTotal(subtotal);
+
+  const tieneReceta = getTieneRecetaUI();
+  const t = calcularTotalesCheckout(itemsCalc, tieneReceta);
+  renderTotalesCheckout(t);
 }
 
-function calcularDescuentosYTotal(subtotal) {
-  const shipping = 5.0;
+function getTieneRecetaUI() {
+  const fileInput = document.getElementById("recetaMedica");
+  return Boolean(fileInput && fileInput.files && fileInput.files[0]);
+}
 
-  // Aplicar descuento automático por monto
-  if (subtotal >= configDescuentos.montoMinimo && descuentos.porMonto === 0) {
-    descuentos.porMonto = configDescuentos.descuentoMonto;
-    mostrarNotificacionToast(
-      `¡Descuento de $${configDescuentos.descuentoMonto} aplicado por compra mayor a $${configDescuentos.montoMinimo}!`,
-      "success"
-    );
-  } else if (subtotal < configDescuentos.montoMinimo && descuentos.porMonto > 0) {
-    descuentos.porMonto = 0;
-  }
+function calcularTotalesCheckout(items, tieneReceta) {
+  const subtotalBase = items.reduce((acc, it) => acc + it.precioBase * it.cantidad, 0);
 
-  // Calcular descuento total
-  const descuentoTotal = descuentos.porReceta + descuentos.porMonto;
+  const descuentoProductos = items.reduce((acc, it) => {
+    return acc + it.precioBase * (it.descuentoPct / 100) * it.cantidad;
+  }, 0);
 
-  // Calcular total CORREGIDO: subtotal + shipping - descuentoTotal
-  const total = Math.max(0, subtotal + shipping - descuentoTotal);
+  const subtotalNeto = Math.max(0, subtotalBase - descuentoProductos);
+  const shipping = subtotalNeto >= 50 ? 0 : 5;
+  const descuentoReceta = tieneReceta ? subtotalNeto * 0.02 : 0;
 
-  // Actualizar elementos HTML
-  document.getElementById("subtotal").textContent = `$${subtotal.toFixed(2)}`;
-  document.getElementById("discount").textContent = `-$${descuentoTotal.toFixed(2)}`;
-  document.getElementById("shipping").textContent = `$${shipping.toFixed(2)}`;
-  document.getElementById("total").textContent = `$${total.toFixed(2)}`;
+  const descuentoTotal = descuentoProductos + descuentoReceta;
+  const total = Math.max(0, subtotalNeto - descuentoReceta + shipping);
+
+  const r2 = (n) => Math.round(n * 100) / 100;
+
+  return {
+    subtotalBase: r2(subtotalBase),
+    descuentoTotal: r2(descuentoTotal),
+    shipping: r2(shipping),
+    total: r2(total),
+  };
+}
+
+function renderTotalesCheckout(t) {
+  document.getElementById("subtotal").textContent = `$${t.subtotalBase.toFixed(2)}`;
+  document.getElementById("discount").textContent = `-$${t.descuentoTotal.toFixed(2)}`;
+  document.getElementById("shipping").textContent = `$${t.shipping.toFixed(2)}`;
+  document.getElementById("total").textContent = `$${t.total.toFixed(2)}`;
 }
 
 // Función auxiliar para mostrar carrito vacío
@@ -428,12 +444,6 @@ function mostrarCarritoVacio() {
             <a href="../index.html" class="btn btn-primary">Volver a la tienda</a>
         </div>
     `;
-
-  // Resetear descuentos
-  descuentos = {
-    porReceta: 0,
-    porMonto: 0,
-  };
 
   document.getElementById("subtotal").textContent = "$0.00";
   document.getElementById("discount").textContent = "-$0.00";
@@ -458,7 +468,7 @@ function configurarSubidaArchivos() {
 
   resetPreview();
 
-  fileInput.addEventListener("change", function () {
+  fileInput.addEventListener("change", async function () {
     if (this.files && this.files[0]) {
       const file = this.files[0];
       const name = file.name.toLowerCase();
@@ -468,8 +478,8 @@ function configurarSubidaArchivos() {
 
       const isImage =
         type.startsWith("image/") ||
-        name.endsWith(".png") ||
-        name.endsWith(".jpg") ||
+        name.endsWith(".webp") ||
+        name.endsWith(".webp") ||
         name.endsWith(".jpeg");
 
       if (!isPdf && !isImage) {
@@ -477,7 +487,7 @@ function configurarSubidaArchivos() {
           "Solo se admiten archivos PDF o imágenes (PNG, JPG, JPEG) para la receta médica.",
           "error"
         );
-        this.value = "";                
+        this.value = "";
         resetPreview();
         return;
       }
@@ -497,11 +507,10 @@ function configurarSubidaArchivos() {
         };
         reader.readAsDataURL(file);
       }
-      aplicarDescuentoPorReceta();
     } else {
       resetPreview();
-      removerDescuentoPorReceta();
     }
+    await cargarResumenPedido();
   });
 
   // Permitir arrastrar y soltar
@@ -533,24 +542,6 @@ function configurarSubidaArchivos() {
   preview.addEventListener("click", function () {
     fileInput.click();
   });
-}
-
-// Función para aplicar descuento por receta médica
-function aplicarDescuentoPorReceta() {
-  const subtotal = parseFloat(document.getElementById("subtotal").textContent.replace("$", ""));
-  descuentos.porReceta = subtotal * 0.02; // 2% de descuento
-
-  // Recalcular totales
-  calcularDescuentosYTotal(subtotal);
-
-  mostrarNotificacionToast("¡Descuento del 2% aplicado por subir receta médica!", "success");
-}
-
-// Función para remover descuento por receta médica
-function removerDescuentoPorReceta() {
-  descuentos.porReceta = 0;
-  const subtotal = parseFloat(document.getElementById("subtotal").textContent.replace("$", ""));
-  calcularDescuentosYTotal(subtotal);
 }
 
 // Procesar el checkout REAL con PlaceToPay
@@ -585,22 +576,25 @@ async function procesarCheckout(e) {
     const pais = document.getElementById("pais")?.value || "";
     const nombreMedico = document.getElementById("nombreMedico")?.value || "";
 
-    // Normalizar tipoDocumento a algo más "de backend"
     let documentType = "";
     switch ((tipoDocumento || "").toLowerCase()) {
       case "cedula":
-        documentType = "CEDULA";
+        documentType = "CI";
         break;
       case "ruc":
         documentType = "RUC";
         break;
       case "pasaporte":
-        documentType = "PASAPORTE";
+        documentType = "PPN";
         break;
       default:
         documentType = tipoDocumento || "";
         break;
     }
+
+    // 2) Si el usuario adjuntó receta médica, subirla
+    const fileInput = document.getElementById("recetaMedica");
+    const hasFile = fileInput && fileInput.files && fileInput.files[0];
 
     const extraData = {
       documentType,
@@ -611,9 +605,9 @@ async function procesarCheckout(e) {
       postalCode: codigoPostal,
       country: pais,
       doctorName: nombreMedico,
+      tieneReceta: Boolean(hasFile),
     };
 
-    // 1) Crear la orden con los datos completos
     const order = await window.api.createOrderFromCart(reference, description, extraData);
     const orderId = Number(order?.orderId ?? order?.id);
 
@@ -621,10 +615,6 @@ async function procesarCheckout(e) {
       console.error("Respuesta createOrderFromCart:", order);
       throw new Error("Orden inválida: no se obtuvo un ID");
     }
-
-    // 2) Si el usuario adjuntó receta médica, subirla
-    const fileInput = document.getElementById("recetaMedica");
-    const hasFile = fileInput && fileInput.files && fileInput.files[0];
 
     if (hasFile) {
       const file = fileInput.files[0];
@@ -637,7 +627,8 @@ async function procesarCheckout(e) {
         type.startsWith("image/") ||
         name.endsWith(".png") ||
         name.endsWith(".jpg") ||
-        name.endsWith(".jpeg");
+        name.endsWith(".jpeg") ||
+        name.endsWith(".webp");
 
       if (!isPdf && !isImage) {
         throw new Error(
@@ -665,7 +656,10 @@ async function procesarCheckout(e) {
     window.location.href = session.processUrl;
   } catch (err) {
     console.error(err);
-    mostrarNotificacionToast("Error al procesar el pago: " + (err?.message || "desconocido"), "error");
+    mostrarNotificacionToast(
+      "Error al procesar el pago: " + (err?.message || "desconocido"),
+      "error"
+    );
   } finally {
     submitBtn.innerHTML = originalText;
     submitBtn.disabled = false;

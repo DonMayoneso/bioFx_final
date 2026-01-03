@@ -193,7 +193,17 @@ function buildCheckoutSnapshot(items) {
   const safeItems = (items || []).map((it) => ({
     id: Number(it.id),
     nombre: String(it.nombre || ""),
+    // precio base
     precio: Number(it.precio || 0),
+    precioBase: Number(it.precio || 0),
+
+    // precio final
+    precioFinal: Number(it.precioFinal || 0),
+
+    // % descuento
+    descuento: Number(it.descuento || 0),
+    descuentoPct: Number(it.descuento || 0),
+
     cantidad: Number(it.cantidad || 0),
     imagen: String(it.imagen || ""),
   }));
@@ -240,7 +250,7 @@ async function cargarProductos() {
           principal: p.desc_Principal ?? p.Desc_Principal ?? "",
           otros: p.desc_Otros ?? p.Desc_Otros ?? "",
         },
-        contraindicaciones: p.contraindicaciones ?? p.Contraindicaciones ?? "",
+        contraindicaciones: p.contraindicaciones ?? p.Contraindicaciones ?? "", //a
         descuento: Number(p.descuento ?? p.Descuento ?? 0),
         disclaimer: p.disclaimer ?? p.Disclaimer ?? "",
         categoriaIds,
@@ -290,7 +300,9 @@ async function fetchAndBindCart() {
       id: pid,
       nombre: it.Nombre ?? it.nombre ?? (prod?.nombre || ""),
       imagen: prod?.imagen || "",
-      precio: Number(it.UnitPrice ?? it.unitPrice ?? it.Precio ?? it.price ?? 0),
+      precioFinal: Number(it.UnitPriceFinal ?? it.unitPriceFinal ?? 0),
+      precio: Number(it.UnitPrice ?? it.unitPrice ?? 0), // precio base
+      descuento: Number(it.Discount ?? it.discount ?? it.Descuento ?? it.descuento ?? 0),
       cantidad: Number(it.Quantity ?? it.quantity ?? it.Cantidad ?? 0),
     };
   });
@@ -387,8 +399,6 @@ function renderizarProductos() {
   });
 }
 
-
-
 function renderizarProductosDestacados() {
   const cont =
     document.getElementById("featuredProductsGrid") ||
@@ -418,7 +428,7 @@ function renderizarProductosDestacados() {
           : ""
       }
       <div class="product-image">
-        <img src="${producto.imagen}" alt="${producto.nombre}">
+        <img src="${producto.imagen}" loading="lazy" alt="${producto.nombre}">
       </div>
       <div class="product-info">
         <h3>${producto.nombre}</h3>
@@ -453,7 +463,6 @@ function renderizarProductosDestacados() {
     `;
   }
 }
-
 
 // Abrir modal de producto con nueva vista
 function abrirProducto(id) {
@@ -757,7 +766,7 @@ function cargarCarritoItems() {
             <img src="${item.imagen}" alt="${item.nombre}" class="cart-item-image">
             <div class="cart-item-info">
                 <h3 class="cart-item-title">${item.nombre}</h3>
-                <div class="cart-item-price">$${(item.precio * item.cantidad).toFixed(2)}</div>
+                <div class="cart-item-price">$${(item.precioFinal * item.cantidad).toFixed(2)}</div>
                 <div class="cart-item-quantity">
                     <button class="quantity-btn" onclick="actualizarCantidadCarrito(${
                       item.id
@@ -778,7 +787,7 @@ function cargarCarritoItems() {
   });
 
   // Actualizar total
-  const total = carrito.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
+  const total = carrito.reduce((sum, item) => sum + item.precioFinal * item.cantidad, 0);
   cartTotal.textContent = `Total: $${total.toFixed(2)}`;
 }
 
@@ -957,7 +966,7 @@ function renderizarTestimoniosCreativos(testimonios) {
     card.className = "testimonial-creative-card";
     card.innerHTML = `
             <div class="testimonial-image-wrapper">
-                <img src="${testimonio.imagen}" alt="${
+                <img src="${testimonio.imagen}" loading="lazy" alt="${
       testimonio.nombre
     }" class="testimonial-image">
                 <div class="testimonial-overlay">
