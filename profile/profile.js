@@ -7,11 +7,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const ordersListEl = document.querySelector("#orders .orders-list");
 
-  function formatOrderDate(isoUtc) {
+function formatOrderDate(isoUtc) {
     if (!isoUtc) return "";
-    const d = new Date(isoUtc);
-    const opts = { day: "numeric", month: "long", year: "numeric", hour: '2-digit', minute: '2-digit' };
-    return d.toLocaleDateString("es-EC", opts);
+    const fechaSegura = isoUtc.endsWith("Z") ? isoUtc : isoUtc + "Z";
+    const d = new Date(fechaSegura);
+    const opts = { 
+        timeZone: 'America/Guayaquil',
+        day: "numeric", 
+        month: "long", 
+        year: "numeric", 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true
+    };
+    return d.toLocaleString("es-EC", opts); 
   }
 
   // Función auxiliar para traducir y estilizar estados
