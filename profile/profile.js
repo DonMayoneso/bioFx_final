@@ -26,29 +26,31 @@ function formatOrderDate(isoUtc) {
   // Función auxiliar para traducir y estilizar estados
   function getStatusConfig(status) {
     // Normalizamos el string para evitar errores de mayúsculas/minúsculas
-    const s = (status || "").toUpperCase();
+    const s = (status || "").toUpperCase();    
     
     switch (s) {
-      case "APPROVED":
-      case "APROBADA":
-        return { 
+      case "PAID":
+       return { 
           label: "Aprobada", 
           class: "status-approved", 
           icon: "fa-check-circle" 
         };
       case "REJECTED":
-      case "RECHAZADA":
-      case "FAILED":
         return { 
           label: "Rechazada", 
           class: "status-rejected", 
           icon: "fa-times-circle" 
         };
       case "PENDING":
-      case "PENDIENTE":
         return { 
           label: "Pendiente", 
           class: "status-pending", 
+          icon: "fa-clock" 
+        };
+        case "EXPIRED":
+        return { 
+          label: "Expirada", 
+          class: "status-expired", 
           icon: "fa-clock" 
         };
       default:
@@ -66,7 +68,7 @@ function formatOrderDate(isoUtc) {
 
     // 1. Obtener configuración del estado
     // Asumimos que el backend envía 'status' o 'paymentStatus'
-    const statusRaw = order.status || order.paymentStatus || "PENDING";
+    const statusRaw = order.status || order.paymentStatus || "PENDING";    
     const statusConfig = getStatusConfig(statusRaw);
 
     // 2. Obtener código de autorización (si existe)
@@ -189,8 +191,7 @@ function formatOrderDate(isoUtc) {
       let hasPending = false;
 
       // Ordenar: Las más recientes primero
-      orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
+      orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));      
       orders.forEach((order) => {
         const card = buildOrderCard(order);
         ordersListEl.appendChild(card);
