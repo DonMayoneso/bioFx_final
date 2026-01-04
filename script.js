@@ -733,14 +733,80 @@ function cambiarCategoria(categoria) {
 }
 
 // Abrir modal de carrito
+// Abrir modal de carrito con verificación de pagos pendientes
 async function abrirCarrito() {
   if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para ver tu carrito." })))
     return;
 
   await fetchAndBindCart();
   cargarCarritoItems();
+  
+  // Verificar si hay un pago pendiente antes de mostrar acciones
+  await verificarPagoPendienteEnCarrito();
+
   cartModal.style.display = "flex";
   document.body.style.overflow = "hidden";
+}
+
+// Función para verificar pago pendiente y bloquear checkout
+async function verificarPagoPendienteEnCarrito() {
+    const checkoutBtn = document.getElementById("checkoutButton");
+    const cartSummary = document.querySelector(".cart-summary");
+    
+    // Limpiar alertas previas si existen
+    const existingAlert = document.querySelector(".cart-pending-alert");
+    if (existingAlert) existingAlert.remove();
+
+    // Restaurar estado del botón inicialmente
+    if (checkoutBtn) {
+        checkoutBtn.disabled = false;
+        checkoutBtn.classList.remove("btn-disabled");
+        checkoutBtn.innerHTML = "Finalizar Compra";
+    }
+
+    // Obtener la última orden intentada
+    const lastOrderId = localStorage.getItem("lastOrderId");
+    
+    if (!lastOrderId) return;
+
+    try {
+        const statusData = await window.api.getOrderStatus(Number(lastOrderId));
+        
+        const status = (statusData.status || statusData.paymentStatus || "").toUpperCase();
+
+        // Si el estado es PENDIENTE, bloqueamos
+        if (status === "PENDING" || status === "PENDING_PAYMENT") {
+            if (checkoutBtn) {
+                checkoutBtn.disabled = true;
+                checkoutBtn.classList.add("btn-disabled");
+                checkoutBtn.innerHTML = '<i class="fas fa-lock"></i> Pago Pendiente';
+            }
+            const alertDiv = document.createElement("div");
+            alertDiv.className = "cart-pending-alert";
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                <div class="cart-pending-content">
+                    <h4>Tienes una transacción en proceso</h4>
+                    <p>Tu última compra (Orden #${statusData.reference || lastOrderId}) está pendiente de confirmación bancaria.</p>
+                    <p>Por seguridad, no puedes iniciar una nueva compra hasta que esta finalice.</p>
+                    <a href="profile/profile.html">Ver estado en mi perfil</a>
+                </div>
+            `;
+
+            // Insertar alerta antes del resumen o totales
+            if (cartSummary) {
+                cartSummary.insertBefore(alertDiv, cartSummary.firstChild);
+            }
+        } else {
+            if (status === "APPROVED" || status === "PAID" || status === "REJECTED") {
+                localStorage.removeItem("lastOrderId");
+                localStorage.removeItem("lastRequestId");
+            }
+        }
+
+    } catch (e) {
+        console.error("Error verificando pago pendiente:", e);
+    }
 }
 
 // Cerrar modal de carrito

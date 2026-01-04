@@ -103,7 +103,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 1000;
-    padding: 5px 0; /* MODIFICADO: Reducido de 15px a 5px */
+    padding: 5px 0;
     transition: all 0.3s ease;
     height: auto;
 }
@@ -113,13 +113,13 @@ body {
     justify-content: space-between;
     align-items: center;
     transition: all 0.3s ease;
-    min-height: 60px; /* MODIFICADO: Altura mínima controlada */
+    min-height: 60px;
 }
 
 /* Contenedor del logo */
 .logo {
     position: relative;
-    height: 50px; /* MODIFICADO: Reducido de 65px a 50px */
+    height: 50px;
     display: flex;
     align-items: center;
 }
@@ -131,7 +131,7 @@ body {
 
 /* Logo completo - visible por defecto */
 .logo-full {
-    height: 50px; /* MODIFICADO: Ajustado a 50px */
+    height: 50px;
     width: auto;
     opacity: 1;
     visibility: visible;
@@ -143,7 +143,7 @@ body {
     top: 50%;
     left: 0;
     transform: translateY(-50%);
-    height: 40px; /* MODIFICADO: Ajustado a 40px */
+    height: 40px;
     width: auto;
     opacity: 0;
     visibility: hidden;
@@ -151,7 +151,7 @@ body {
 
 /* Estado reducido del header al hacer scroll */
 .header.shrink {
-    padding: 0; /* MODIFICADO: Sin padding extra */
+    padding: 0;
 }
 
 .header.shrink .container {
@@ -241,7 +241,7 @@ body {
 /* RESPONSIVE HEADER - Ajustes críticos para móvil */
 @media (max-width: 768px) {
     .header .container {
-        flex-direction: row; /* Forzar fila para evitar altura excesiva */
+        flex-direction: row;
         flex-wrap: wrap;
         gap: 10px;
         padding: 5px 15px;
@@ -1921,12 +1921,12 @@ body {
 .placetopay-logo {
     max-width: 180px;
     height: auto;
-    filter: brightness(0) invert(1); /* Hace el logo blanco para mejor contraste */
+    filter: brightness(0) invert(1);
     transition: all 0.3s ease;
 }
 
 .placetopay-logo:hover {
-    filter: brightness(0) invert(0.8); /* Efecto hover sutil */
+    filter: brightness(0) invert(0.8);
 }
 
 .payment-terms {
@@ -3640,3 +3640,60 @@ body {
 }
 .snackbar.success { background: var(--success); }
 .snackbar.error   { background: var(--danger); }
+
+/* ESTILOS PARA ALERTA DE PAGO PENDIENTE EN CARRITO */
+.cart-pending-alert {
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    color: #856404;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 20px 0 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 0.9rem;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.cart-pending-alert i {
+    font-size: 1.2rem;
+    margin-top: 2px;
+    color: #856404;
+}
+
+.cart-pending-content h4 {
+    margin: 0 0 5px 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.cart-pending-content p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+.cart-pending-content a {
+    color: #856404;
+    text-decoration: underline;
+    font-weight: 600;
+    margin-top: 5px;
+    display: inline-block;
+}
+
+.cart-pending-content a:hover {
+    color: #533f03;
+}
+
+/* Estado deshabilitado para el botón de checkout */
+.btn-disabled {
+    background-color: #ccc !important;
+    cursor: not-allowed !important;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
