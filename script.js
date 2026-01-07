@@ -732,8 +732,7 @@ function cambiarCategoria(categoria) {
   }
 }
 
-// Abrir modal de carrito
-// Abrir modal de carrito con verificación de pagos pendientes
+// AbrirCarrito para asegurar la verificación
 async function abrirCarrito() {
   if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para ver tu carrito." })))
     return;
@@ -741,23 +740,23 @@ async function abrirCarrito() {
   await fetchAndBindCart();
   cargarCarritoItems();
   
-  // Verificar si hay un pago pendiente antes de mostrar acciones
+  // Verificación exhaustiva de estados
   await verificarPagoPendienteEnCarrito();
 
   cartModal.style.display = "flex";
   document.body.style.overflow = "hidden";
 }
 
-// Función para verificar pago pendiente y bloquear checkout
+//  Función Nucleo: Gestión de PENDING y PENDING_VALIDATION
 async function verificarPagoPendienteEnCarrito() {
     const checkoutBtn = document.getElementById("checkoutButton");
     const cartSummary = document.querySelector(".cart-summary");
     
-    // Limpiar alertas previas si existen
+    // Limpiar alertas previas
     const existingAlert = document.querySelector(".cart-pending-alert");
     if (existingAlert) existingAlert.remove();
 
-    // Restaurar estado del botón inicialmente
+    // Resetear estado del botón
     if (checkoutBtn) {
         checkoutBtn.disabled = false;
         checkoutBtn.classList.remove("btn-disabled");
@@ -774,142 +773,91 @@ async function verificarPagoPendienteEnCarrito() {
         
         const status = (statusData.status || statusData.paymentStatus || "").toUpperCase();
 
-        // Si el estado es PENDIENTE, bloqueamos
-        if (status === "PENDING" || status === "PENDING_PAYMENT") {
+        // CASO 1: PENDING_VALIDATION (Bloqueo Total)
+        if (status === "PENDING_VALIDATION") {
             if (checkoutBtn) {
                 checkoutBtn.disabled = true;
                 checkoutBtn.classList.add("btn-disabled");
-                checkoutBtn.innerHTML = '<i class="fas fa-lock"></i> Pago Pendiente';
+                checkoutBtn.innerHTML = '<i class="fas fa-university"></i> Validando Pago...';
             }
+
             const alertDiv = document.createElement("div");
             alertDiv.className = "cart-pending-alert";
             alertDiv.innerHTML = `
                 <i class="fas fa-exclamation-triangle"></i>
                 <div class="cart-pending-content">
-                    <h4>Tienes una transacción en proceso</h4>
-                    <p>Tu última compra (Orden #${statusData.reference || lastOrderId}) está pendiente de confirmación bancaria.</p>
-                    <p>Por seguridad, no puedes iniciar una nueva compra hasta que esta finalice.</p>
-                    <a href="profile/profile.html">Ver estado en mi perfil</a>
+                    <h4>Validación Bancaria en Curso</h4>
+                    <p>Tu pago (Orden #${statusData.reference || lastOrderId}) está siendo procesado por el banco.</p>
+                    <p>No es posible realizar nuevas compras hasta que recibamos la confirmación definitiva.</p>
+                    <a href="profile/profile.html" style="margin-right: 15px;">Ver en mi perfil</a>
+                    <button class="btn-check-status" onclick="location.reload()" style="background: none; border: underline; cursor: pointer; color: #856404; font-weight: bold; padding:0;">
+                        <i class="fas fa-sync-alt"></i> Actualizar Estado
+                    </button>
                 </div>
             `;
+            if (cartSummary) cartSummary.insertBefore(alertDiv, cartSummary.firstChild);
+        } 
+        
+        // CASO 2: PENDING (Sesión abierta en PlaceToPay - Permite continuar)
+        else if (status === "PENDING") {
+            const alertDiv = document.createElement("div");
+            alertDiv.className = "cart-pending-alert";
+            alertDiv.style.backgroundColor = "#e1f5fe";
+            alertDiv.style.borderColor = "#b3e5fc";
+            alertDiv.style.color = "#01579b";
 
-            // Insertar alerta antes del resumen o totales
-            if (cartSummary) {
-                cartSummary.insertBefore(alertDiv, cartSummary.firstChild);
-            }
-        } else {
-            if (status === "APPROVED" || status === "PAID" || status === "REJECTED") {
-                localStorage.removeItem("lastOrderId");
-                localStorage.removeItem("lastRequestId");
-            }
+            alertDiv.innerHTML = `
+                <i class="fas fa-clock" style="color: #01579b;"></i>
+                <div class="cart-pending-content">
+                    <h4 style="color: #01579b;">Tienes una sesión de pago activa</h4>
+                    <p>Aún no has completado el pago de tu pedido anterior.</p>
+                    <p>Puedes continuar con el pago pendiente o esperar a que expire (30 min) para iniciar uno nuevo.</p>
+                    <a href="profile/profile.html" style="color: #01579b; font-weight: 700;">Ir a completar mi pago</a>
+                </div>
+            `;
+            if (cartSummary) cartSummary.insertBefore(alertDiv, cartSummary.firstChild);
+        }
+
+        // Limpieza de localStorage si la orden ya se resolvió
+        else if (["PAID", "APPROVED", "REJECTED", "CANCELLED", "EXPIRED"].includes(status)) {
+            localStorage.removeItem("lastOrderId");
+            localStorage.removeItem("lastRequestId");
         }
 
     } catch (e) {
-        console.error("Error verificando pago pendiente:", e);
+        console.error("Error al verificar sesiones:", e);
     }
 }
 
-// Cerrar modal de carrito
-function cerrarModalCarrito() {
-  cartModal.style.display = "none";
-  document.body.style.overflow = "auto";
-}
-
-// Cargar items del carrito
-function cargarCarritoItems() {
-  cartItems.innerHTML = "";
-
-  if (carrito.length === 0) {
-    cartItems.innerHTML = '<div class="empty-cart">Tu carrito está vacío</div>';
-    cartTotal.textContent = "Total: $0.00";
-    return;
-  }
-
-  carrito.forEach((item) => {
-    const cartItem = document.createElement("div");
-    cartItem.className = "cart-item";
-    cartItem.innerHTML = `
-            <img src="${item.imagen}" alt="${item.nombre}" class="cart-item-image">
-            <div class="cart-item-info">
-                <h3 class="cart-item-title">${item.nombre}</h3>
-                <div class="cart-item-price">$${(item.precioFinal * item.cantidad).toFixed(2)}</div>
-                <div class="cart-item-quantity">
-                    <button class="quantity-btn" onclick="actualizarCantidadCarrito(${
-                      item.id
-                    }, -1)">-</button>
-                    <span>${item.cantidad}</span>
-                    <button class="quantity-btn" onclick="actualizarCantidadCarrito(${
-                      item.id
-                    }, 1)">+</button>
-                </div>
-                <div class="cart-item-actions">
-                    <button class="cart-item-delete" onclick="eliminarDelCarrito(${item.id})">
-                        <i class="fas fa-trash"></i> Eliminar
-                    </button>
-                </div>
-            </div>
-        `;
-    cartItems.appendChild(cartItem);
-  });
-
-  // Actualizar total
-  const total = carrito.reduce((sum, item) => sum + item.precioFinal * item.cantidad, 0);
-  cartTotal.textContent = `Total: $${total.toFixed(2)}`;
-}
-
-// Actualizar cantidad en el carrito
-async function actualizarCantidadCarrito(productId, delta) {
-  const item = carrito.find((x) => x.id === productId);
-  if (!item) return;
-  const nueva = Number(item.cantidad) + delta;
-
-  try {
-    if (nueva <= 0) {
-      await window.api.removeCartItem(item.itemId);
-    } else {
-      await window.api.updateCartItemQty(item.itemId, nueva);
-    }
-    await fetchAndBindCart();
-    cargarCarritoItems();
-  } catch (e) {
-    (window.Snackbar?.error || mostrarNotificacion)(e.message || "Error al actualizar.");
-  }
-}
-
-// Eliminar producto del carrito
-async function eliminarDelCarrito(productId) {
-  const item = carrito.find((x) => x.id === productId);
-  if (!item) return;
-  try {
-    await window.api.removeCartItem(item.itemId);
-    await fetchAndBindCart();
-    cargarCarritoItems();
-  } catch (e) {
-    (window.Snackbar?.error || mostrarNotificacion)(e.message || "Error al eliminar.");
-  }
-}
-
+// Ajuste en finalizarCompra para prevenir saltos manuales
 async function finalizarCompra() {
-  // 1) Requiere sesión
-  if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para pagar." }))) return;
+    if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para pagar." }))) return;
 
-  // 2) Sincroniza carrito desde API para evitar cantidades desactualizadas
-  await fetchAndBindCart();
+    // Validación de seguridad de último segundo
+    const lastOrderId = localStorage.getItem("lastOrderId");
+    if (lastOrderId) {
+        const check = await window.api.getOrderStatus(Number(lastOrderId));
+        const s = (check.status || "").toUpperCase();
+        if (s === "PENDING_VALIDATION") {
+            (window.Snackbar?.error || mostrarNotificacion)("Tienes un pago en validación. No puedes crear uno nuevo.");
+            return;
+        }
+    }
 
-  // 3) Bloquea si vacío
-  const totalItems = carrito.reduce((s, it) => s + Number(it.cantidad || 0), 0);
-  if (!totalItems) {
-    (window.Snackbar?.error || mostrarNotificacion)?.("Tu carrito está vacío.");
-    return;
-  }
+    await fetchAndBindCart();
+    const totalItems = carrito.reduce((s, it) => s + Number(it.cantidad || 0), 0);
+    if (!totalItems) {
+        (window.Snackbar?.error || mostrarNotificacion)?.("Tu carrito está vacío.");
+        return;
+    }
 
-  // 4) Snapshot mínimo para Checkout
+  // Snapshot mínimo para Checkout
   const snapshot = buildCheckoutSnapshot(carrito);
   try {
     sessionStorage.setItem("carritoCheckout", JSON.stringify(snapshot));
   } catch {}
 
-  // 5) Redirige
+  // Redirige
   window.location.href = "checkout/checkout.html";
 }
 

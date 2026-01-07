@@ -7,57 +7,68 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const ordersListEl = document.querySelector("#orders .orders-list");
 
-function formatOrderDate(isoUtc) {
+  function formatOrderDate(isoUtc) {
     if (!isoUtc) return "";
     const fechaSegura = isoUtc.endsWith("Z") ? isoUtc : isoUtc + "Z";
     const d = new Date(fechaSegura);
-    const opts = { 
-        timeZone: 'America/Guayaquil',
-        day: "numeric", 
-        month: "long", 
-        year: "numeric", 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true
+    const opts = {
+      timeZone: 'America/Guayaquil',
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
     };
-    return d.toLocaleString("es-EC", opts); 
+    return d.toLocaleString("es-EC", opts);
   }
 
-  // Función auxiliar para traducir y estilizar estados
+  // Función auxiliar para traducir y estilizar estados (ACTUALIZADO)
   function getStatusConfig(status) {
-    // Normalizamos el string para evitar errores de mayúsculas/minúsculas
-    const s = (status || "").toUpperCase();    
-    
+    const s = (status || "").toUpperCase();
+
     switch (s) {
       case "PAID":
-       return { 
-          label: "Aprobada", 
-          class: "status-approved", 
-          icon: "fa-check-circle" 
+        return {
+          label: "Aprobada",
+          class: "status-approved",
+          icon: "fa-check-circle"
         };
       case "REJECTED":
-        return { 
-          label: "Rechazada", 
-          class: "status-rejected", 
-          icon: "fa-times-circle" 
+        return {
+          label: "Rechazada",
+          class: "status-rejected",
+          icon: "fa-times-circle"
+        };
+      case "PENDING_VALIDATION":
+        return {
+          label: "En Validación",
+          class: "status-pending-validation",
+          icon: "fa-spinner fa-spin"
         };
       case "PENDING":
-        return { 
-          label: "Pendiente", 
-          class: "status-pending", 
-          icon: "fa-clock" 
+        return {
+          label: "Pendiente",
+          class: "status-pending",
+          icon: "fa-clock"
         };
-        case "EXPIRED":
-        return { 
-          label: "Expirada", 
-          class: "status-expired", 
-          icon: "fa-clock" 
+      case "EXPIRED":
+        return {
+          label: "Expirada",
+          class: "status-expired",
+          icon: "fa-clock"
+        };
+      case "CANCELLED":
+        return {
+          label: "Cancelada",
+          class: "status-cancelled",
+          icon: "fa-ban"
         };
       default:
-        return { 
-          label: status || "Desconocido", 
-          class: "", 
-          icon: "fa-info-circle" 
+        return {
+          label: status || "Desconocido",
+          class: "",
+          icon: "fa-info-circle"
         };
     }
   }
@@ -66,24 +77,17 @@ function formatOrderDate(isoUtc) {
     const card = document.createElement("div");
     card.className = "order-card";
 
-    // 1. Obtener configuración del estado
-    // Asumimos que el backend envía 'status' o 'paymentStatus'
-    const statusRaw = order.status || order.paymentStatus || "PENDING";    
+    const statusRaw = order.status || order.paymentStatus || "PENDING";
     const statusConfig = getStatusConfig(statusRaw);
 
-    // 2. Obtener código de autorización (si existe)
-    // Placetopay suele devolver 'authorization' o 'authCode'
     const authCode = order.authorization || order.authorizationCode || order.authCode || null;
-
     const orderNumber = order.orderNumber || order.reference || `ORD-${order.orderId}`;
     const dateText = formatOrderDate(order.createdAt);
 
     const paymentInfoParts = [];
     if (order.paymentMethodName) paymentInfoParts.push(order.paymentMethodName);
-    
-    // Solo mostramos emisor si no es rechazado (opcional, pero estético)
     if (order.issuerName && statusRaw !== 'REJECTED') paymentInfoParts.push(order.issuerName);
-    
+
     const paymentInfo = paymentInfoParts.length ? `Pago con ${paymentInfoParts.join(" · ")}` : "";
     const hasAttachmentText = order.hasAttachment ? "Incluye factura adjunta" : "";
 
@@ -107,7 +111,6 @@ function formatOrderDate(isoUtc) {
       )
       .join("");
 
-    // HTML Construido con Estado y Auth Code
     card.innerHTML = `
       <div class="order-header">
         <div class="order-header-info">
@@ -120,7 +123,6 @@ function formatOrderDate(isoUtc) {
           </div>
 
           ${authCode ? `<div style="margin-top:5px; font-size: 0.9em; color: var(--gray);">Cód. Autorización: <span class="auth-code">${authCode}</span></div>` : ""}
-
           ${paymentInfo ? `<div class="order-payment" style="margin-top:5px; font-size:0.9em;">${paymentInfo}</div>` : ""}
           ${hasAttachmentText ? `<div class="order-invoice" style="margin-top:5px; color: var(--primary);"><i class="fas fa-paperclip"></i> ${hasAttachmentText}</div>` : ""}
         </div>
@@ -133,21 +135,19 @@ function formatOrderDate(isoUtc) {
       <div class="order-footer">
         <div class="order-total">Total: $${Number(order.totalAmount).toFixed(2)}</div>
         
-        ${statusConfig.label === 'Rechazada' ? 
-          `<div class="order-actions">
+        ${statusRaw === 'REJECTED' ?
+        `<div class="order-actions">
               <a href="../index.html" class="btn-repeat-order">Intentar nuevamente</a>
            </div>` : ''
-        }
+      }
       </div>
     `;
 
     return card;
   }
 
-  // Función para mostrar alerta de pago pendiente
   function showPendingAlert() {
-    // Busca si ya existe para no duplicar
-    if(document.querySelector('.pending-order-alert')) return;
+    if (document.querySelector('.pending-order-alert')) return;
 
     const container = document.querySelector('#orders');
     const alertDiv = document.createElement('div');
@@ -162,8 +162,7 @@ function formatOrderDate(isoUtc) {
         <button class="btn-check-status" onclick="location.reload()">Actualizar Estado</button>
       </div>
     `;
-    
-    // Insertar después del título
+
     const title = container.querySelector('.section-title');
     title.insertAdjacentElement('afterend', alertDiv);
   }
@@ -173,9 +172,8 @@ function formatOrderDate(isoUtc) {
     ordersListEl.innerHTML = `<p class="orders-loading"><i class="fas fa-spinner fa-spin"></i> Cargando tu historial de pedidos...</p>`;
 
     try {
-      // Si el backend filtra, habría que ajustar el backend. Asumimos que trae todo.
       const orders = await window.api.getMyOrdersHistory();
-      
+
       if (!orders || !orders.length) {
         ordersListEl.innerHTML = `<div class="empty-orders">
             <i class="fas fa-box-open"></i>
@@ -186,26 +184,36 @@ function formatOrderDate(isoUtc) {
       }
 
       ordersListEl.innerHTML = "";
-      
-      // Variable para detectar si hay pendientes
       let hasPending = false;
 
-      // Ordenar: Las más recientes primero
-      orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));      
-      orders.forEach((order) => {
-        const card = buildOrderCard(order);
-        ordersListEl.appendChild(card);
+      // Definimos qué estados queremos mostrar (FILTRO APLICADO)
+      const allowedToSee = ["PAID", "REJECTED", "PENDING_VALIDATION"];
 
-        // Chequear estado para la lógica de "Bloqueo/Alerta"
+      orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      orders.forEach((order) => {
         const status = (order.status || order.paymentStatus || "").toUpperCase();
-        if (status === 'PENDING' || status === 'PENDIENTE') {
+
+        // 1. Detectar si hay pagos pendientes para la alerta (PENDING o PENDING_VALIDATION)
+        if (status === 'PENDING' || status === 'PENDIENTE' || status === 'PENDING_VALIDATION') {
           hasPending = true;
         }
+
+        // 2. Filtrar visualmente: Si no es PAID, REJECTED o PENDING_VALIDATION, no se muestra
+        if (!allowedToSee.includes(status)) {
+          return;
+        }
+
+        const card = buildOrderCard(order);
+        ordersListEl.appendChild(card);
       });
 
-      // Si hay pendientes, mostramos la alerta recomendada
-      if(hasPending) {
+      if (hasPending) {
         showPendingAlert();
+      }
+
+      // Si después del filtro no hay nada, mostrar mensaje vacío
+      if (ordersListEl.innerHTML === "") {
+        ordersListEl.innerHTML = `<p class="empty-orders">No hay pedidos para mostrar en este momento.</p>`;
       }
 
     } catch (err) {
@@ -214,23 +222,14 @@ function formatOrderDate(isoUtc) {
     }
   }
 
-  // ... (El resto del código JS existente se mantiene igual: navLinks, forms submit, etc.) ...
-  
   navLinks.forEach((link) => {
     link.addEventListener("click", function (e) {
       e.preventDefault();
-
-      // Remover clase active de todos los enlaces
       navLinks.forEach((l) => l.classList.remove("active"));
-      // Agregar clase active al enlace clickeado
       this.classList.add("active");
-
-      // Ocultar todas las secciones
       tabs.forEach((tab) => {
         tab.classList.remove("active");
       });
-
-      // Mostrar la sección correspondiente
       const targetId = this.getAttribute("data-tab");
       document.getElementById(targetId).classList.add("active");
     });
@@ -241,20 +240,17 @@ function formatOrderDate(isoUtc) {
     billingForm.addEventListener("submit", function (e) {
       e.preventDefault();
       alert("Datos de facturación actualizados correctamente.");
-      // Aquí iría la lógica para guardar los cambios
     });
   }
 
   (async () => {
     try {
-      const perfil = await window.api.getMiPerfil(); // devuelve null si 401
+      const perfil = await window.api.getMiPerfil();
       if (!perfil) {
-        // sin sesión: vuelve a home
         window.location.href = homeLink;
         return;
       }
 
-      // Rellenar encabezado de perfil
       const nombre =
         [perfil?.nombre ?? perfil?.Nombre, perfil?.apellido ?? perfil?.Apellido]
           .filter(Boolean)
@@ -270,7 +266,6 @@ function formatOrderDate(isoUtc) {
       if (emailEl) emailEl.textContent = email;
       if (dateEl && creado) dateEl.textContent = "Miembro desde: " + formatearMesAnio(creado);
 
-      // Rellenar formulario "Información Personal"
       const firstNameEl = document.getElementById("firstName");
       const lastNameEl = document.getElementById("lastName");
       const emailInpEl = document.getElementById("email");
@@ -282,13 +277,6 @@ function formatOrderDate(isoUtc) {
       const pEmail = perfil?.email ?? perfil?.Email ?? "";
       const pTelefono = perfil?.telefono ?? perfil?.Telefono ?? "";
 
-      // Setea valores si existen los inputs
-      if (firstNameEl) firstNameEl.value = pNombre;
-      if (lastNameEl) lastNameEl.value = pApellido;
-      if (emailInpEl) emailInpEl.value = pEmail;
-      if (phoneEl) phoneEl.value = pTelefono;
-
-      // Cargar historial de pedidos pagados
       await loadOrdersHistory();
     } catch {
       window.location.href = homeLink;
@@ -315,14 +303,13 @@ function formatOrderDate(isoUtc) {
     return `${meses[d.getMonth()]} ${d.getFullYear()}`;
   }
 
-  // Logout
   const logoutLink = document.getElementById("logoutLink");
   if (logoutLink) {
     logoutLink.addEventListener("click", async (e) => {
       e.preventDefault();
       try {
         await window.api.logout();
-      } catch {}
+      } catch { }
       window.location.href = homeLink;
     });
   }
@@ -332,7 +319,6 @@ function formatOrderDate(isoUtc) {
     securityForm.addEventListener("submit", function (e) {
       e.preventDefault();
       alert("Contraseña actualizada correctamente.");
-      // Aquí iría la lógica para guardar los cambios
     });
   }
 
@@ -369,14 +355,13 @@ function formatOrderDate(isoUtc) {
   }
 
   function validatePhone() {
-    const digits = (phoneEl.value || "").replace(/\D+/g, ""); // solo números
-    if (digits !== phoneEl.value) phoneEl.value = digits.slice(0, 10); // sanitiza
+    const digits = (phoneEl.value || "").replace(/\D+/g, "");
+    if (digits !== phoneEl.value) phoneEl.value = digits.slice(0, 10);
     const ok = phoneRx.test(phoneEl.value);
     setErr(phoneEl, "phoneErr", ok ? "" : "Debe tener 10 dígitos numéricos.");
     return ok;
   }
 
-  // Sanitiza mientras se escribe
   firstNameEl?.addEventListener("input", () => {
     firstNameEl.value = firstNameEl.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g, "");
     validateNames();
@@ -387,10 +372,9 @@ function formatOrderDate(isoUtc) {
   });
   phoneEl?.addEventListener("input", validatePhone);
 
-  // En el submit, valida antes de enviar
   personalForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const ok = validateNames() & validatePhone(); // evalúa ambas
+    const ok = validateNames() & validatePhone();
     if (!ok) return;
 
     const btn = personalForm.querySelector('button[type="submit"]');
