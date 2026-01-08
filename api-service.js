@@ -99,7 +99,7 @@ class ApiService {
 
   // Carrito
   getMyCart() {
-    return this.request("/api/ShoppingCart/mine"); 
+    return this.request("/api/ShoppingCart/mine");
   }
   clearMyCart() {
     return this.request("/api/ShoppingCart/clear", { method: "POST" });
@@ -232,6 +232,35 @@ class ApiService {
     return this.request(`/api/Transactions/refresh-by-request`, {
       method: "POST",
       body: { requestId },
+    });
+  }
+
+  cancelPaymentByRequestId(requestId) {
+    return this.request(`/api/Transactions/cancel-by-request`, {
+      method: "POST",
+      body: { requestId },
+    });
+  }
+
+  retryPlacetoPaySession(orderOrId, returnUrl) {
+    // Misma resolución de orderId que createPlacetoPaySession
+    let oid = Number(orderOrId);
+
+    if ((!Number.isFinite(oid) || oid <= 0) && orderOrId && typeof orderOrId === "object") {
+      oid = Number(orderOrId.orderId ?? orderOrId.id ?? orderOrId.OrderId);
+    }
+
+    if (!Number.isFinite(oid) || oid <= 0) {
+      oid = Number(this.lastOrderId);
+    }
+
+    if (!Number.isFinite(oid) || oid <= 0) {
+      throw new Error("orderId inválido");
+    }
+
+    return this.request(`/api/Orders/${oid}/placetopay/retry`, {
+      method: "POST",
+      body: { returnUrl },
     });
   }
 }
