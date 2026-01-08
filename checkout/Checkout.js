@@ -84,6 +84,34 @@ async function guardAccessOrRedirectCheckout() {
     const perfil = await window.api.getMiPerfil();
     if (!perfil) throw new Error("NO_SESSION");
 
+    // --- NUEVA LÓGICA DE BLOQUEO POR PAGOS PENDIENTES ---
+    // Verificamos si hay órdenes en curso antes de dejar cargar el checkout
+    try {
+      const orders = await window.api.getMyOrdersHistory();
+      if (orders && Array.isArray(orders)) {
+        // Estados que BLOQUEAN una nueva compra
+        const blockingStatuses = ["PENDING", "PENDIENTE", "PENDING_VALIDATION"];
+        
+        const hasActiveOrder = orders.some(order => {
+           const s = (order.status || order.paymentStatus || "").toUpperCase();
+           return blockingStatuses.includes(s);
+        });
+
+        if (hasActiveOrder) {
+           // Si hay una orden activa, lanzamos error para caer en el catch y redirigir
+           console.warn("Bloqueo: Existe una transacción pendiente o en validación.");
+           alert("Tienes una transacción en proceso. Por favor espera a que finalice.");
+           throw new Error("ACTIVE_TRANSACTION_EXISTS");
+        }
+      }
+    } catch (innerErr) {
+      // Si el error fue explícitamente porque hay transacción activa, lo propagamos
+      if (innerErr.message === "ACTIVE_TRANSACTION_EXISTS") throw innerErr;
+      // Si falló la API de historial, permitimos continuar (fail-open) o bloqueamos según preferencia.
+      // Por usabilidad, solemos dejar pasar si es error de conexión, pero aquí solo logueamos.
+      console.warn("No se pudo verificar historial de órdenes", innerErr);
+    }
+
     // 2) carrito con items
     const cart = await window.api.getMyCart();
     const items = Array.isArray(cart?.Items)
@@ -94,7 +122,7 @@ async function guardAccessOrRedirectCheckout() {
     if (!items || items.length === 0) throw new Error("EMPTY_CART");
 
     return true; // acceso permitido
-  } catch {
+  } catch (err) {
     // limpia rastros mínimos y regresa a la tienda
     try {
       sessionStorage.removeItem("carritoCheckout");
@@ -103,6 +131,8 @@ async function guardAccessOrRedirectCheckout() {
       localStorage.removeItem("carritoCheckout");
     } catch {}
     document.cookie = "carritoCheckout=; max-age=0; path=/";
+    
+    // Redirección al index
     window.location.replace("../index.html");
     return false;
   }
