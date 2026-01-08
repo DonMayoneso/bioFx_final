@@ -228,13 +228,6 @@ class ApiService {
     return this.request(`/api/Orders/${orderId}/status`);
   }
 
-  refreshByRequestId(requestId) {
-    return this.request(`/api/Transactions/refresh-by-request`, {
-      method: "POST",
-      body: { requestId },
-    });
-  }
-
   cancelPaymentByRequestId(requestId) {
     return this.request(`/api/Transactions/cancel-by-request`, {
       method: "POST",
