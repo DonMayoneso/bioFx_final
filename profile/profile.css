@@ -444,3 +444,10 @@
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Estado: VALIDANDO PAGO (PENDING_VALIDATION) */
+.status-validation {
+  background-color: rgba(23, 162, 184, 0.15);
+  color: #17a2b8;
+  border: 1px solid rgba(23, 162, 184, 0.2);
+}

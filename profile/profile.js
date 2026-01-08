@@ -26,8 +26,8 @@ function formatOrderDate(isoUtc) {
   // Función auxiliar para traducir y estilizar estados
   function getStatusConfig(status) {
     // Normalizamos el string para evitar errores de mayúsculas/minúsculas
-    const s = (status || "").toUpperCase();    
-    
+    const s = (status || "").toUpperCase();
+
     switch (s) {
       case "PAID":
        return { 
@@ -36,28 +36,40 @@ function formatOrderDate(isoUtc) {
           icon: "fa-check-circle" 
         };
       case "REJECTED":
-        return { 
-          label: "Rechazada", 
-          class: "status-rejected", 
-          icon: "fa-times-circle" 
+        return {
+          label: "Rechazada",
+          class: "status-rejected",
+          icon: "fa-times-circle"
+        };
+      case "PENDING_VALIDATION": // NUEVO ESTADO
+        return {
+          label: "Validando Pago",
+          class: "status-validation",
+          icon: "fa-sync-alt fa-spin"
         };
       case "PENDING":
-        return { 
-          label: "Pendiente", 
-          class: "status-pending", 
-          icon: "fa-clock" 
+        return {
+          label: "Pendiente",
+          class: "status-pending",
+          icon: "fa-clock"
         };
-        case "EXPIRED":
-        return { 
-          label: "Expirada", 
-          class: "status-expired", 
-          icon: "fa-clock" 
+      case "EXPIRED":
+        return {
+          label: "Expirada",
+          class: "status-expired",
+          icon: "fa-clock"
+        };
+      case "CANCELLED": // NUEVO ESTADO
+        return {
+          label: "Cancelada",
+          class: "status-expired", // Usamos estilo neutro
+          icon: "fa-ban"
         };
       default:
-        return { 
-          label: status || "Desconocido", 
-          class: "", 
-          icon: "fa-info-circle" 
+        return {
+          label: status || "Desconocido",
+          class: "",
+          icon: "fa-info-circle"
         };
     }
   }
@@ -67,8 +79,7 @@ function formatOrderDate(isoUtc) {
     card.className = "order-card";
 
     // 1. Obtener configuración del estado
-    // Asumimos que el backend envía 'status' o 'paymentStatus'
-    const statusRaw = order.status || order.paymentStatus || "PENDING";    
+    const statusRaw = order.status || order.paymentStatus || "PENDING";
     const statusConfig = getStatusConfig(statusRaw);
 
     // 2. Obtener código de autorización (si existe)
@@ -80,8 +91,8 @@ function formatOrderDate(isoUtc) {
 
     const paymentInfoParts = [];
     if (order.paymentMethodName) paymentInfoParts.push(order.paymentMethodName);
-    
-    // Solo mostramos emisor si no es rechazado (opcional, pero estético)
+
+    // Solo mostramos emisor si no es rechazado
     if (order.issuerName && statusRaw !== 'REJECTED') paymentInfoParts.push(order.issuerName);
     
     const paymentInfo = paymentInfoParts.length ? `Pago con ${paymentInfoParts.join(" · ")}` : "";
@@ -146,8 +157,7 @@ function formatOrderDate(isoUtc) {
 
   // Función para mostrar alerta de pago pendiente
   function showPendingAlert() {
-    // Busca si ya existe para no duplicar
-    if(document.querySelector('.pending-order-alert')) return;
+    if (document.querySelector('.pending-order-alert')) return;
 
     const container = document.querySelector('#orders');
     const alertDiv = document.createElement('div');
@@ -162,8 +172,7 @@ function formatOrderDate(isoUtc) {
         <button class="btn-check-status" onclick="location.reload()">Actualizar Estado</button>
       </div>
     `;
-    
-    // Insertar después del título
+
     const title = container.querySelector('.section-title');
     title.insertAdjacentElement('afterend', alertDiv);
   }
@@ -173,10 +182,18 @@ function formatOrderDate(isoUtc) {
     ordersListEl.innerHTML = `<p class="orders-loading"><i class="fas fa-spinner fa-spin"></i> Cargando tu historial de pedidos...</p>`;
 
     try {
-      // Si el backend filtra, habría que ajustar el backend. Asumimos que trae todo.
       const orders = await window.api.getMyOrdersHistory();
-      
-      if (!orders || !orders.length) {
+
+      // FILTRO: Solo permitimos estos estados
+      const allowedStatuses = ['PAID', 'REJECTED', 'PENDING_VALIDATION'];
+
+      // Filtramos la lista completa antes de hacer nada más
+      const visibleOrders = (orders || []).filter(order => {
+        const status = (order.status || order.paymentStatus || "").toUpperCase();
+        return allowedStatuses.includes(status);
+      });
+
+      if (!visibleOrders.length) {
         ordersListEl.innerHTML = `<div class="empty-orders">
             <i class="fas fa-box-open"></i>
             <p>Todavía no tienes pedidos registrados.</p>
@@ -186,27 +203,16 @@ function formatOrderDate(isoUtc) {
       }
 
       ordersListEl.innerHTML = "";
-      
-      // Variable para detectar si hay pendientes
-      let hasPending = false;
 
       // Ordenar: Las más recientes primero
-      orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));      
-      orders.forEach((order) => {
+      visibleOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      
+      visibleOrders.forEach((order) => {
         const card = buildOrderCard(order);
         ordersListEl.appendChild(card);
-
-        // Chequear estado para la lógica de "Bloqueo/Alerta"
-        const status = (order.status || order.paymentStatus || "").toUpperCase();
-        if (status === 'PENDING' || status === 'PENDIENTE') {
-          hasPending = true;
-        }
       });
 
-      // Si hay pendientes, mostramos la alerta recomendada
-      if(hasPending) {
-        showPendingAlert();
-      }
+      // Nota: Como filtramos los 'PENDING' (sesiones abiertas), ya no mostramos la alerta de pago pendiente aquí.
 
     } catch (err) {
       console.error(err);
