@@ -444,24 +444,3 @@
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
-/* Estado: PENDING_VALIDATION */
-.status-pending-validation {
-  background-color: rgba(0, 123, 255, 0.15);
-  color: #007bff;
-  border: 1px solid rgba(0, 123, 255, 0.2);
-}
-
-/* Estado: CANCELLED */
-.status-cancelled {
-  background-color: rgba(108, 117, 125, 0.15);
-  color: #6c757d;
-  border: 1px solid rgba(108, 117, 125, 0.2);
-}
-
-/* Estado: EXPIRED (Añadido por consistencia) */
-.status-expired {
-  background-color: rgba(108, 117, 125, 0.1);
-  color: #555;
-  border: 1px solid rgba(0,0,0,0.1);
-}

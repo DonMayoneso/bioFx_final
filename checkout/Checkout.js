@@ -80,99 +80,32 @@ async function prefillPersonalInfo() {
 
 async function guardAccessOrRedirectCheckout() {
   try {
-    // Verificación de sesión
+    // 1) sesión
     const perfil = await window.api.getMiPerfil();
     if (!perfil) throw new Error("NO_SESSION");
 
-    // NUEVO BLOQUEO: Verificar órdenes PENDING o PENDING_VALIDATION
-    // Llamamos al historial para evitar que el usuario duplique pagos
-    const ordersResponse = await window.api.getMisOrdenes(); 
-    const activeOrder = ordersResponse.find(order => 
-      order.status === 'PENDING' || order.status === 'PENDING_VALIDATION'
-    );
-
-    if (activeOrder) {
-      // Si existe una orden activa, bloqueamos el acceso al Checkout
-      mostrarNotificacionToast("Tienes un proceso de pago pendiente. Por favor, finalízalo antes de continuar.", "error");
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      throw new Error("PENDING_PAYMENT_EXISTS");
-    }
-
-    // Verificación de carrito con items
+    // 2) carrito con items
     const cart = await window.api.getMyCart();
     const items = Array.isArray(cart?.Items)
       ? cart.Items
       : Array.isArray(cart?.items)
       ? cart.items
       : [];
-    
     if (!items || items.length === 0) throw new Error("EMPTY_CART");
 
-    return true; 
-  } catch (error) {
-    console.warn("Acceso denegado:", error.message);
-    // Limpieza de seguridad
+    return true; // acceso permitido
+  } catch {
+    // limpia rastros mínimos y regresa a la tienda
     try {
       sessionStorage.removeItem("carritoCheckout");
+    } catch {}
+    try {
       localStorage.removeItem("carritoCheckout");
     } catch {}
     document.cookie = "carritoCheckout=; max-age=0; path=/";
-    
     window.location.replace("../index.html");
     return false;
   }
-}
-
-/**
- * Retornar la configuración visual según el estado de la orden de PlaceToPay
- * Incluye los nuevos estados: PENDING_VALIDATION y CANCELLED
- */
-function obtenerConfiguracionEstado(status) {
-  const estados = {
-    'PAID': {
-      titulo: "¡Pago Confirmado!",
-      clase: "success",
-      mensaje: "Hemos recibido tu pago correctamente. Tu pedido está en proceso.",
-      icono: "fa-check-circle"
-    },
-    'REJECTED': {
-      titulo: "Pago Rechazado",
-      clase: "error",
-      mensaje: "La transacción fue declinada por el banco. Intenta con otra tarjeta.",
-      icono: "fa-times-circle"
-    },
-    'EXPIRED': {
-      titulo: "Sesión Expirada",
-      clase: "error",
-      mensaje: "El tiempo para pagar ha terminado. Debes iniciar el proceso de nuevo.",
-      icono: "fa-clock"
-    },
-    'PENDING': {
-      titulo: "Pago Pendiente",
-      clase: "info",
-      mensaje: "Tu sesión sigue activa. Tienes 30 minutos para completar el pago.",
-      icono: "fa-hourglass-half"
-    },
-    'PENDING_VALIDATION': {
-      titulo: "Validación Bancaria",
-      clase: "info",
-      mensaje: "Estamos esperando la confirmación de tu banco. Esto puede tardar unos minutos.",
-      icono: "fa-spinner fa-spin"
-    },
-    'CANCELLED': {
-      titulo: "Proceso Cancelado",
-      clase: "error",
-      mensaje: "Has cancelado la operación. Puedes reintentar el pago desde tu carrito.",
-      icono: "fa-ban"
-    }
-  };
-
-  return estados[status] || {
-    titulo: "Estado Desconocido",
-    clase: "info",
-    mensaje: "Estamos verificando el estado de tu transacción.",
-    icono: "fa-question-circle"
-  };
 }
 
 // Inicialización del checkout
