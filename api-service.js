@@ -198,13 +198,13 @@ class ApiService {
     return await res.json();
   }
 
-  createPlacetoPaySession(orderOrId, returnUrl) {
+  createPlacetoPaySession(orderId, returnUrl) {
     // 1) Intenta usar el valor que le pasen
-    let oid = Number(orderOrId);
+    let oid = Number(orderId);
 
     // 2) Si vino un objeto, intenta extraer el id de sus propiedades
-    if ((!Number.isFinite(oid) || oid <= 0) && orderOrId && typeof orderOrId === "object") {
-      oid = Number(orderOrId.orderId ?? orderOrId.id ?? orderOrId.OrderId);
+    if ((!Number.isFinite(oid) || oid <= 0) && orderId && typeof orderId === "object") {
+      oid = Number(orderId.orderId ?? orderId.id ?? orderId.OrderId);
     }
 
     // 3) Si sigue siendo inválido, usa el último orderId creado
@@ -212,7 +212,7 @@ class ApiService {
       oid = Number(this.lastOrderId);
     }
 
-    console.log("createPlacetoPaySession input:", { orderOrId, oid });
+    console.log("createPlacetoPaySession input:", { orderId, oid });
 
     if (!Number.isFinite(oid) || oid <= 0) {
       throw new Error("orderId inválido");
@@ -228,19 +228,32 @@ class ApiService {
     return this.request(`/api/Orders/${orderId}/status`);
   }
 
-  cancelPaymentByRequestId(requestId) {
-    return this.request(`/api/Transactions/cancel-by-request`, {
+  cancelPendingOrder(orderId) {
+    let oid = Number(orderId);
+
+    if ((!Number.isFinite(oid) || oid <= 0) && orderId && typeof orderId === "object") {
+      oid = Number(orderId.orderId ?? orderId.id ?? orderId.OrderId);
+    }
+
+    if (!Number.isFinite(oid) || oid <= 0) {
+      oid = Number(this.lastOrderId);
+    }
+
+    if (!Number.isFinite(oid) || oid <= 0) {
+      throw new Error("orderId inválido");
+    }
+
+    return this.request(`/api/Orders/${oid}/cancel`, {
       method: "POST",
-      body: { requestId },
     });
   }
 
-  retryPlacetoPaySession(orderOrId, returnUrl) {
+  retryPlacetoPaySession(orderId, returnUrl) {
     // Misma resolución de orderId que createPlacetoPaySession
-    let oid = Number(orderOrId);
+    let oid = Number(orderId);
 
-    if ((!Number.isFinite(oid) || oid <= 0) && orderOrId && typeof orderOrId === "object") {
-      oid = Number(orderOrId.orderId ?? orderOrId.id ?? orderOrId.OrderId);
+    if ((!Number.isFinite(oid) || oid <= 0) && orderId && typeof orderId === "object") {
+      oid = Number(orderId.orderId ?? orderId.id ?? orderId.OrderId);
     }
 
     if (!Number.isFinite(oid) || oid <= 0) {
