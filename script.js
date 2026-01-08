@@ -753,11 +753,11 @@ async function verificarPagoPendienteEnCarrito() {
     const checkoutBtn = document.getElementById("checkoutButton");
     const cartSummary = document.querySelector(".cart-summary");
     
-    // Limpiar alertas previas si existen
+    // Limpiar alertas previas si existen para no duplicarlas
     const existingAlert = document.querySelector(".cart-pending-alert");
     if (existingAlert) existingAlert.remove();
 
-    // Restaurar estado del botón inicialmente
+    // Restaurar estado del botón inicialmente (asumimos desbloqueado hasta probar lo contrario)
     if (checkoutBtn) {
         checkoutBtn.disabled = false;
         checkoutBtn.classList.remove("btn-disabled");
@@ -774,22 +774,51 @@ async function verificarPagoPendienteEnCarrito() {
         
         const status = (statusData.status || statusData.paymentStatus || "").toUpperCase();
 
-        // Si el estado es PENDIENTE, bloqueamos
-        if (status === "PENDING" || status === "PENDING_PAYMENT") {
+        // LISTA DE ESTADOS QUE BLOQUEAN UNA NUEVA COMPRA
+        const blockingStatuses = ["PENDING", "PENDING_PAYMENT", "PENDING_VALIDATION"];
+
+        if (blockingStatuses.includes(status)) {
+            // Bloquear botón visual y funcionalmente
             if (checkoutBtn) {
                 checkoutBtn.disabled = true;
                 checkoutBtn.classList.add("btn-disabled");
-                checkoutBtn.innerHTML = '<i class="fas fa-lock"></i> Pago Pendiente';
+                
+                // Texto dinámico según el estado
+                const iconBtn = status === "PENDING_VALIDATION" 
+                    ? '<i class="fas fa-circle-notch fa-spin"></i>' 
+                    : '<i class="fas fa-lock"></i>';
+                
+                checkoutBtn.innerHTML = `${iconBtn} Pago en Proceso`;
             }
+
+            // Crear la alerta visual
             const alertDiv = document.createElement("div");
             alertDiv.className = "cart-pending-alert";
+            
+            // Personalizamos el mensaje según si es Pendiente (usuario debe actuar) o Validación (banco procesando)
+            const isValidation = status === "PENDING_VALIDATION";
+            
+            const tituloMsg = isValidation 
+                ? "Estamos validando tu pago anterior" 
+                : "Tienes una transacción pendiente";
+                
+            const cuerpoMsg = isValidation
+                ? "Tu banco está procesando la respuesta final. Por seguridad, espera un momento."
+                : `Tu orden #${statusData.reference || lastOrderId} aún no ha sido finalizada.`;
+
             alertDiv.innerHTML = `
-                <i class="fas fa-exclamation-triangle"></i>
+                <i class="fas ${isValidation ? 'fa-sync-alt fa-spin' : 'fa-exclamation-triangle'}"></i>
                 <div class="cart-pending-content">
-                    <h4>Tienes una transacción en proceso</h4>
-                    <p>Tu última compra (Orden #${statusData.reference || lastOrderId}) está pendiente de confirmación bancaria.</p>
-                    <p>Por seguridad, no puedes iniciar una nueva compra hasta que esta finalice.</p>
-                    <a href="profile/profile.html">Ver estado en mi perfil</a>
+                    <h4>${tituloMsg}</h4>
+                    <p>${cuerpoMsg}</p>
+                    <p style="font-size: 0.85em; margin-top:5px;">No puedes iniciar una nueva compra hasta que esta finalice.</p>
+                    
+                    <div style="margin-top: 8px; display: flex; gap: 15px; align-items: center;">
+                        <a href="profile/profile.html">Ver en mi perfil</a>
+                        <a href="#" onclick="verificarPagoPendienteEnCarrito(); return false;" style="color: var(--primary); text-decoration: none;">
+                            <i class="fas fa-sync"></i> Verificar estado ahora
+                        </a>
+                    </div>
                 </div>
             `;
 
@@ -798,9 +827,14 @@ async function verificarPagoPendienteEnCarrito() {
                 cartSummary.insertBefore(alertDiv, cartSummary.firstChild);
             }
         } else {
-            if (status === "APPROVED" || status === "PAID" || status === "REJECTED") {
+            // Si el estado es FINAL (Pagado, Rechazado, Expirado o Cancelado), limpiamos el bloqueo
+            // Agregamos EXPIRED y CANCELLED para que el usuario no se quede atascado por una sesión vieja
+            const finalStatuses = ["APPROVED", "PAID", "REJECTED", "EXPIRED", "CANCELLED"];
+            
+            if (finalStatuses.includes(status)) {
                 localStorage.removeItem("lastOrderId");
                 localStorage.removeItem("lastRequestId");
+                // El botón ya se restauró al inicio de la función
             }
         }
 

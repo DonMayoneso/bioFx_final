@@ -131,8 +131,6 @@ async function guardAccessOrRedirectCheckout() {
       localStorage.removeItem("carritoCheckout");
     } catch {}
     document.cookie = "carritoCheckout=; max-age=0; path=/";
-    
-    // Redirección al index
     window.location.replace("../index.html");
     return false;
   }
