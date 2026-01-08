@@ -252,7 +252,6 @@
         </a>
         <div class="container">
             <div class="header-content">
-                <!-- Aquí debes reemplazar la ruta con la correcta para tu isotipo -->
                 <img src="../assets/logos/isotipo.webp" alt="BioFX Isotipo" class="isotipo">
                 <div>
                     <h1>Políticas y Términos de BioFX</h1>
@@ -601,7 +600,7 @@
                 </div>
             </div>
 
-            <div class="policy-section">
+            <div class="policy-section" id="data-protection">
                 <div class="policy-section-header">
                     <h3>Protección de datos personales (Cláusula Placetopay)</h3>
                     <i class="fas fa-chevron-down toggle-icon"></i>
@@ -640,42 +639,36 @@
             const termsSection = document.getElementById('terms');
             const faqSection = document.getElementById('faq-placetopay');
             
-            privacyLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                privacySection.style.display = 'block';
+            // Función para cambiar de pestaña
+            function switchTab(tabId) {
+                // Ocultar todo
+                privacySection.style.display = 'none';
                 termsSection.style.display = 'none';
                 faqSection.style.display = 'none';
                 
-                privacyLink.classList.add('active');
+                privacyLink.classList.remove('active');
                 termsLink.classList.remove('active');
                 faqLink.classList.remove('active');
-            });
-            
-            termsLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                privacySection.style.display = 'none';
-                termsSection.style.display = 'block';
-                faqSection.style.display = 'none';
-                
-                privacyLink.classList.remove('active');
-                termsLink.classList.add('active');
-                faqLink.classList.remove('active');
-            });
 
-            faqLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                privacySection.style.display = 'none';
-                termsSection.style.display = 'none';
-                faqSection.style.display = 'block';
-                
-                privacyLink.classList.remove('active');
-                termsLink.classList.remove('active');
-                faqLink.classList.add('active');
-            });
+                // Mostrar seleccionado
+                if (tabId === 'privacy') {
+                    privacySection.style.display = 'block';
+                    privacyLink.classList.add('active');
+                } else if (tabId === 'terms') {
+                    termsSection.style.display = 'block';
+                    termsLink.classList.add('active');
+                } else if (tabId === 'faq-placetopay') {
+                    faqSection.style.display = 'block';
+                    faqLink.classList.add('active');
+                }
+            }
+
+            privacyLink.addEventListener('click', (e) => { e.preventDefault(); switchTab('privacy'); });
+            termsLink.addEventListener('click', (e) => { e.preventDefault(); switchTab('terms'); });
+            faqLink.addEventListener('click', (e) => { e.preventDefault(); switchTab('faq-placetopay'); });
             
             // Funcionalidad para acordeón
             const sectionHeaders = document.querySelectorAll('.policy-section-header');
-            
             sectionHeaders.forEach(header => {
                 header.addEventListener('click', function() {
                     const section = this.parentElement;
@@ -683,13 +676,47 @@
                 });
             });
             
-            // Abrir la primera sección por defecto
-            if (document.querySelector('.policy-section')) {
-                // Solo activamos si no hay ninguna activa
-                if(!document.querySelector('.policy-section.active')) {
-                     document.querySelector('.policy-section').classList.add('active');
+            // --- LÓGICA DE APERTURA AUTOMÁTICA (DEEP LINKING) ---
+            function handleHash() {
+                const hash = window.location.hash;
+                
+                if (hash === '#terms') {
+                    switchTab('terms');
+                } else if (hash === '#faq-placetopay') {
+                    switchTab('faq-placetopay');
+                } else if (hash === '#data-protection') {
+                    // 1. Ir a la pestaña de FAQ
+                    switchTab('faq-placetopay');
+                    
+                    // 2. Buscar la sección específica
+                    const targetSection = document.getElementById('data-protection');
+                    if (targetSection) {
+                        // 3. Abrir el acordeón
+                        targetSection.classList.add('active');
+                        
+                        // 4. Scroll suave hacia la sección
+                        setTimeout(() => {
+                            targetSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            // Pequeño efecto visual
+                            targetSection.style.transition = "box-shadow 0.5s";
+                            targetSection.style.boxShadow = "0 0 15px rgba(42, 127, 140, 0.5)";
+                            setTimeout(() => { targetSection.style.boxShadow = ""; }, 1500);
+                        }, 100);
+                    }
+                } else {
+                    // Default: Privacy (si no hay hash o es #privacy)
+                    if (hash === '#privacy' || !hash) {
+                        switchTab('privacy');
+                        // Asegurar que el primer acordeón esté abierto si es la vista por defecto
+                        if(!document.querySelector('.policy-section.active') && document.querySelector('#privacy .policy-section')) {
+                             document.querySelector('#privacy .policy-section').classList.add('active');
+                        }
+                    }
                 }
             }
+
+            // Ejecutar al cargar
+            handleHash();
         });
     </script>
 </body>
