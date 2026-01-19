@@ -7,20 +7,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const ordersListEl = document.querySelector("#orders .orders-list");
 
-function formatOrderDate(isoUtc) {
+  function formatOrderDate(isoUtc) {
     if (!isoUtc) return "";
     const fechaSegura = isoUtc.endsWith("Z") ? isoUtc : isoUtc + "Z";
     const d = new Date(fechaSegura);
-    const opts = { 
-        timeZone: 'America/Guayaquil',
-        day: "numeric", 
-        month: "long", 
-        year: "numeric", 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true
+    const opts = {
+      timeZone: "America/Guayaquil",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     };
-    return d.toLocaleString("es-EC", opts); 
+    return d.toLocaleString("es-EC", opts);
   }
 
   // Función auxiliar para traducir y estilizar estados
@@ -30,46 +30,46 @@ function formatOrderDate(isoUtc) {
 
     switch (s) {
       case "PAID":
-       return { 
-          label: "Aprobada", 
-          class: "status-approved", 
-          icon: "fa-check-circle" 
+        return {
+          label: "Aprobada",
+          class: "status-approved",
+          icon: "fa-check-circle",
         };
       case "REJECTED":
         return {
           label: "Rechazada",
           class: "status-rejected",
-          icon: "fa-times-circle"
+          icon: "fa-times-circle",
         };
       case "PENDING_VALIDATION": // NUEVO ESTADO
         return {
           label: "Validando Pago",
           class: "status-validation",
-          icon: "fa-sync-alt fa-spin"
+          icon: "fa-sync-alt fa-spin",
         };
       case "PENDING":
         return {
           label: "Pendiente",
           class: "status-pending",
-          icon: "fa-clock"
+          icon: "fa-clock",
         };
       case "EXPIRED":
         return {
           label: "Expirada",
           class: "status-expired",
-          icon: "fa-clock"
+          icon: "fa-clock",
         };
       case "CANCELLED": // NUEVO ESTADO
         return {
           label: "Cancelada",
           class: "status-expired", // Usamos estilo neutro
-          icon: "fa-ban"
+          icon: "fa-ban",
         };
       default:
         return {
           label: status || "Desconocido",
           class: "",
-          icon: "fa-info-circle"
+          icon: "fa-info-circle",
         };
     }
   }
@@ -83,20 +83,27 @@ function formatOrderDate(isoUtc) {
     const statusConfig = getStatusConfig(statusRaw);
 
     // 2. Obtener código de autorización (si existe)
-    // Placetopay suele devolver 'authorization' o 'authCode'
-    const authCode = order.authorization || order.authorizationCode || order.authCode || null;
+    const authCode =
+      order.authorization || order.authorizationCode || order.authCode || null;
 
-    const orderNumber = order.orderNumber || order.reference || `ORD-${order.orderId}`;
+    const orderNumber =
+      order.orderNumber || order.reference || `ORD-${order.orderId}`;
     const dateText = formatOrderDate(order.createdAt);
 
     const paymentInfoParts = [];
-    if (order.paymentMethodName) paymentInfoParts.push(order.paymentMethodName);
+    if (order.paymentMethodName)
+      paymentInfoParts.push(order.paymentMethodName);
 
     // Solo mostramos emisor si no es rechazado
-    if (order.issuerName && statusRaw !== 'REJECTED') paymentInfoParts.push(order.issuerName);
-    
-    const paymentInfo = paymentInfoParts.length ? `Pago con ${paymentInfoParts.join(" · ")}` : "";
-    const hasAttachmentText = order.hasAttachment ? "Incluye factura adjunta" : "";
+    if (order.issuerName && statusRaw !== "REJECTED")
+      paymentInfoParts.push(order.issuerName);
+
+    const paymentInfo = paymentInfoParts.length
+      ? `Pago con ${paymentInfoParts.join(" · ")}`
+      : "";
+    const hasAttachmentText = order.hasAttachment
+      ? "Incluye factura adjunta"
+      : "";
 
     const itemsHtml = (order.items || [])
       .map(
@@ -123,17 +130,33 @@ function formatOrderDate(isoUtc) {
       <div class="order-header">
         <div class="order-header-info">
           <div class="order-id">Pedido #${orderNumber}</div>
-          ${dateText ? `<div class="order-date">Realizado el: ${dateText}</div>` : ""}
+          ${
+            dateText
+              ? `<div class="order-date">Realizado el: ${dateText}</div>`
+              : ""
+          }
           
           <div class="order-status-badge ${statusConfig.class}">
             <i class="fas ${statusConfig.icon}"></i>
             ${statusConfig.label}
           </div>
 
-          ${authCode ? `<div style="margin-top:5px; font-size: 0.9em; color: var(--gray);">Cód. Autorización: <span class="auth-code">${authCode}</span></div>` : ""}
+          ${
+            authCode
+              ? `<div style="margin-top:5px; font-size: 0.9em; color: var(--gray);">Cód. Autorización: <span class="auth-code">${authCode}</span></div>`
+              : ""
+          }
 
-          ${paymentInfo ? `<div class="order-payment" style="margin-top:5px; font-size:0.9em;">${paymentInfo}</div>` : ""}
-          ${hasAttachmentText ? `<div class="order-invoice" style="margin-top:5px; color: var(--primary);"><i class="fas fa-paperclip"></i> ${hasAttachmentText}</div>` : ""}
+          ${
+            paymentInfo
+              ? `<div class="order-payment" style="margin-top:5px; font-size:0.9em;">${paymentInfo}</div>`
+              : ""
+          }
+          ${
+            hasAttachmentText
+              ? `<div class="order-invoice" style="margin-top:5px; color: var(--primary);"><i class="fas fa-paperclip"></i> ${hasAttachmentText}</div>`
+              : ""
+          }
         </div>
       </div>
 
@@ -142,12 +165,16 @@ function formatOrderDate(isoUtc) {
       </div>
 
       <div class="order-footer">
-        <div class="order-total">Total: $${Number(order.totalAmount).toFixed(2)}</div>
+        <div class="order-total">Total: $${Number(order.totalAmount).toFixed(
+          2
+        )}</div>
         
-        ${statusConfig.label === 'Rechazada' ? 
-          `<div class="order-actions">
+        ${
+          statusConfig.label === "Rechazada"
+            ? `<div class="order-actions">
               <a href="../index.html" class="btn-repeat-order">Intentar nuevamente</a>
-           </div>` : ''
+            </div>`
+            : ""
         }
       </div>
     `;
@@ -155,26 +182,44 @@ function formatOrderDate(isoUtc) {
     return card;
   }
 
-  // Función para mostrar alerta de pago pendiente
-  function showPendingAlert() {
-    if (document.querySelector('.pending-order-alert')) return;
+  // Función mejorada para mostrar alerta (admite modo validación)
+  function showPendingAlert(title, message, isValidation = false) {
+    if (document.querySelector(".pending-order-alert")) return;
 
-    const container = document.querySelector('#orders');
-    const alertDiv = document.createElement('div');
-    alertDiv.className = 'pending-order-alert';
+    const container = document.querySelector("#orders");
+    const alertDiv = document.createElement("div");
+
+    // Asigna la clase base y añade 'validation-mode' si es necesario
+    const cssClass = isValidation
+      ? "pending-order-alert validation-mode"
+      : "pending-order-alert";
+    const iconClass = isValidation
+      ? "fa-sync-alt fa-spin"
+      : "fa-exclamation-triangle";
+
+    // Textos por defecto
+    const finalTitle = title || "Pago Pendiente Detectado";
+    const finalMsg =
+      message ||
+      "Tu banco está procesando una transacción. Por favor espera la confirmación antes de realizar una nueva compra.";
+
+    alertDiv.className = cssClass;
     alertDiv.innerHTML = `
-      <i class="fas fa-exclamation-triangle"></i>
+      <i class="fas ${iconClass}"></i>
       <div>
-        <strong>Pago Pendiente Detectado</strong>
-        <p style="margin:0; font-size:0.9rem;">Tu banco está procesando una transacción. Por favor espera la confirmación antes de realizar una nueva compra.</p>
+        <strong>${finalTitle}</strong>
+        <p style="margin:0; font-size:0.9rem;">${finalMsg}</p>
       </div>
       <div class="pending-actions">
         <button class="btn-check-status" onclick="location.reload()">Actualizar Estado</button>
       </div>
     `;
 
-    const title = container.querySelector('.section-title');
-    title.insertAdjacentElement('afterend', alertDiv);
+    // Inserta la alerta después del título de la sección
+    const sectionTitle = container.querySelector(".section-title");
+    if (sectionTitle) {
+      sectionTitle.insertAdjacentElement("afterend", alertDiv);
+    }
   }
 
   async function loadOrdersHistory() {
@@ -185,11 +230,15 @@ function formatOrderDate(isoUtc) {
       const orders = await window.api.getMyOrdersHistory();
 
       // FILTRO: Solo permitimos estos estados
-      const allowedStatuses = ['PAID', 'REJECTED', 'PENDING_VALIDATION'];
+      const allowedStatuses = ["PAID", "REJECTED", "PENDING_VALIDATION"];
 
       // Filtramos la lista completa antes de hacer nada más
-      const visibleOrders = (orders || []).filter(order => {
-        const status = (order.status || order.paymentStatus || "").toUpperCase();
+      const visibleOrders = (orders || []).filter((order) => {
+        const status = (
+          order.status ||
+          order.paymentStatus ||
+          ""
+        ).toUpperCase();
         return allowedStatuses.includes(status);
       });
 
@@ -205,23 +254,44 @@ function formatOrderDate(isoUtc) {
       ordersListEl.innerHTML = "";
 
       // Ordenar: Las más recientes primero
-      visibleOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      
+      visibleOrders.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      // Bandera para detectar validación
+      let hasValidationOrder = false;
+
       visibleOrders.forEach((order) => {
+        const status = (
+          order.status ||
+          order.paymentStatus ||
+          ""
+        ).toUpperCase();
+
+        // Detectar si hay una orden validando
+        if (status === "PENDING_VALIDATION") {
+          hasValidationOrder = true;
+        }
+
         const card = buildOrderCard(order);
         ordersListEl.appendChild(card);
       });
 
-      // Nota: Como filtramos los 'PENDING' (sesiones abiertas), ya no mostramos la alerta de pago pendiente aquí.
-
+      // Si encontramos una orden en validación, mostramos la alerta Turquesa
+      if (hasValidationOrder) {
+        showPendingAlert(
+          "Pago en Validación",
+          "Tu transacción está siendo validada por el banco. El estado se actualizará automáticamente en unos instantes.",
+          true // TRUE activa el modo validación
+        );
+      }
     } catch (err) {
       console.error(err);
       ordersListEl.innerHTML = `<p class="orders-error">No se pudo cargar tu historial de pedidos. Intenta más tarde.</p>`;
     }
   }
 
-  // ... (El resto del código JS existente se mantiene igual: navLinks, forms submit, etc.) ...
-  
+  // Navegación de Tabs
   navLinks.forEach((link) => {
     link.addEventListener("click", function (e) {
       e.preventDefault();
@@ -251,6 +321,7 @@ function formatOrderDate(isoUtc) {
     });
   }
 
+  // Carga inicial y validación de sesión
   (async () => {
     try {
       const perfil = await window.api.getMiPerfil(); // devuelve null si 401
@@ -274,7 +345,8 @@ function formatOrderDate(isoUtc) {
 
       if (nameEl) nameEl.textContent = nombre;
       if (emailEl) emailEl.textContent = email;
-      if (dateEl && creado) dateEl.textContent = "Miembro desde: " + formatearMesAnio(creado);
+      if (dateEl && creado)
+        dateEl.textContent = "Miembro desde: " + formatearMesAnio(creado);
 
       // Rellenar formulario "Información Personal"
       const firstNameEl = document.getElementById("firstName");
@@ -294,7 +366,7 @@ function formatOrderDate(isoUtc) {
       if (emailInpEl) emailInpEl.value = pEmail;
       if (phoneEl) phoneEl.value = pTelefono;
 
-      // Cargar historial de pedidos pagados
+      // Cargar historial de pedidos
       await loadOrdersHistory();
     } catch {
       window.location.href = homeLink;
@@ -342,6 +414,7 @@ function formatOrderDate(isoUtc) {
     });
   }
 
+  // Validaciones del formulario personal
   const firstNameEl = document.getElementById("firstName");
   const lastNameEl = document.getElementById("lastName");
   const phoneEl = document.getElementById("phone");
@@ -384,11 +457,17 @@ function formatOrderDate(isoUtc) {
 
   // Sanitiza mientras se escribe
   firstNameEl?.addEventListener("input", () => {
-    firstNameEl.value = firstNameEl.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g, "");
+    firstNameEl.value = firstNameEl.value.replace(
+      /[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g,
+      ""
+    );
     validateNames();
   });
   lastNameEl?.addEventListener("input", () => {
-    lastNameEl.value = lastNameEl.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g, "");
+    lastNameEl.value = lastNameEl.value.replace(
+      /[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g,
+      ""
+    );
     validateNames();
   });
   phoneEl?.addEventListener("input", validatePhone);

@@ -403,7 +403,7 @@
   margin-left: 5px;
 }
 
-/* Alerta de Pago Pendiente */
+/* ALERTA DE PAGO PENDIENTE (Base y Amarillo) */
 .pending-order-alert {
   background-color: #fff3cd;
   color: #856404;
@@ -445,7 +445,20 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Estado: VALIDANDO PAGO (PENDING_VALIDATION) */
+.pending-order-alert.validation-mode {
+    background-color: rgba(23, 162, 184, 0.15);
+    color: #0f6674;
+    border: 1px solid rgba(23, 162, 184, 0.3);
+}
+
+.pending-order-alert.validation-mode .btn-check-status {
+    background-color: #17a2b8;
+}
+
+.pending-order-alert.validation-mode .btn-check-status:hover {
+    background-color: #138496;
+}
+
 .status-validation {
   background-color: rgba(23, 162, 184, 0.15);
   color: #17a2b8;

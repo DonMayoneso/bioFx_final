@@ -732,109 +732,89 @@ function cambiarCategoria(categoria) {
   }
 }
 
-// Abrir modal de carrito
-// Abrir modal de carrito con verificación de pagos pendientes
+// Abrir modal de carrito con verificación
 async function abrirCarrito() {
-  if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para ver tu carrito." })))
-    return;
+    if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para ver tu carrito." })))
+        return;
 
-  await fetchAndBindCart();
-  cargarCarritoItems();
-  
-  // Verificar si hay un pago pendiente antes de mostrar acciones
-  await verificarPagoPendienteEnCarrito();
+    await fetchAndBindCart();
+    cargarCarritoItems();
+    
+    // Verificar si hay un pago pendiente para decidir qué mostrar
+    await verificarPagoPendienteEnCarrito();
 
-  cartModal.style.display = "flex";
-  document.body.style.overflow = "hidden";
+    cartModal.style.display = "flex";
+    document.body.style.overflow = "hidden";
 }
 
-// Función para verificar pago pendiente y bloquear checkout
+// Función principal para gestionar estados de pago en el carrito
 async function verificarPagoPendienteEnCarrito() {
     const checkoutBtn = document.getElementById("checkoutButton");
     const cartSummary = document.querySelector(".cart-summary");
     
-    // Limpiar alertas previas si existen para no duplicarlas
+    // 1. Limpieza inicial de alertas y estados
     const existingAlert = document.querySelector(".cart-pending-alert");
     if (existingAlert) existingAlert.remove();
 
-    // Restaurar estado del botón inicialmente (asumimos desbloqueado hasta probar lo contrario)
     if (checkoutBtn) {
         checkoutBtn.disabled = false;
-        checkoutBtn.classList.remove("btn-disabled");
+        checkoutBtn.classList.remove("btn-disabled", "btn-continue-payment");
         checkoutBtn.innerHTML = "Finalizar Compra";
+        checkoutBtn.removeAttribute("data-action"); 
+        checkoutBtn.removeAttribute("data-order-id");
     }
 
-    // Obtener la última orden intentada
+    // 2. Obtener la última orden
     const lastOrderId = localStorage.getItem("lastOrderId");
-    
-    if (!lastOrderId) return;
+    if (!lastOrderId) return; 
 
     try {
         const statusData = await window.api.getOrderStatus(Number(lastOrderId));
-        
         const status = (statusData.status || statusData.paymentStatus || "").toUpperCase();
 
-        // LISTA DE ESTADOS QUE BLOQUEAN UNA NUEVA COMPRA
-        const blockingStatuses = ["PENDING", "PENDING_PAYMENT", "PENDING_VALIDATION"];
-
-        if (blockingStatuses.includes(status)) {
-            // Bloquear botón visual y funcionalmente
+        // --- CASO A: VALIDANDO (Bloqueo total - Color Turquesa) ---
+        if (status === "PENDING_VALIDATION") {
+            
             if (checkoutBtn) {
                 checkoutBtn.disabled = true;
                 checkoutBtn.classList.add("btn-disabled");
-                
-                // Texto dinámico según el estado
-                const iconBtn = status === "PENDING_VALIDATION" 
-                    ? '<i class="fas fa-circle-notch fa-spin"></i>' 
-                    : '<i class="fas fa-lock"></i>';
-                
-                checkoutBtn.innerHTML = `${iconBtn} Pago en Proceso`;
+                checkoutBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Validando Pago...';
             }
 
-            // Crear la alerta visual
-            const alertDiv = document.createElement("div");
-            alertDiv.className = "cart-pending-alert";
+            injectCartAlert(cartSummary, {
+                type: "validation", // Activa estilo turquesa
+                title: "Estamos validando tu pago",
+                msg: "Tu banco está procesando la respuesta. Por seguridad, espera un momento.",
+                icon: "fa-sync-alt fa-spin"
+            });
+
+        // --- CASO B: PENDIENTE (Habilitado pero Redirige - Color Amarillo) ---
+        } else if (["PENDING", "PENDING_PAYMENT"].includes(status)) {
             
-            // Personalizamos el mensaje según si es Pendiente (usuario debe actuar) o Validación (banco procesando)
-            const isValidation = status === "PENDING_VALIDATION";
-            
-            const tituloMsg = isValidation 
-                ? "Estamos validando tu pago anterior" 
-                : "Tienes una transacción pendiente";
+            if (checkoutBtn) {
+                // Habilitamos el botón pero cambiamos su función
+                checkoutBtn.disabled = false;
+                checkoutBtn.classList.add("btn-continue-payment");
+                checkoutBtn.innerHTML = 'Continuar con el Pago <i class="fas fa-arrow-right"></i>';
                 
-            const cuerpoMsg = isValidation
-                ? "Tu banco está procesando la respuesta final. Por seguridad, espera un momento."
-                : `Tu orden #${statusData.reference || lastOrderId} aún no ha sido finalizada.`;
-
-            alertDiv.innerHTML = `
-                <i class="fas ${isValidation ? 'fa-sync-alt fa-spin' : 'fa-exclamation-triangle'}"></i>
-                <div class="cart-pending-content">
-                    <h4>${tituloMsg}</h4>
-                    <p>${cuerpoMsg}</p>
-                    <p style="font-size: 0.85em; margin-top:5px;">No puedes iniciar una nueva compra hasta que esta finalice.</p>
-                    
-                    <div style="margin-top: 8px; display: flex; gap: 15px; align-items: center;">
-                        <a href="profile/profile.html">Ver en mi perfil</a>
-                        <a href="#" onclick="verificarPagoPendienteEnCarrito(); return false;" style="color: var(--primary); text-decoration: none;">
-                            <i class="fas fa-sync"></i> Verificar estado ahora
-                        </a>
-                    </div>
-                </div>
-            `;
-
-            // Insertar alerta antes del resumen o totales
-            if (cartSummary) {
-                cartSummary.insertBefore(alertDiv, cartSummary.firstChild);
+                // Marcadores para que finalizarCompra sepa qué hacer
+                checkoutBtn.setAttribute("data-action", "redirect");
+                checkoutBtn.setAttribute("data-order-id", lastOrderId);
             }
+
+            injectCartAlert(cartSummary, {
+                type: "pending", // Estilo amarillo estándar
+                title: "Tienes una orden pendiente",
+                msg: `La orden #${statusData.reference || lastOrderId} está esperando pago.`,
+                icon: "fa-exclamation-triangle"
+            });
+
+        // --- CASO C: FINALIZADO (Limpiar almacenamiento) ---
         } else {
-            // Si el estado es FINAL (Pagado, Rechazado, Expirado o Cancelado), limpiamos el bloqueo
-            // Agregamos EXPIRED y CANCELLED para que el usuario no se quede atascado por una sesión vieja
-            const finalStatuses = ["APPROVED", "PAID", "REJECTED", "EXPIRED", "CANCELLED"];
-            
+            const finalStatuses = ["APPROVED", "PAID", "REJECTED", "EXPIRED", "CANCELLED", "FAILED"];
             if (finalStatuses.includes(status)) {
                 localStorage.removeItem("lastOrderId");
                 localStorage.removeItem("lastRequestId");
-                // El botón ya se restauró al inicio de la función
             }
         }
 
@@ -843,10 +823,76 @@ async function verificarPagoPendienteEnCarrito() {
     }
 }
 
+// Helper para inyectar la alerta visualmente (Mantiene el código limpio)
+function injectCartAlert(container, { type, title, msg, icon }) {
+    if (!container) return;
+
+    const alertDiv = document.createElement("div");
+    // Si es validación agregamos la clase .validation-mode que definimos en CSS
+    const modeClass = type === "validation" ? "validation-mode" : "";
+    
+    alertDiv.className = `cart-pending-alert ${modeClass}`;
+    
+    alertDiv.innerHTML = `
+        <i class="fas ${icon}"></i>
+        <div class="cart-pending-content">
+            <h4>${title}</h4>
+            <p>${msg}</p>
+            <p style="font-size: 0.85em; margin-top:5px; opacity: 0.9;">
+                ${type === 'pending' 
+                    ? 'Debes completar o cancelar esta orden antes de crear una nueva.' 
+                    : 'No cierres esta ventana hasta obtener confirmación.'}
+            </p>
+            
+            <div style="margin-top: 8px; display: flex; gap: 15px; align-items: center;">
+                <a href="#" onclick="verificarPagoPendienteEnCarrito(); return false;" style="text-decoration: none;">
+                    <i class="fas fa-sync"></i> Actualizar estado
+                </a>
+            </div>
+        </div>
+    `;
+
+    // Insertar alerta al principio del resumen
+    container.insertBefore(alertDiv, container.firstChild);
+}
+
 // Cerrar modal de carrito
 function cerrarModalCarrito() {
   cartModal.style.display = "none";
   document.body.style.overflow = "auto";
+}
+
+// *** IMPORTANTE: También debes actualizar finalizarCompra para que la redirección funcione ***
+async function finalizarCompra() {
+    const checkoutBtn = document.getElementById("checkoutButton");
+
+    // 1. INTERCEPTAR SI ES REDIRECCIÓN A CONTINUAR PAGO
+    if (checkoutBtn && checkoutBtn.getAttribute("data-action") === "redirect") {
+        const pendingOrderId = checkoutBtn.getAttribute("data-order-id");
+        if (pendingOrderId) {
+            // Redirige a la página que creamos en el paso anterior
+            window.location.href = `continuar_pago/continuar_pago.html?orderId=${pendingOrderId}`;
+            return; 
+        }
+    }
+
+    // --- Flujo Normal de Checkout (si no hay redirección) ---
+    if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para pagar." }))) return;
+
+    await fetchAndBindCart();
+
+    const totalItems = carrito.reduce((s, it) => s + Number(it.cantidad || 0), 0);
+    if (!totalItems) {
+        (window.Snackbar?.error || mostrarNotificacion)?.("Tu carrito está vacío.");
+        return;
+    }
+
+    const snapshot = buildCheckoutSnapshot(carrito);
+    try {
+        sessionStorage.setItem("carritoCheckout", JSON.stringify(snapshot));
+    } catch {}
+
+    window.location.href = "checkout/checkout.html";
 }
 
 // Cargar items del carrito

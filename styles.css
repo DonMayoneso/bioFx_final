@@ -2994,7 +2994,7 @@ body {
 .promo-track {
     display: flex;
     width: max-content;
-    animation: moveText 20s linear infinite;
+    animation: moveText 0s linear infinite;
 }
 
 .promo-content {
@@ -3617,7 +3617,7 @@ body {
   position: fixed;
   right: 20px;
   bottom: 20px;
-  z-index: 12000; /* mayor que header/promo */
+  z-index: 12000;
 }
 
 .snackbar {
@@ -3643,7 +3643,7 @@ body {
 
 /* ESTILOS PARA ALERTA DE PAGO PENDIENTE EN CARRITO */
 .cart-pending-alert {
-    background-color: #fff3cd;
+    background-color: #fff3cd; /* (PENDING) */
     border: 1px solid #ffeeba;
     color: #856404;
     padding: 15px;
@@ -3656,10 +3656,20 @@ body {
     animation: fadeIn 0.3s ease-in-out;
 }
 
+/* VARIANTE: VALIDACIÓN */
+.cart-pending-alert.validation-mode {
+    background-color: rgba(23, 162, 184, 0.15);
+    border-color: rgba(23, 162, 184, 0.3);
+    color: #0f6674;
+}
+
 .cart-pending-alert i {
     font-size: 1.2rem;
     margin-top: 2px;
-    color: #856404;
+}
+
+.cart-pending-alert.validation-mode i {
+    color: #17a2b8;
 }
 
 .cart-pending-content h4 {
@@ -3674,7 +3684,7 @@ body {
 }
 
 .cart-pending-content a {
-    color: #856404;
+    color: inherit;
     text-decoration: underline;
     font-weight: 600;
     margin-top: 5px;
@@ -3682,7 +3692,7 @@ body {
 }
 
 .cart-pending-content a:hover {
-    color: #533f03;
+    opacity: 0.8;
 }
 
 /* Estado deshabilitado para el botón de checkout */
@@ -3691,6 +3701,11 @@ body {
     cursor: not-allowed !important;
     pointer-events: none;
     opacity: 0.7;
+}
+
+/* Estado para botón de continuar pago*/
+.btn-continue-payment {
+    background-color: var(--secondary) !important;
 }
 
 @keyframes fadeIn {
