@@ -3,56 +3,22 @@ let currentOrderId = null;
 
 async function initPage() {
     try {
-        // 1. Verificación de sesión de usuario
+        // Verificación de sesión de usuario
         const perfil = await window.api.getMiPerfil();
         if (!perfil) throw new Error("NO_SESSION");
 
-        // 2. Obtener Order ID
-        // Prioridad 1: URL
+        // Obtener Order ID de URL o LocalStorage
         const url = new URL(window.location.href);
-        let resolvedId = url.searchParams.get("orderId");
+        currentOrderId = url.searchParams.get("orderId") || localStorage.getItem("lastOrderId");
 
-        // Prioridad 2: Buscar en el historial de compras (API) si no viene en URL
-        // CORRECCIÓN SOLICITADA: Reemplazo de localStorage por API History
-        if (!resolvedId) {
-            try {
-                const history = await window.api.getMyOrdersHistory();
-                
-                if (Array.isArray(history) && history.length > 0) {
-                    const pendingStates = ["PENDING", "PENDING_PAYMENT", "PENDING_VALIDATION"];
-                    
-                    // Filtramos ordenes pendientes y ordenamos descendente (la más reciente primero)
-                    // Asumimos que ID más alto es más reciente, o usamos createdAt si existe
-                    const latestPending = history
-                        .filter(o => pendingStates.includes(String(o.status || o.paymentStatus || "").toUpperCase()))
-                        .sort((a, b) => {
-                            const idA = Number(a.id || a.orderId || 0);
-                            const idB = Number(b.id || b.orderId || 0);
-                            return idB - idA;
-                        })[0];
+        if (!currentOrderId) throw new Error("NO_ORDER");
 
-                    if (latestPending) {
-                        resolvedId = latestPending.id || latestPending.orderId;
-                    }
-                }
-            } catch (err) {
-                console.warn("No se pudo recuperar historial para buscar pendientes:", err);
-            }
-        }
-
-        currentOrderId = resolvedId;
-
-        if (!currentOrderId) {
-            // Si no hay ID en URL y no se encontró pendiente en historial -> Home
-            console.warn("No se encontró ninguna orden pendiente.");
-            throw new Error("NO_ORDER");
-        }
-
-        // 3. Consultar estado fresco de la orden específica
+        // Consultar estado fresco de la orden
         const orderData = await window.api.getOrderStatus(Number(currentOrderId));
         
-        // 4. Validación del Estado PENDING (Doble chequeo de seguridad)
+        // Validación del Estado PENDING
         const status = String(orderData.status || orderData.Status || "").toUpperCase();
+        
         const pendingStates = ["PENDING", "PENDING_PAYMENT", "PENDING_VALIDATION"];
 
         if (!pendingStates.includes(status)) {
@@ -61,7 +27,7 @@ async function initPage() {
             return;
         }
 
-        // 5. Renderizar UI con los datos
+        // Renderizar UI con los datos
         renderOrderDetails(orderData);
 
     } catch (error) {
@@ -78,7 +44,7 @@ function renderOrderDetails(order) {
     // Referencia
     document.getElementById("orderReference").textContent = order.reference || `ORD-${order.id}`;
     
-    // Manejo seguro de valores numéricos
+    // Manejo seguro de valores numéricos para Subtotal, Total y Descuento
     const subtotal = Number(order.subtotal || 0);
     const total = Number(order.total || order.totalAmount || 0);
     const discount = Number(order.discount || 0);
@@ -92,8 +58,6 @@ function renderOrderDetails(order) {
     // Renderizar lista de productos
     const productsList = document.getElementById("productsList");
     productsList.innerHTML = "";
-    
-    // Adaptación a la estructura de items
     const items = order.items || order.products || [];
 
     if (items.length > 0) {
@@ -124,17 +88,20 @@ async function handleCancel() {
     const btn = document.getElementById("btnCancel");
     const originalText = btn.innerHTML;
     
+    // Feedback visual
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelando...';
 
     try {
         await window.api.cancelPendingOrder(currentOrderId);
+        
         window.location.replace("../index.html");
 
     } catch (error) {
         console.error(error);
         alert("Error al cancelar el pago: " + (error.message || "Error desconocido"));
         
+        // Restaurar botón en caso de error
         btn.disabled = false;
         btn.innerHTML = originalText;
     }
@@ -145,21 +112,23 @@ async function handleContinue() {
     const btn = document.getElementById("btnContinue");
     const originalText = btn.innerHTML;
     
+    // Feedback visual
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
 
     try {
         // Construir la URL de retorno
         const origin = window.location.origin;
-        // Apuntar correctamente a la carpeta confirmacion_pago
         const returnUrl = `${origin}/confirmacion_pago/confirmacion_pago.html?orderId=${currentOrderId}`;
 
-        // Ejecutar el endpoint de Retry
+        //  Ejecutar el endpoint de Retry
         const response = await window.api.retryPlacetoPaySession(currentOrderId, returnUrl);
 
+        // Validar respuesta y redirigir a la pasarela y a Placetopay para devolver processUrl
         if (response && response.processUrl) {
             window.location.href = response.processUrl;
         } else if (response && response.paymentUrl) {
+            // Fallback por si la propiedad se llama diferente
             window.location.href = response.paymentUrl;
         } else {
             throw new Error("La API no devolvió una URL de pago válida para redireccionar.");
@@ -169,6 +138,7 @@ async function handleContinue() {
         console.error(error);
         alert("No se pudo retomar la sesión de pago: " + (error.message || "Intente más tarde"));
         
+        // Restaurar botón
         btn.disabled = false;
         btn.innerHTML = originalText;
     }

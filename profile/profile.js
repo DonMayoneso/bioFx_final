@@ -25,31 +25,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Función auxiliar para traducir y estilizar estados
   function getStatusConfig(status) {
+    // Normalizamos el string para evitar errores de mayúsculas/minúsculas
     const s = (status || "").toUpperCase();
 
     switch (s) {
       case "PAID":
-      case "APPROVED":
         return {
           label: "Aprobada",
           class: "status-approved",
           icon: "fa-check-circle",
         };
       case "REJECTED":
-      case "FAILED":
         return {
           label: "Rechazada",
           class: "status-rejected",
           icon: "fa-times-circle",
         };
-      case "PENDING_VALIDATION":
+      case "PENDING_VALIDATION": // NUEVO ESTADO
         return {
           label: "Validando Pago",
           class: "status-validation",
           icon: "fa-sync-alt fa-spin",
         };
       case "PENDING":
-      case "PENDING_PAYMENT":
         return {
           label: "Pendiente",
           class: "status-pending",
@@ -61,10 +59,10 @@ document.addEventListener("DOMContentLoaded", function () {
           class: "status-expired",
           icon: "fa-clock",
         };
-      case "CANCELLED":
+      case "CANCELLED": // NUEVO ESTADO
         return {
           label: "Cancelada",
-          class: "status-expired",
+          class: "status-expired", // Usamos estilo neutro
           icon: "fa-ban",
         };
       default:
@@ -81,22 +79,22 @@ document.addEventListener("DOMContentLoaded", function () {
     card.className = "order-card";
 
     // 1. Obtener configuración del estado
-    const statusRaw = (order.status || order.paymentStatus || "PENDING").toUpperCase();
+    const statusRaw = order.status || order.paymentStatus || "PENDING";
     const statusConfig = getStatusConfig(statusRaw);
 
-    // 2. Obtener código de autorización
+    // 2. Obtener código de autorización (si existe)
     const authCode =
       order.authorization || order.authorizationCode || order.authCode || null;
 
-    // Aseguramos obtener el ID correcto para los links
-    const orderId = order.orderId || order.id; 
-    const orderNumber = order.orderNumber || order.reference || `ORD-${orderId}`;
+    const orderNumber =
+      order.orderNumber || order.reference || `ORD-${order.orderId}`;
     const dateText = formatOrderDate(order.createdAt);
 
     const paymentInfoParts = [];
     if (order.paymentMethodName)
       paymentInfoParts.push(order.paymentMethodName);
 
+    // Solo mostramos emisor si no es rechazado
     if (order.issuerName && statusRaw !== "REJECTED")
       paymentInfoParts.push(order.issuerName);
 
@@ -107,7 +105,6 @@ document.addEventListener("DOMContentLoaded", function () {
       ? "Incluye factura adjunta"
       : "";
 
-    // Construcción de Items
     const itemsHtml = (order.items || [])
       .map(
         (item) => `
@@ -128,50 +125,38 @@ document.addEventListener("DOMContentLoaded", function () {
       )
       .join("");
 
-    /* -----------------------------------------------------------
-       LÓGICA DE BOTONES DE ACCIÓN (CORREGIDO)
-       ----------------------------------------------------------- */
-    let actionButtonHtml = "";
-
-    // CASO 1: PENDIENTE -> Redirigir a continuar_pago
-    if (statusRaw === "PENDING" || statusRaw === "PENDING_PAYMENT") {
-       // Estilo inline para diferenciarlo (Amarillo/Naranja)
-       actionButtonHtml = `
-         <div class="order-actions">
-            <a href="../continuar_pago/continuar_pago.html?orderId=${orderId}" 
-               class="btn-repeat-order" 
-               style="border-color: #f39c12; color: #f39c12;">
-               Continuar Pago <i class="fas fa-arrow-right"></i>
-            </a>
-         </div>
-       `;
-    } 
-    // CASO 2: RECHAZADA -> Redirigir a tienda (index)
-    else if (statusRaw === "REJECTED" || statusRaw === "FAILED") {
-       actionButtonHtml = `
-         <div class="order-actions">
-            <a href="../index.html" class="btn-repeat-order">Intentar nuevamente</a>
-         </div>
-       `;
-    }
-    // CASO 3: VALIDANDO -> No mostramos botón (el usuario debe esperar)
-
-    // HTML Final de la tarjeta
+    // HTML Construido con Estado y Auth Code
     card.innerHTML = `
       <div class="order-header">
         <div class="order-header-info">
           <div class="order-id">Pedido #${orderNumber}</div>
-          ${dateText ? `<div class="order-date">Realizado el: ${dateText}</div>` : ""}
+          ${
+            dateText
+              ? `<div class="order-date">Realizado el: ${dateText}</div>`
+              : ""
+          }
           
           <div class="order-status-badge ${statusConfig.class}">
             <i class="fas ${statusConfig.icon}"></i>
             ${statusConfig.label}
           </div>
 
-          ${authCode ? `<div style="margin-top:5px; font-size: 0.9em; color: var(--gray);">Cód. Autorización: <span class="auth-code">${authCode}</span></div>` : ""}
+          ${
+            authCode
+              ? `<div style="margin-top:5px; font-size: 0.9em; color: var(--gray);">Cód. Autorización: <span class="auth-code">${authCode}</span></div>`
+              : ""
+          }
 
-          ${paymentInfo ? `<div class="order-payment" style="margin-top:5px; font-size:0.9em;">${paymentInfo}</div>` : ""}
-          ${hasAttachmentText ? `<div class="order-invoice" style="margin-top:5px; color: var(--primary);"><i class="fas fa-paperclip"></i> ${hasAttachmentText}</div>` : ""}
+          ${
+            paymentInfo
+              ? `<div class="order-payment" style="margin-top:5px; font-size:0.9em;">${paymentInfo}</div>`
+              : ""
+          }
+          ${
+            hasAttachmentText
+              ? `<div class="order-invoice" style="margin-top:5px; color: var(--primary);"><i class="fas fa-paperclip"></i> ${hasAttachmentText}</div>`
+              : ""
+          }
         </div>
       </div>
 
@@ -180,21 +165,31 @@ document.addEventListener("DOMContentLoaded", function () {
       </div>
 
       <div class="order-footer">
-        <div class="order-total">Total: $${Number(order.totalAmount).toFixed(2)}</div>
-        ${actionButtonHtml}
+        <div class="order-total">Total: $${Number(order.totalAmount).toFixed(
+          2
+        )}</div>
+        
+        ${
+          statusConfig.label === "Rechazada"
+            ? `<div class="order-actions">
+              <a href="../index.html" class="btn-repeat-order">Intentar nuevamente</a>
+            </div>`
+            : ""
+        }
       </div>
     `;
 
     return card;
   }
 
-  // Función para mostrar alerta superior
+  // Función mejorada para mostrar alerta (admite modo validación)
   function showPendingAlert(title, message, isValidation = false) {
     if (document.querySelector(".pending-order-alert")) return;
 
     const container = document.querySelector("#orders");
     const alertDiv = document.createElement("div");
 
+    // Asigna la clase base y añade 'validation-mode' si es necesario
     const cssClass = isValidation
       ? "pending-order-alert validation-mode"
       : "pending-order-alert";
@@ -202,8 +197,11 @@ document.addEventListener("DOMContentLoaded", function () {
       ? "fa-sync-alt fa-spin"
       : "fa-exclamation-triangle";
 
+    // Textos por defecto
     const finalTitle = title || "Pago Pendiente Detectado";
-    const finalMsg = message || "Tu banco está procesando una transacción.";
+    const finalMsg =
+      message ||
+      "Tu banco está procesando una transacción. Por favor espera la confirmación antes de realizar una nueva compra.";
 
     alertDiv.className = cssClass;
     alertDiv.innerHTML = `
@@ -217,6 +215,7 @@ document.addEventListener("DOMContentLoaded", function () {
       </div>
     `;
 
+    // Inserta la alerta después del título de la sección
     const sectionTitle = container.querySelector(".section-title");
     if (sectionTitle) {
       sectionTitle.insertAdjacentElement("afterend", alertDiv);
@@ -230,11 +229,16 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       const orders = await window.api.getMyOrdersHistory();
 
-      // Permitimos ver Pending Validation, Pending, Paid y Rejected
-      const allowedStatuses = ["PAID", "APPROVED", "REJECTED", "FAILED", "PENDING_VALIDATION", "PENDING", "PENDING_PAYMENT"];
+      // FILTRO: Solo permitimos estos estados
+      const allowedStatuses = ["PAID", "REJECTED", "PENDING_VALIDATION"];
 
+      // Filtramos la lista completa antes de hacer nada más
       const visibleOrders = (orders || []).filter((order) => {
-        const status = (order.status || order.paymentStatus || "").toUpperCase();
+        const status = (
+          order.status ||
+          order.paymentStatus ||
+          ""
+        ).toUpperCase();
         return allowedStatuses.includes(status);
       });
 
@@ -249,15 +253,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
       ordersListEl.innerHTML = "";
 
+      // Ordenar: Las más recientes primero
       visibleOrders.sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
 
+      // Bandera para detectar validación
       let hasValidationOrder = false;
 
       visibleOrders.forEach((order) => {
-        const status = (order.status || order.paymentStatus || "").toUpperCase();
+        const status = (
+          order.status ||
+          order.paymentStatus ||
+          ""
+        ).toUpperCase();
 
+        // Detectar si hay una orden validando
         if (status === "PENDING_VALIDATION") {
           hasValidationOrder = true;
         }
@@ -266,11 +277,12 @@ document.addEventListener("DOMContentLoaded", function () {
         ordersListEl.appendChild(card);
       });
 
+      // Si encontramos una orden en validación, mostramos la alerta Turquesa
       if (hasValidationOrder) {
         showPendingAlert(
           "Pago en Validación",
           "Tu transacción está siendo validada por el banco. El estado se actualizará automáticamente en unos instantes.",
-          true
+          true // TRUE activa el modo validación
         );
       }
     } catch (err) {
@@ -283,11 +295,18 @@ document.addEventListener("DOMContentLoaded", function () {
   navLinks.forEach((link) => {
     link.addEventListener("click", function (e) {
       e.preventDefault();
+
+      // Remover clase active de todos los enlaces
       navLinks.forEach((l) => l.classList.remove("active"));
+      // Agregar clase active al enlace clickeado
       this.classList.add("active");
+
+      // Ocultar todas las secciones
       tabs.forEach((tab) => {
         tab.classList.remove("active");
       });
+
+      // Mostrar la sección correspondiente
       const targetId = this.getAttribute("data-tab");
       document.getElementById(targetId).classList.add("active");
     });
@@ -298,20 +317,25 @@ document.addEventListener("DOMContentLoaded", function () {
     billingForm.addEventListener("submit", function (e) {
       e.preventDefault();
       alert("Datos de facturación actualizados correctamente.");
+      // Aquí iría la lógica para guardar los cambios
     });
   }
 
-  // Carga inicial
+  // Carga inicial y validación de sesión
   (async () => {
     try {
-      const perfil = await window.api.getMiPerfil();
+      const perfil = await window.api.getMiPerfil(); // devuelve null si 401
       if (!perfil) {
+        // sin sesión: vuelve a home
         window.location.href = homeLink;
         return;
       }
 
-      const nombre = [perfil?.nombre ?? perfil?.Nombre, perfil?.apellido ?? perfil?.Apellido]
-          .filter(Boolean).join(" ") || "Usuario";
+      // Rellenar encabezado de perfil
+      const nombre =
+        [perfil?.nombre ?? perfil?.Nombre, perfil?.apellido ?? perfil?.Apellido]
+          .filter(Boolean)
+          .join(" ") || "Usuario";
       const email = perfil?.email ?? perfil?.Email ?? "";
       const creado = perfil?.creadoEl ?? perfil?.CreadoEl ?? null;
 
@@ -324,21 +348,25 @@ document.addEventListener("DOMContentLoaded", function () {
       if (dateEl && creado)
         dateEl.textContent = "Miembro desde: " + formatearMesAnio(creado);
 
+      // Rellenar formulario "Información Personal"
       const firstNameEl = document.getElementById("firstName");
       const lastNameEl = document.getElementById("lastName");
       const emailInpEl = document.getElementById("email");
       const phoneEl = document.getElementById("phone");
 
+      // Normaliza campos del API
       const pNombre = perfil?.nombre ?? perfil?.Nombre ?? "";
       const pApellido = perfil?.apellido ?? perfil?.Apellido ?? "";
       const pEmail = perfil?.email ?? perfil?.Email ?? "";
       const pTelefono = perfil?.telefono ?? perfil?.Telefono ?? "";
 
+      // Setea valores si existen los inputs
       if (firstNameEl) firstNameEl.value = pNombre;
       if (lastNameEl) lastNameEl.value = pApellido;
       if (emailInpEl) emailInpEl.value = pEmail;
       if (phoneEl) phoneEl.value = pTelefono;
 
+      // Cargar historial de pedidos
       await loadOrdersHistory();
     } catch {
       window.location.href = homeLink;
@@ -348,10 +376,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function formatearMesAnio(isoUtc) {
     const d = new Date(isoUtc);
-    const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    const meses = [
+      "Enero",
+      "Febrero",
+      "Marzo",
+      "Abril",
+      "Mayo",
+      "Junio",
+      "Julio",
+      "Agosto",
+      "Septiembre",
+      "Octubre",
+      "Noviembre",
+      "Diciembre",
+    ];
     return `${meses[d.getMonth()]} ${d.getFullYear()}`;
   }
 
+  // Logout
   const logoutLink = document.getElementById("logoutLink");
   if (logoutLink) {
     logoutLink.addEventListener("click", async (e) => {
@@ -368,14 +410,16 @@ document.addEventListener("DOMContentLoaded", function () {
     securityForm.addEventListener("submit", function (e) {
       e.preventDefault();
       alert("Contraseña actualizada correctamente.");
+      // Aquí iría la lógica para guardar los cambios
     });
   }
 
-  // Validaciones
+  // Validaciones del formulario personal
   const firstNameEl = document.getElementById("firstName");
   const lastNameEl = document.getElementById("lastName");
   const phoneEl = document.getElementById("phone");
   const personalForm = document.getElementById("personalForm");
+
   const nameRx = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]+$/;
   const phoneRx = /^\d{10}$/;
 
@@ -389,38 +433,49 @@ document.addEventListener("DOMContentLoaded", function () {
     const fn = (firstNameEl.value || "").trim();
     const ln = (lastNameEl.value || "").trim();
     let ok = true;
+
     if (!fn || !nameRx.test(fn)) {
       setErr(firstNameEl, "firstNameErr", "Solo letras, espacios, ' y -.");
       ok = false;
     } else setErr(firstNameEl, "firstNameErr", "");
+
     if (!ln || !nameRx.test(ln)) {
       setErr(lastNameEl, "lastNameErr", "Solo letras, espacios, ' y -.");
       ok = false;
     } else setErr(lastNameEl, "lastNameErr", "");
+
     return ok;
   }
 
   function validatePhone() {
-    const digits = (phoneEl.value || "").replace(/\D+/g, "");
-    if (digits !== phoneEl.value) phoneEl.value = digits.slice(0, 10);
+    const digits = (phoneEl.value || "").replace(/\D+/g, ""); // solo números
+    if (digits !== phoneEl.value) phoneEl.value = digits.slice(0, 10); // sanitiza
     const ok = phoneRx.test(phoneEl.value);
     setErr(phoneEl, "phoneErr", ok ? "" : "Debe tener 10 dígitos numéricos.");
     return ok;
   }
 
+  // Sanitiza mientras se escribe
   firstNameEl?.addEventListener("input", () => {
-    firstNameEl.value = firstNameEl.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g, "");
+    firstNameEl.value = firstNameEl.value.replace(
+      /[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g,
+      ""
+    );
     validateNames();
   });
   lastNameEl?.addEventListener("input", () => {
-    lastNameEl.value = lastNameEl.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g, "");
+    lastNameEl.value = lastNameEl.value.replace(
+      /[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g,
+      ""
+    );
     validateNames();
   });
   phoneEl?.addEventListener("input", validatePhone);
 
+  // En el submit, valida antes de enviar
   personalForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const ok = validateNames() & validatePhone();
+    const ok = validateNames() & validatePhone(); // evalúa ambas
     if (!ok) return;
 
     const btn = personalForm.querySelector('button[type="submit"]');
