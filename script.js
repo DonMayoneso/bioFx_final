@@ -735,15 +735,13 @@ function cambiarCategoria(categoria) {
 // Variable para controlar el cooldown del botón de actualizar
 const UPDATE_COOLDOWN = 60000;
 
-// Abrir modal de carrito con verificación
+// Abrir modal de carrito
 async function abrirCarrito() {
     if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para ver tu carrito." })))
         return;
 
     await fetchAndBindCart();
     cargarCarritoItems();
-    
-    // Verificamos directamente con la API (Historial)
     await verificarPagoPendienteEnCarrito();
 
     cartModal.style.display = "flex";
@@ -759,6 +757,7 @@ async function verificarPagoPendienteEnCarrito() {
     const existingAlert = document.querySelector(".cart-pending-alert");
     if (existingAlert) existingAlert.remove();
 
+    // Restaurar botón a estado "Normal" por defecto
     if (checkoutBtn) {
         checkoutBtn.disabled = false;
         checkoutBtn.classList.remove("btn-disabled", "btn-continue-payment");
@@ -780,9 +779,9 @@ async function verificarPagoPendienteEnCarrito() {
             .filter(o => blockingStates.includes(String(o.status || o.paymentStatus || "").toUpperCase()))
             .sort((a, b) => (b.id || b.orderId) - (a.id || a.orderId))[0];
 
-        if (!pendingOrder) return;
+        if (!pendingOrder) return; // El usuario está limpio
 
-        // Datos de la orden
+        // Datos de la orden encontrada
         const lastOrderId = pendingOrder.id || pendingOrder.orderId;
         const reference = pendingOrder.reference || pendingOrder.orderNumber || `ORD-${lastOrderId}`;
         const status = String(pendingOrder.status || pendingOrder.paymentStatus || "").toUpperCase();
@@ -801,7 +800,7 @@ async function verificarPagoPendienteEnCarrito() {
                 title: "Estamos validando tu pago",
                 msg: "Tu banco está procesando la respuesta. Por seguridad, espera un momento.",
                 icon: "fa-sync-alt fa-spin",
-                orderId: lastOrderId // Pasamos el ID para el botón actualizar
+                orderId: lastOrderId
             });
 
         // CASO B: PENDIENTE
@@ -810,9 +809,10 @@ async function verificarPagoPendienteEnCarrito() {
             if (checkoutBtn) {
                 checkoutBtn.disabled = false;
                 checkoutBtn.classList.add("btn-continue-payment");
+                // Cambio de texto solicitado
                 checkoutBtn.innerHTML = 'Continuar con el pago pendiente <i class="fas fa-arrow-right"></i>';
                 
-                // Marcadores para la redirección
+                // Marcadores para que finalizarCompra sepa qué hacer
                 checkoutBtn.setAttribute("data-action", "redirect");
                 checkoutBtn.setAttribute("data-order-id", lastOrderId);
             }
@@ -831,43 +831,41 @@ async function verificarPagoPendienteEnCarrito() {
     }
 }
 
-// Nueva función para actualizar manualmente la orden con restricción de tiempo
+// Nueva función para actualizar manualmente la orden (con Cooldown)
 async function actualizarEstadoOrdenManual(orderId, btnElement) {
     const now = Date.now();
     const lastUpdateKey = `last_update_${orderId}`;
     const lastUpdate = localStorage.getItem(lastUpdateKey);
 
-    // Verificación de Cooldown
+    // Restricción de tiempo
     if (lastUpdate && (now - parseInt(lastUpdate)) < UPDATE_COOLDOWN) {
         const remaining = Math.ceil((UPDATE_COOLDOWN - (now - parseInt(lastUpdate))) / 1000);
-        
         const msg = `Por favor espera ${remaining} segundos para actualizar nuevamente.`;
         if (window.Snackbar?.show) window.Snackbar.show(msg, { type: 'error' });
         else alert(msg);
         return;
     }
 
-    // Feedback visual de carga en el botón pequeño
+    // Feedback visual
     const originalContent = btnElement.innerHTML;
     btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ...';
     btnElement.style.pointerEvents = 'none';
 
     try {
         // Llamada al API
-        const nuevaOrden = await window.api.getOrderStatus(orderId);
+        await window.api.getOrderStatus(orderId);
         
-        // Guardar timestamp de esta actualización exitosa
+        // Guardar timestamp
         localStorage.setItem(lastUpdateKey, now.toString());
 
-        // Notificar éxito
-        if (window.Snackbar?.show) window.Snackbar.show("Estado actualizado correctamente.", { type: 'success' });
+        if (window.Snackbar?.show) window.Snackbar.show("Estado actualizado.", { type: 'success' });
 
-        // Refrescar la vista del carrito con la nueva información
+        // Refrescar la vista del carrito
         await verificarPagoPendienteEnCarrito();
 
     } catch (error) {
         console.error("Error actualizando orden:", error);
-        if (window.Snackbar?.show) window.Snackbar.show("No se pudo actualizar el estado.", { type: 'error' });
+        if (window.Snackbar?.show) window.Snackbar.show("No se pudo actualizar.", { type: 'error' });
         
         // Restaurar botón solo si falló
         btnElement.innerHTML = originalContent;
@@ -922,74 +920,45 @@ function cerrarModalCarrito() {
   cartModal.style.display = "none";
   document.body.style.overflow = "auto";
 }
-
-// *** LÓGICA DE FINALIZAR COMPRA CORREGIDA ***
+// Lógica de Finalizar Compra
 async function finalizarCompra() {
     const checkoutBtn = document.getElementById("checkoutButton");
 
-    // REDIRECCIÓN PENDIENTE
-    // Si hay una orden pendiente, no importa el estado del carrito actual.
+    // REDIRECCIÓN DE PAGO PENDIENTE
     if (checkoutBtn && checkoutBtn.getAttribute("data-action") === "redirect") {
         const pendingOrderId = checkoutBtn.getAttribute("data-order-id");
         if (pendingOrderId) {
-            // Redirige a la página correcta creada anteriormente
             window.location.href = `continuar_pago/continuar_pago.html?orderId=${pendingOrderId}`;
             return; 
         }
     }
 
-    // Flujo Normal de Checkout
+    // FLUJO NORMAL DE COMPRA NUEVA
+    // (Solo llega aquí si NO hay un pago pendiente activo)
     
+    // A. Validar Sesión
     if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para pagar." }))) return;
 
+    // Sincronizar Carrito
     await fetchAndBindCart();
 
+    // Validar Carrito Vacío
     const totalItems = carrito.reduce((s, it) => s + Number(it.cantidad || 0), 0);
     
-    // Verificar si el carrito está vacío (solo para compras nuevas)
     if (!totalItems) {
         (window.Snackbar?.error || mostrarNotificacion)?.("Tu carrito está vacío.");
         return;
     }
 
+    // Preparar datos para Checkout
     const snapshot = buildCheckoutSnapshot(carrito);
     try {
         sessionStorage.setItem("carritoCheckout", JSON.stringify(snapshot));
-    } catch {}
-
-    window.location.href = "checkout/checkout.html";
-}
-
-// Actualizar finalizarCompra para que la redirección funcione
-async function finalizarCompra() {
-    const checkoutBtn = document.getElementById("checkoutButton");
-
-    // INTERCEPTAR SI ES REDIRECCIÓN A CONTINUAR PAGO
-    if (checkoutBtn && checkoutBtn.getAttribute("data-action") === "redirect") {
-        const pendingOrderId = checkoutBtn.getAttribute("data-order-id");
-        if (pendingOrderId) {
-            // Redirigir a la página Continuar_pago
-            window.location.href = `continuar_pago/continuar_pago.html?orderId=${pendingOrderId}`;
-            return; 
-        }
+    } catch (e) {
+        console.error("Error guardando sesión de carrito:", e);
     }
 
-    // Flujo Normal de Checkout (si no hay redirección)
-    if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para pagar." }))) return;
-
-    await fetchAndBindCart();
-
-    const totalItems = carrito.reduce((s, it) => s + Number(it.cantidad || 0), 0);
-    if (!totalItems) {
-        (window.Snackbar?.error || mostrarNotificacion)?.("Tu carrito está vacío.");
-        return;
-    }
-
-    const snapshot = buildCheckoutSnapshot(carrito);
-    try {
-        sessionStorage.setItem("carritoCheckout", JSON.stringify(snapshot));
-    } catch {}
-
+    // Ir al Checkout
     window.location.href = "checkout/checkout.html";
 }
 
