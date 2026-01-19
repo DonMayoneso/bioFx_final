@@ -732,6 +732,9 @@ function cambiarCategoria(categoria) {
   }
 }
 
+// Variable para controlar el cooldown del botón de actualizar
+const UPDATE_COOLDOWN = 60000;
+
 // Abrir modal de carrito con verificación
 async function abrirCarrito() {
     if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para ver tu carrito." })))
@@ -739,18 +742,20 @@ async function abrirCarrito() {
 
     await fetchAndBindCart();
     cargarCarritoItems();
+    
+    // Verificamos directamente con la API (Historial)
     await verificarPagoPendienteEnCarrito();
 
     cartModal.style.display = "flex";
     document.body.style.overflow = "hidden";
 }
 
-// Función principal para gestion de estados de pago en el carrito
+// Función principal para gestión de estados de pago en el carrito
 async function verificarPagoPendienteEnCarrito() {
     const checkoutBtn = document.getElementById("checkoutButton");
     const cartSummary = document.querySelector(".cart-summary");
     
-    // 1. Limpieza inicial de alertas y estados del botón
+    // Limpieza inicial
     const existingAlert = document.querySelector(".cart-pending-alert");
     if (existingAlert) existingAlert.remove();
 
@@ -763,19 +768,21 @@ async function verificarPagoPendienteEnCarrito() {
     }
 
     try {
+        // BUSCAR EN EL API (Historial)
         const history = await window.api.getMyOrdersHistory();
         
         if (!Array.isArray(history) || history.length === 0) return;
 
         const blockingStates = ["PENDING", "PENDING_PAYMENT", "PENDING_VALIDATION"];
         
+        // Ordenamos por ID descendente y tomamos la más reciente
         const pendingOrder = history
             .filter(o => blockingStates.includes(String(o.status || o.paymentStatus || "").toUpperCase()))
             .sort((a, b) => (b.id || b.orderId) - (a.id || a.orderId))[0];
 
         if (!pendingOrder) return;
 
-        // Datos de la orden encontrada
+        // Datos de la orden
         const lastOrderId = pendingOrder.id || pendingOrder.orderId;
         const reference = pendingOrder.reference || pendingOrder.orderNumber || `ORD-${lastOrderId}`;
         const status = String(pendingOrder.status || pendingOrder.paymentStatus || "").toUpperCase();
@@ -793,7 +800,8 @@ async function verificarPagoPendienteEnCarrito() {
                 type: "validation",
                 title: "Estamos validando tu pago",
                 msg: "Tu banco está procesando la respuesta. Por seguridad, espera un momento.",
-                icon: "fa-sync-alt fa-spin"
+                icon: "fa-sync-alt fa-spin",
+                orderId: lastOrderId // Pasamos el ID para el botón actualizar
             });
 
         // CASO B: PENDIENTE
@@ -804,7 +812,7 @@ async function verificarPagoPendienteEnCarrito() {
                 checkoutBtn.classList.add("btn-continue-payment");
                 checkoutBtn.innerHTML = 'Continuar con el pago pendiente <i class="fas fa-arrow-right"></i>';
                 
-                // Marcadores finalizarCompra
+                // Marcadores para la redirección
                 checkoutBtn.setAttribute("data-action", "redirect");
                 checkoutBtn.setAttribute("data-order-id", lastOrderId);
             }
@@ -813,7 +821,8 @@ async function verificarPagoPendienteEnCarrito() {
                 type: "pending",
                 title: "Tienes una orden pendiente",
                 msg: `La orden #${reference} está esperando pago.`,
-                icon: "fa-exclamation-triangle"
+                icon: "fa-exclamation-triangle",
+                orderId: lastOrderId
             });
         }
 
@@ -822,12 +831,55 @@ async function verificarPagoPendienteEnCarrito() {
     }
 }
 
-// Helper para inyectar la alerta visualmente (Mantiene el código limpio)
-function injectCartAlert(container, { type, title, msg, icon }) {
+// Nueva función para actualizar manualmente la orden con restricción de tiempo
+async function actualizarEstadoOrdenManual(orderId, btnElement) {
+    const now = Date.now();
+    const lastUpdateKey = `last_update_${orderId}`;
+    const lastUpdate = localStorage.getItem(lastUpdateKey);
+
+    // Verificación de Cooldown
+    if (lastUpdate && (now - parseInt(lastUpdate)) < UPDATE_COOLDOWN) {
+        const remaining = Math.ceil((UPDATE_COOLDOWN - (now - parseInt(lastUpdate))) / 1000);
+        
+        const msg = `Por favor espera ${remaining} segundos para actualizar nuevamente.`;
+        if (window.Snackbar?.show) window.Snackbar.show(msg, { type: 'error' });
+        else alert(msg);
+        return;
+    }
+
+    // Feedback visual de carga en el botón pequeño
+    const originalContent = btnElement.innerHTML;
+    btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ...';
+    btnElement.style.pointerEvents = 'none';
+
+    try {
+        // Llamada al API
+        const nuevaOrden = await window.api.getOrderStatus(orderId);
+        
+        // Guardar timestamp de esta actualización exitosa
+        localStorage.setItem(lastUpdateKey, now.toString());
+
+        // Notificar éxito
+        if (window.Snackbar?.show) window.Snackbar.show("Estado actualizado correctamente.", { type: 'success' });
+
+        // Refrescar la vista del carrito con la nueva información
+        await verificarPagoPendienteEnCarrito();
+
+    } catch (error) {
+        console.error("Error actualizando orden:", error);
+        if (window.Snackbar?.show) window.Snackbar.show("No se pudo actualizar el estado.", { type: 'error' });
+        
+        // Restaurar botón solo si falló
+        btnElement.innerHTML = originalContent;
+        btnElement.style.pointerEvents = 'auto';
+    }
+}
+
+// Helper para inyectar la alerta visualmente
+function injectCartAlert(container, { type, title, msg, icon, orderId }) {
     if (!container) return;
 
     const alertDiv = document.createElement("div");
-    // Si es validación agregamos la clase .validation-mode que definimos en CSS
     const modeClass = type === "validation" ? "validation-mode" : "";
     
     alertDiv.className = `cart-pending-alert ${modeClass}`;
@@ -840,18 +892,28 @@ function injectCartAlert(container, { type, title, msg, icon }) {
             <p style="font-size: 0.85em; margin-top:5px; opacity: 0.9;">
                 ${type === 'pending' 
                     ? 'Debes completar o cancelar esta orden antes de crear una nueva.' 
-                    : 'No cierres esta ventana hasta obtener confirmación.'}
+                    : 'Si el estado no cambia automáticamente, usa el botón de actualizar.'}
             </p>
             
             <div style="margin-top: 8px; display: flex; gap: 15px; align-items: center;">
-                <a href="#" onclick="verificarPagoPendienteEnCarrito(); return false;" style="text-decoration: none;">
+                <a href="profile/profile.html" style="text-decoration: underline; cursor: pointer;">Ver en perfil</a>
+                
+                <a href="#" class="update-status-link" style="text-decoration: none; cursor: pointer; font-weight: 700;">
                     <i class="fas fa-sync"></i> Actualizar estado
                 </a>
             </div>
         </div>
     `;
 
-    // Insertar alerta al principio del resumen
+    // Asignar el evento click al botón de actualizar
+    const updateBtn = alertDiv.querySelector('.update-status-link');
+    if (updateBtn && orderId) {
+        updateBtn.onclick = (e) => {
+            e.preventDefault();
+            actualizarEstadoOrdenManual(orderId, updateBtn);
+        };
+    }
+
     container.insertBefore(alertDiv, container.firstChild);
 }
 
