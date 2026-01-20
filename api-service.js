@@ -14,8 +14,11 @@ class ApiService {
     if (!res.ok) {
       const err = new Error();
       err.status = res.status;
+
       try {
         const j = await res.json();
+        err.data = j;
+
         const parts = [];
         if (j.message) parts.push(j.message);
         if (j.code) parts.push(`SQL ${j.code}`);
@@ -23,7 +26,9 @@ class ApiService {
         err.message = parts.join(" • ") || `HTTP ${res.status} ${res.statusText}`;
       } catch {
         err.message = `HTTP ${res.status} ${res.statusText}`;
+        err.data = null;
       }
+
       throw err;
     }
 
@@ -94,6 +99,13 @@ class ApiService {
     return this.request("/api/Account/register", {
       method: "POST",
       body: { email, password, nombre, apellido, telefono },
+    });
+  }
+
+  resendVerification(email) {
+    return this.request("/api/Account/resend-verification", {
+      method: "POST",
+      body: { email },
     });
   }
 
