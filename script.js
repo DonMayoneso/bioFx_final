@@ -923,10 +923,11 @@ function cerrarModalCarrito() {
 // Lógica de Finalizar Compra
 async function finalizarCompra() {
     const checkoutBtn = document.getElementById("checkoutButton");
-
+        
     // REDIRECCIÓN DE PAGO PENDIENTE
     if (checkoutBtn && checkoutBtn.getAttribute("data-action") === "redirect") {
         const pendingOrderId = checkoutBtn.getAttribute("data-order-id");
+        
         if (pendingOrderId) {
             window.location.href = `continuar_pago/continuar_pago.html?orderId=${pendingOrderId}`;
             return; 
@@ -1034,30 +1035,6 @@ async function eliminarDelCarrito(productId) {
   } catch (e) {
     (window.Snackbar?.error || mostrarNotificacion)(e.message || "Error al eliminar.");
   }
-}
-
-async function finalizarCompra() {
-  // 1) Requiere sesión
-  if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para pagar." }))) return;
-
-  // 2) Sincroniza carrito desde API para evitar cantidades desactualizadas
-  await fetchAndBindCart();
-
-  // 3) Bloquea si vacío
-  const totalItems = carrito.reduce((s, it) => s + Number(it.cantidad || 0), 0);
-  if (!totalItems) {
-    (window.Snackbar?.error || mostrarNotificacion)?.("Tu carrito está vacío.");
-    return;
-  }
-
-  // 4) Snapshot mínimo para Checkout
-  const snapshot = buildCheckoutSnapshot(carrito);
-  try {
-    sessionStorage.setItem("carritoCheckout", JSON.stringify(snapshot));
-  } catch {}
-
-  // 5) Redirige
-  window.location.href = "checkout/checkout.html";
 }
 
 // Actualizar contador de carrito
