@@ -1,14 +1,29 @@
-// Variable global
+// Variable global para almacenar el ID de la orden
 let currentOrderId = null;
 
-// Helper para resolver rutas de imágenes
+// Helper para resolver imágenes
 function resolveImagePath(p) {
     if (!p) return "../assets/productos/placeholder.webp";
     if (/^https?:\/\//i.test(p)) return p; 
     if (p.startsWith("/")) return p; 
     if (p.startsWith("../")) return p; 
-    // Ajuste para rutas relativas desde esta carpeta
     return "../" + p.replace(/^\.?\//, ""); 
+}
+
+// Función para mostrar errores en pantalla
+function mostrarErrorCritico(titulo, mensaje) {
+    document.getElementById("loader").style.display = "none";
+    document.getElementById("orderDetails").style.display = "none";
+    
+    const container = document.querySelector(".confirmation-content");
+    container.innerHTML = `
+        <div style="text-align: center; color: #dc3545;">
+            <i class="fas fa-exclamation-circle" style="font-size: 3rem; margin-bottom: 15px;"></i>
+            <h2>${titulo}</h2>
+            <p>${mensaje}</p>
+            <a href="../index.html" class="btn btn-primary" style="margin-top: 20px;">Volver al Inicio</a>
+        </div>
+    `;
 }
 
 async function initPage() {
@@ -18,23 +33,19 @@ async function initPage() {
         if (!perfil) throw new Error("NO_SESSION");
 
         // Obtener Order ID
-        // Prioridad A: URL
         const url = new URL(window.location.href);
         let resolvedId = url.searchParams.get("orderId");
 
-        // Prioridad B: Buscar en Historial
+        // Si no hay ID en URL, buscamos en el historial como respaldo
         if (!resolvedId) {
             try {
                 const history = await window.api.getMyOrdersHistory();
-                
                 if (Array.isArray(history) && history.length > 0) {
                     const blockingStates = ["PENDING", "PENDING_PAYMENT", "PENDING_VALIDATION"];
                     
-                    // Buscar la orden pendiente más reciente
                     const latestPending = history
                         .filter(o => blockingStates.includes(String(o.status || o.paymentStatus || "").toUpperCase()))
                         .sort((a, b) => {
-                            // Ordenar por ID descendente
                             const idA = Number(a.id || a.orderId || 0);
                             const idB = Number(b.id || b.orderId || 0);
                             return idB - idA;
@@ -45,28 +56,26 @@ async function initPage() {
                     }
                 }
             } catch (err) {
-                console.warn("No se pudo recuperar historial:", err);
+                console.warn("Error buscando historial:", err);
             }
         }
 
         currentOrderId = resolvedId;
 
         if (!currentOrderId) {
-            console.warn("No se encontró ninguna orden pendiente.");
-            window.location.replace("../index.html");
+            mostrarErrorCritico("Orden no encontrada", "No pudimos identificar la orden pendiente. Por favor intenta desde tu perfil.");
             return;
         }
 
-        // Consultar detalle completo de la orden
+        // Consultar detalle de la orden
         const orderData = await window.api.getOrderStatus(Number(currentOrderId));
         
-        // Validación del Estado
+        // Validación de Estado
         const status = String(orderData.status || orderData.Status || "").toUpperCase();
         const validStates = ["PENDING", "PENDING_PAYMENT", "PENDING_VALIDATION"];
 
         if (!validStates.includes(status)) {
-            console.warn(`Estado ${status} no es válido para continuar. Redirigiendo.`);
-            window.location.replace("../index.html");
+            mostrarErrorCritico("Estado Inválido", `La orden actual está en estado <b>${status}</b> y no requiere continuación de pago.`);
             return;
         }
 
@@ -74,32 +83,31 @@ async function initPage() {
         renderOrderDetails(orderData);
 
     } catch (error) {
-        console.error("Error en inicialización:", error);
-        window.location.replace("../index.html");
+        console.error("Error crítico:", error);
+        let msg = "Ocurrió un error al cargar los datos.";
+        if (error.message === "NO_SESSION") msg = "Tu sesión ha expirado. Por favor inicia sesión nuevamente.";
+        
+        mostrarErrorCritico("Ups, algo salió mal", msg);
     }
 }
 
 function renderOrderDetails(order) {
-    // Mostrar contenido
     document.getElementById("loader").style.display = "none";
     document.getElementById("orderDetails").style.display = "block";
 
-    // Referencia visual
+    // Datos generales
     document.getElementById("orderReference").textContent = order.reference || order.orderNumber || `ORD-${order.id}`;
 
-    // PROCESAMIENTO DE PRODUCTOS
+    // Procesamiento de productos
     const productsList = document.getElementById("productsList");
     productsList.innerHTML = "";
 
-    // Normalizar items para asegurar compatibilidad de nombres de propiedades
     const rawItems = order.items || order.products || [];
     
-    // tems para estandarizar precio y descuento
+    // Mapeo de items
     const itemsCalc = rawItems.map(item => {
         const precioBase = Number(item.price || item.unitPrice || item.UnitPrice || 0);
         const cantidad = Number(item.quantity || item.Quantity || 0);
-        
-        // Intentar detectar descuento si viene en el item, si no, asumir 0
         const descuentoPct = Number(item.discountPct || item.discount || 0);
 
         return {
@@ -116,18 +124,15 @@ function renderOrderDetails(order) {
             const itemTotal = item.precioBase * item.cantidad;
             const row = document.createElement("div");
             row.className = "product-item";
-            
             row.innerHTML = `
                 <div style="display:flex; align-items:center; width:100%;">
                     <img src="${resolveImagePath(item.imagen)}" 
                          style="width:50px; height:50px; object-fit:cover; border-radius:4px; margin-right:10px;"
                          onerror="this.src='../assets/productos/placeholder.webp'">
-                    
                     <div style="flex:1;">
                         <div class="product-name">${item.nombre}</div>
                         <div class="product-qty">${item.cantidad} x $${item.precioBase.toFixed(2)}</div>
                     </div>
-                    
                     <div class="product-price" style="font-weight:700;">$${itemTotal.toFixed(2)}</div>
                 </div>
             `;
@@ -137,83 +142,55 @@ function renderOrderDetails(order) {
         productsList.innerHTML = "<p>Detalles de productos no disponibles.</p>";
     }
 
-    // CÁLCULO DE TOTALES
+    // Totales
     const totales = calcularTotalesOrden(itemsCalc, order);
 
     document.getElementById("orderSubtotal").textContent = `$${totales.subtotalBase.toFixed(2)}`;
     document.getElementById("orderTotal").textContent = `$${totales.total.toFixed(2)}`;
     
     const discountEl = document.getElementById("orderDiscount");
-    // Mostramos descuento si existe
     if (Math.abs(totales.descuentoTotal) > 0.01) {
         discountEl.textContent = `-$${totales.descuentoTotal.toFixed(2)}`;
         discountEl.style.color = "var(--success)";
     } else {
         discountEl.textContent = "$0.00";
     }
+
+    // Si hay envío, lo mostramos
     if (totales.shipping > 0) {
-        agregarFilaEnvio(totales.shipping);
+        const container = document.querySelector('.order-summary-box');
+        const totalRow = document.querySelector('.total-row');
+        if(!document.getElementById('shippingRow')) {
+            const row = document.createElement('div');
+            row.className = 'summary-row';
+            row.id = 'shippingRow';
+            row.innerHTML = `<span class="summary-label">Envío:</span><span class="summary-value">$${totales.shipping.toFixed(2)}</span>`;
+            container.insertBefore(row, totalRow);
+        }
     }
 }
 
-// Función portada del checkout
 function calcularTotalesOrden(items, orderData) {
-    // Subtotal Base (Precio lista * cantidad)
     const subtotalBase = items.reduce((acc, it) => acc + it.precioBase * it.cantidad, 0);
-
-    // Descuentos de productos
-    const descuentoProductos = items.reduce((acc, it) => {
-        return acc + it.precioBase * (it.descuentoPct / 100) * it.cantidad;
-    }, 0);
-
+    const descuentoProductos = items.reduce((acc, it) => acc + it.precioBase * (it.descuentoPct / 100) * it.cantidad, 0);
     const subtotalNeto = Math.max(0, subtotalBase - descuentoProductos);
-
-    // Regla de Envío
+    
+    // Reglas de negocio (envío gratis > 50)
     const shipping = subtotalNeto >= 50 ? 0 : 5;
-
-    // Descuento receta
+    
     const tieneReceta = orderData.hasAttachment || orderData.tieneReceta; 
     const descuentoReceta = tieneReceta ? subtotalNeto * 0.02 : 0;
-
     const descuentoTotal = descuentoProductos + descuentoReceta;
-    
-    // Total Final
     const total = Math.max(0, subtotalNeto - descuentoReceta + shipping);
 
-    return {
-        subtotalBase: subtotalBase,
-        descuentoTotal: descuentoTotal,
-        shipping: shipping,
-        total: total
-    };
+    return { subtotalBase, descuentoTotal, shipping, total };
 }
 
-function agregarFilaEnvio(monto) {
-    const container = document.querySelector('.order-summary-box');
-    const totalRow = document.querySelector('.total-row');
-    
-    // Evitar duplicados
-    if(document.getElementById('shippingRow')) return;
-
-    const row = document.createElement('div');
-    row.className = 'summary-row';
-    row.id = 'shippingRow';
-    row.innerHTML = `
-        <span class="summary-label">Envío:</span>
-        <span class="summary-value">$${monto.toFixed(2)}</span>
-    `;
-    
-    // Insertar antes del total
-    container.insertBefore(row, totalRow);
-}
-
-// Lógica del botón CANCELAR
+// Botones
 async function handleCancel() {
     if(!confirm("¿Estás seguro de que deseas cancelar este pago?")) return;
-
     const btn = document.getElementById("btnCancel");
     const originalText = btn.innerHTML;
-    
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelando...';
 
@@ -222,24 +199,21 @@ async function handleCancel() {
         window.location.replace("../index.html");
     } catch (error) {
         console.error(error);
-        alert("Error al cancelar: " + (error.message || "Desconocido"));
+        alert("Error al cancelar: " + error.message);
         btn.disabled = false;
         btn.innerHTML = originalText;
     }
 }
 
-// Lógica del botón CONTINUAR
 async function handleContinue() {
     const btn = document.getElementById("btnContinue");
     const originalText = btn.innerHTML;
-    
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
 
     try {
         const origin = window.location.origin;
         const returnUrl = `${origin}/confirmacion_pago/confirmacion_pago.html?orderId=${currentOrderId}`;
-
         const response = await window.api.retryPlacetoPaySession(currentOrderId, returnUrl);
 
         if (response && response.processUrl) {
@@ -249,10 +223,9 @@ async function handleContinue() {
         } else {
             throw new Error("No se obtuvo URL de pago válida.");
         }
-
     } catch (error) {
         console.error(error);
-        alert("No se pudo retomar la sesión: " + (error.message || "Intente más tarde"));
+        alert("No se pudo retomar la sesión: " + error.message);
         btn.disabled = false;
         btn.innerHTML = originalText;
     }
@@ -260,10 +233,8 @@ async function handleContinue() {
 
 document.addEventListener("DOMContentLoaded", () => {
     initPage();
-
     const btnCancel = document.getElementById("btnCancel");
     if(btnCancel) btnCancel.addEventListener("click", handleCancel);
-
     const btnContinue = document.getElementById("btnContinue");
     if(btnContinue) btnContinue.addEventListener("click", handleContinue);
 });
