@@ -7,10 +7,7 @@
     <link rel="icon" type="image/png" href="../assets/logos/isotipoico.webp" />
     <link rel="stylesheet" href="../styles.css" />
     <link rel="stylesheet" href="checkout.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   </head>
   <body>
     <header class="header">
@@ -50,7 +47,6 @@
         <div class="checkout-content">
           <div class="checkout-form">
             <form id="checkoutForm">
-              <!-- Información Personal -->
               <fieldset class="form-section">
                 <legend><i class="fas fa-user"></i> Información Personal</legend>
 
@@ -93,7 +89,6 @@
                 </div>
               </fieldset>
 
-              <!-- Dirección de Envío -->
               <fieldset class="form-section">
                 <legend><i class="fas fa-truck"></i> Dirección de Envío</legend>
 
@@ -127,7 +122,6 @@
                 </div>
               </fieldset>
 
-              <!-- Receta Médica (Opcional) -->
               <fieldset class="form-section">
                 <legend><i class="fas fa-file-medical"></i> Receta Médica (Opcional)</legend>
 
@@ -153,38 +147,53 @@
                   >
                 </div>
               </fieldset>
-
-              <!-- Método de Pago -->
+              
               <fieldset class="form-section">
                 <legend><i class="fas fa-credit-card"></i> Método de Pago</legend>
-
                 <div class="payment-methods">
                   <div class="payment-method selected">
                     <div class="payment-header">
                       <i class="fas fa-shield-alt"></i>
-                      <h3>Pago Seguro con PlaceToPay</h3>
+                      <h3>Pago Seguro con Placetopay</h3>
                     </div>
                     <div class="payment-content">
                       <p>
-                        Serás redirigido a PlaceToPay para completar tu pago de forma segura.
+                        Serás redirigido a Placetopay para completar tu pago de forma segura.
                         Aceptamos tarjetas de crédito, débito y transferencias bancarias.
                       </p>
+                      
                       <div class="payment-logo">
-                        <img src="../assets/logos/placetopay.webp" alt="PlaceToPay" />
+                        <img src="https://static.placetopay.com/placetopay-logo.svg" alt="PlaceToPay" />
+                      </div>
+
+                      <div class="card-icons">
+                          <i class="fa-brands fa-cc-visa" title="Visa"></i>
+                          <i class="fa-brands fa-cc-diners-club" title="Diners Club"></i>
+                          <i class="fa-brands fa-cc-discover" title="Discover"></i>
+                          <i class="fa-brands fa-cc-mastercard" title="MasterCard"></i>
+                          <i class="fa-brands fa-cc-amex" title="American Express"></i>
                       </div>
                       <div class="payment-terms">
-                        <small
-                          >En caso de dudas sobre el manejo de su información bancaria ver
-                          <a href="../politicas/politicas.html" target="_blank"
-                            >Términos y condiciones</a
-                          ></small
-                        >
+                        <small>
+                          En caso de dudas sobre el manejo de su información bancaria ver
+                          <a href="../politicas/politicas.html" target="_blank">Términos y condiciones</a>
+                        </small>
                       </div>
                     </div>
                   </div>
                 </div>
               </fieldset>
 
+              <div class="acceptance-section">
+                 <div class="checkbox-group">
+                    <input type="checkbox" id="acceptTerms" name="acceptTerms" required>
+                    <label for="acceptTerms">Si, acepto los <a href="../politicas/politicas.html#faq-placetopay" target="_blank">Términos y Condiciones</a></label>
+                 </div>
+                 <div class="checkbox-group">
+                    <input type="checkbox" id="acceptPrivacy" name="acceptPrivacy" required>
+                    <label for="acceptPrivacy">Si, acepto la <a href="../politicas/politicas.html#data-protection" target="_blank">Política de Protección de Datos</a></label>
+                 </div>
+              </div>
               <div class="form-actions">
                 <button type="button" class="btn btn-outline" id="cancelCheckout">Cancelar</button>
                 <button type="submit" class="btn btn-primary" id="submitCheckout">
@@ -212,7 +221,7 @@
               </div>
               <div class="summary-row">
                 <span>Envío</span>
-                <span id="shipping">$5.00</span>
+                <span id="shipping">$3.50</span>
               </div>
               <div class="summary-row total">
                 <span>Total</span>
@@ -240,13 +249,11 @@
 
     <footer class="footer">
       <div class="container">
-        <!-- Logo / Isotipo -->
         <div class="footer-logo">
           <img src="../assets/logos/isotipob50.webp" alt="BioFX" class="logo-img" />
         </div>
 
         <div class="footer-columns">
-          <!-- Columna de Información y Ayuda -->
           <div class="footer-column">
             <h3>Información Y Ayuda</h3>
             <ul>
@@ -268,7 +275,6 @@
             </ul>
           </div>
 
-          <!-- Columna de Contacto -->
           <div class="footer-column">
             <h3>Contacto</h3>
             <p><i class="fas fa-map-marker-alt"></i> Centro Comercial Plaza del Rancho</p>

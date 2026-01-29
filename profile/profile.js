@@ -9,24 +9,101 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function formatOrderDate(isoUtc) {
     if (!isoUtc) return "";
-    const d = new Date(isoUtc);
-    const opts = { day: "numeric", month: "long", year: "numeric" };
-    return d.toLocaleDateString("es-EC", opts);
+    const fechaSegura = isoUtc.endsWith("Z") ? isoUtc : isoUtc + "Z";
+    const d = new Date(fechaSegura);
+    const opts = {
+      timeZone: "America/Guayaquil",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    };
+    return d.toLocaleString("es-EC", opts);
+  }
+
+  // Función auxiliar para traducir y estilizar estados
+  function getStatusConfig(status) {
+    // Normalizamos el string para evitar errores de mayúsculas/minúsculas
+    const s = (status || "").toUpperCase();
+
+    switch (s) {
+      case "PAID":
+        return {
+          label: "Aprobada",
+          class: "status-approved",
+          icon: "fa-check-circle",
+        };
+      case "REJECTED":
+        return {
+          label: "Rechazada",
+          class: "status-rejected",
+          icon: "fa-times-circle",
+        };
+      case "PENDING_VALIDATION": // NUEVO ESTADO
+        return {
+          label: "Validando Pago",
+          class: "status-validation",
+          icon: "fa-sync-alt fa-spin",
+        };
+      case "PENDING":
+        return {
+          label: "Pendiente",
+          class: "status-pending",
+          icon: "fa-clock",
+        };
+      case "EXPIRED":
+        return {
+          label: "Expirada",
+          class: "status-expired",
+          icon: "fa-clock",
+        };
+      case "CANCELLED": // NUEVO ESTADO
+        return {
+          label: "Cancelada",
+          class: "status-expired", // Usamos estilo neutro
+          icon: "fa-ban",
+        };
+      default:
+        return {
+          label: status || "Desconocido",
+          class: "",
+          icon: "fa-info-circle",
+        };
+    }
   }
 
   function buildOrderCard(order) {
     const card = document.createElement("div");
     card.className = "order-card";
 
-    const orderNumber = order.orderNumber || order.reference || `ORD-${order.orderId}`;
+    // 1. Obtener configuración del estado
+    const statusRaw = order.status || order.paymentStatus || "PENDING";
+    const statusConfig = getStatusConfig(statusRaw);
+
+    // 2. Obtener código de autorización (si existe)
+    const authCode =
+      order.authorization || order.authorizationCode || order.authCode || null;
+
+    const orderNumber =
+      order.orderNumber || order.reference || `ORD-${order.orderId}`;
     const dateText = formatOrderDate(order.createdAt);
 
     const paymentInfoParts = [];
-    if (order.paymentMethodName) paymentInfoParts.push(order.paymentMethodName);
-    if (order.issuerName) paymentInfoParts.push(order.issuerName);
-    const paymentInfo = paymentInfoParts.length ? `Pago con ${paymentInfoParts.join(" · ")}` : "";
+    if (order.paymentMethodName)
+      paymentInfoParts.push(order.paymentMethodName);
 
-    const hasAttachmentText = order.hasAttachment ? "Incluye factura adjunta" : "";
+    // Solo mostramos emisor si no es rechazado
+    if (order.issuerName && statusRaw !== "REJECTED")
+      paymentInfoParts.push(order.issuerName);
+
+    const paymentInfo = paymentInfoParts.length
+      ? `Pago con ${paymentInfoParts.join(" · ")}`
+      : "";
+    const hasAttachmentText = order.hasAttachment
+      ? "Incluye factura adjunta"
+      : "";
 
     const itemsHtml = (order.items || [])
       .map(
@@ -36,6 +113,7 @@ document.addEventListener("DOMContentLoaded", function () {
             src="../${item.productImage}"
             alt="${item.productName}"
             class="order-product-img"
+            onerror="this.onerror=null;this.src='../assets/productos/placeholder.png';" 
           />
           <div class="order-product-info">
             <h4>${item.productName}</h4>
@@ -47,13 +125,38 @@ document.addEventListener("DOMContentLoaded", function () {
       )
       .join("");
 
+    // HTML Construido con Estado y Auth Code
     card.innerHTML = `
       <div class="order-header">
-        <div>
+        <div class="order-header-info">
           <div class="order-id">Pedido #${orderNumber}</div>
-          ${dateText ? `<div class="order-date">Realizado el: ${dateText}</div>` : ""}
-          ${paymentInfo ? `<div class="order-payment">${paymentInfo}</div>` : ""}
-          ${hasAttachmentText ? `<div class="order-invoice">${hasAttachmentText}</div>` : ""}
+          ${
+            dateText
+              ? `<div class="order-date">Realizado el: ${dateText}</div>`
+              : ""
+          }
+          
+          <div class="order-status-badge ${statusConfig.class}">
+            <i class="fas ${statusConfig.icon}"></i>
+            ${statusConfig.label}
+          </div>
+
+          ${
+            authCode
+              ? `<div style="margin-top:5px; font-size: 0.9em; color: var(--gray);">Cód. Autorización: <span class="auth-code">${authCode}</span></div>`
+              : ""
+          }
+
+          ${
+            paymentInfo
+              ? `<div class="order-payment" style="margin-top:5px; font-size:0.9em;">${paymentInfo}</div>`
+              : ""
+          }
+          ${
+            hasAttachmentText
+              ? `<div class="order-invoice" style="margin-top:5px; color: var(--primary);"><i class="fas fa-paperclip"></i> ${hasAttachmentText}</div>`
+              : ""
+          }
         </div>
       </div>
 
@@ -62,35 +165,133 @@ document.addEventListener("DOMContentLoaded", function () {
       </div>
 
       <div class="order-footer">
-        <div class="order-total">Total: $${Number(order.totalAmount).toFixed(2)}</div>
+        <div class="order-total">Total: $${Number(order.totalAmount).toFixed(
+          2
+        )}</div>
+        
+        ${
+          statusConfig.label === "Rechazada"
+            ? `<div class="order-actions">
+              <a href="../index.html" class="btn-repeat-order">Intentar nuevamente</a>
+            </div>`
+            : ""
+        }
       </div>
     `;
 
     return card;
   }
 
+  // Función mejorada para mostrar alerta (admite modo validación)
+  function showPendingAlert(title, message, isValidation = false) {
+    if (document.querySelector(".pending-order-alert")) return;
+
+    const container = document.querySelector("#orders");
+    const alertDiv = document.createElement("div");
+
+    // Asigna la clase base y añade 'validation-mode' si es necesario
+    const cssClass = isValidation
+      ? "pending-order-alert validation-mode"
+      : "pending-order-alert";
+    const iconClass = isValidation
+      ? "fa-sync-alt fa-spin"
+      : "fa-exclamation-triangle";
+
+    // Textos por defecto
+    const finalTitle = title || "Pago Pendiente Detectado";
+    const finalMsg =
+      message ||
+      "Tu banco está procesando una transacción. Por favor espera la confirmación antes de realizar una nueva compra.";
+
+    alertDiv.className = cssClass;
+    alertDiv.innerHTML = `
+      <i class="fas ${iconClass}"></i>
+      <div>
+        <strong>${finalTitle}</strong>
+        <p style="margin:0; font-size:0.9rem;">${finalMsg}</p>
+      </div>
+      <div class="pending-actions">
+        <button class="btn-check-status" onclick="location.reload()">Actualizar Estado</button>
+      </div>
+    `;
+
+    // Inserta la alerta después del título de la sección
+    const sectionTitle = container.querySelector(".section-title");
+    if (sectionTitle) {
+      sectionTitle.insertAdjacentElement("afterend", alertDiv);
+    }
+  }
+
   async function loadOrdersHistory() {
     if (!ordersListEl) return;
-    ordersListEl.innerHTML = `<p class="orders-loading">Cargando tu historial de pedidos...</p>`;
+    ordersListEl.innerHTML = `<p class="orders-loading"><i class="fas fa-spinner fa-spin"></i> Cargando tu historial de pedidos...</p>`;
 
     try {
       const orders = await window.api.getMyOrdersHistory();
-      if (!orders || !orders.length) {
-        ordersListEl.innerHTML = `<p class="orders-empty">Todavía no has realizado compras pagadas.</p>`;
+
+      // FILTRO: Solo permitimos estos estados
+      const allowedStatuses = ["PAID", "REJECTED", "PENDING_VALIDATION"];
+
+      // Filtramos la lista completa antes de hacer nada más
+      const visibleOrders = (orders || []).filter((order) => {
+        const status = (
+          order.status ||
+          order.paymentStatus ||
+          ""
+        ).toUpperCase();
+        return allowedStatuses.includes(status);
+      });
+
+      if (!visibleOrders.length) {
+        ordersListEl.innerHTML = `<div class="empty-orders">
+            <i class="fas fa-box-open"></i>
+            <p>Todavía no tienes pedidos registrados.</p>
+            <a href="../index.html" class="btn btn-primary">Ir a la tienda</a>
+        </div>`;
         return;
       }
 
       ordersListEl.innerHTML = "";
-      orders.forEach((order) => {
+
+      // Ordenar: Las más recientes primero
+      visibleOrders.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      // Bandera para detectar validación
+      let hasValidationOrder = false;
+
+      visibleOrders.forEach((order) => {
+        const status = (
+          order.status ||
+          order.paymentStatus ||
+          ""
+        ).toUpperCase();
+
+        // Detectar si hay una orden validando
+        if (status === "PENDING_VALIDATION") {
+          hasValidationOrder = true;
+        }
+
         const card = buildOrderCard(order);
         ordersListEl.appendChild(card);
       });
+
+      // Si encontramos una orden en validación, mostramos la alerta Turquesa
+      if (hasValidationOrder) {
+        showPendingAlert(
+          "Pago en Validación",
+          "Tu transacción está siendo validada por el banco. El estado se actualizará automáticamente en unos instantes.",
+          true // TRUE activa el modo validación
+        );
+      }
     } catch (err) {
       console.error(err);
       ordersListEl.innerHTML = `<p class="orders-error">No se pudo cargar tu historial de pedidos. Intenta más tarde.</p>`;
     }
   }
 
+  // Navegación de Tabs
   navLinks.forEach((link) => {
     link.addEventListener("click", function (e) {
       e.preventDefault();
@@ -120,6 +321,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Carga inicial y validación de sesión
   (async () => {
     try {
       const perfil = await window.api.getMiPerfil(); // devuelve null si 401
@@ -143,7 +345,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (nameEl) nameEl.textContent = nombre;
       if (emailEl) emailEl.textContent = email;
-      if (dateEl && creado) dateEl.textContent = "Miembro desde: " + formatearMesAnio(creado);
+      if (dateEl && creado)
+        dateEl.textContent = "Miembro desde: " + formatearMesAnio(creado);
 
       // Rellenar formulario "Información Personal"
       const firstNameEl = document.getElementById("firstName");
@@ -163,7 +366,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (emailInpEl) emailInpEl.value = pEmail;
       if (phoneEl) phoneEl.value = pTelefono;
 
-      // Cargar historial de pedidos pagados
+      // Cargar historial de pedidos
       await loadOrdersHistory();
     } catch {
       window.location.href = homeLink;
@@ -211,6 +414,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Validaciones del formulario personal
   const firstNameEl = document.getElementById("firstName");
   const lastNameEl = document.getElementById("lastName");
   const phoneEl = document.getElementById("phone");
@@ -253,11 +457,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Sanitiza mientras se escribe
   firstNameEl?.addEventListener("input", () => {
-    firstNameEl.value = firstNameEl.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g, "");
+    firstNameEl.value = firstNameEl.value.replace(
+      /[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g,
+      ""
+    );
     validateNames();
   });
   lastNameEl?.addEventListener("input", () => {
-    lastNameEl.value = lastNameEl.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g, "");
+    lastNameEl.value = lastNameEl.value.replace(
+      /[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g,
+      ""
+    );
     validateNames();
   });
   phoneEl?.addEventListener("input", validatePhone);

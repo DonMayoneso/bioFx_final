@@ -89,6 +89,7 @@
             justify-content: center;
             margin-bottom: 30px;
             gap: 20px;
+            flex-wrap: wrap;
         }
         
         .policy-nav a {
@@ -179,6 +180,20 @@
             color: #616160;
         }
         
+        /* Estilos específicos para Placetopay Branding */
+        .placetopay-branding-container {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .placetopay-logo {
+            max-height: 55px;
+            width: auto;
+            display: inline-block;
+        }
+
         /* Footer */
         .policy-footer {
             background-color: #1a5276;
@@ -231,14 +246,12 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="policy-header">
         <a href="../index.html" class="back-button">
             <i class="fas fa-arrow-left"></i> Regresar al Comercio
         </a>
         <div class="container">
             <div class="header-content">
-                <!-- Aquí debes reemplazar la ruta con la correcta para tu isotipo -->
                 <img src="../assets/logos/isotipo.webp" alt="BioFX Isotipo" class="isotipo">
                 <div>
                     <h1>Políticas y Términos de BioFX</h1>
@@ -248,22 +261,20 @@
         </div>
     </header>
 
-    <!-- Navegación -->
     <div class="container">
         <div class="policy-nav">
             <a href="#privacy" class="active">Políticas de Privacidad</a>
             <a href="#terms">Términos y Condiciones</a>
+            <a href="#faq-placetopay">FAQ Placetopay</a>
         </div>
     </div>
 
-    <!-- Contenido Principal -->
     <div class="container">
-        <!-- Políticas de Privacidad -->
         <section id="privacy" class="policy-content">
             <h2>Política de Privacidad y Cookies</h2>
-            <p>Última actualización: [16/11/2025]</p>
+            <p>Última actualización: [31/12/2025]</p>
             
-            <div class="policy-section">
+            <div class="policy-section active">
                 <div class="policy-section-header">
                     <h3>1. Introducción</h3>
                     <i class="fas fa-chevron-down toggle-icon"></i>
@@ -334,23 +345,7 @@
             
             <div class="policy-section">
                 <div class="policy-section-header">
-                    <h3>6. Protección de datos personales</h3>
-                    <i class="fas fa-chevron-down toggle-icon"></i>
-                </div>
-                <div class="policy-section-content">
-                    <p>El titular de los datos acepta y emite su consentimiento unilateral de manera libre y voluntaria para el tratamiento de sus datos personales para que sean: recolectados a través de nuestros canales electrónicos o por cualquier medio, almacenados, procesados, transmitidos y eliminados o para ser objeto de cualquier tratamiento o conjunto de tratamientos a realizar, ya sea por procedimientos técnicos de carácter automatizado, parcialmente automatizado o no automatizados por el Comercio o su delegado, con la finalidad de identificar, actualizar sus datos y ofrecerle servicios y/o productos a través de los canales digitales o cualquier otro medio.</p>
-                    
-                    <p>La transmisión y almacenamiento de la información recopilada por el Comercio o su delegado, será realizada en la infraestructura que este administre, dentro o fuera del territorio ecuatoriano. Esta infraestructura puede ser implementada en servidores físicos o en la nube de proveedores que cuenten con las debidas certificaciones internacionales para el tratamiento de Seguridad de la Información.</p>
-                    
-                    <p>Adicionalmente, mediante la presente el titular de los datos declara conocer y aceptar el Aviso de Política de Privacidad de Placetopay en la cual se indican sus derechos, datos tratados y las actividades comerciales de los aliados, así como otros datos de interés respecto a la protección de datos personales, que se encuentran detallados en el sitio web de Placetopay en la ruta <a href="https://www.placetopay.com/web/politicas-de-privacidad/" target="_blank">https://www.placetopay.com/web/politicas-de-privacidad/</a>, mediante la cual, se podrá solicitar la gestión de derechos o consentimientos.</p>
-                    
-                    <p>El Comercio o su delegado notificará sobre las actualizaciones del Aviso de Política de Privacidad antes mencionado por medio de los diferentes canales digitales.</p>
-                </div>
-            </div>
-            
-            <div class="policy-section">
-                <div class="policy-section-header">
-                    <h3>7. Tus derechos</h3>
+                    <h3>6. Tus derechos</h3>
                     <i class="fas fa-chevron-down toggle-icon"></i>
                 </div>
                 <div class="policy-section-content">
@@ -368,7 +363,7 @@
             
             <div class="policy-section">
                 <div class="policy-section-header">
-                    <h3>8. Contacto</h3>
+                    <h3>7. Contacto</h3>
                     <i class="fas fa-chevron-down toggle-icon"></i>
                 </div>
                 <div class="policy-section-content">
@@ -379,10 +374,9 @@
             </div>
         </section>
 
-        <!-- Términos y Condiciones -->
         <section id="terms" class="policy-content" style="display: none;">
             <h2>Términos y Condiciones de Uso</h2>
-            <p>Última actualización: [16/11/2025]</p>
+            <p>Última actualización: [31/12/2025]</p>
             
             <div class="policy-section">
                 <div class="policy-section-header">
@@ -501,9 +495,130 @@
                 </div>
             </div>
         </section>
+
+        <section id="faq-placetopay" class="policy-content" style="display: none;">
+            
+            <div class="placetopay-branding-container">
+                <img src="https://static.placetopay.com/placetopay-logo.svg" alt="Placetopay Pagos Seguros" class="placetopay-logo">
+            </div>
+
+            <h2>Preguntas Frecuentes - Placetopay</h2>
+            <p>Última actualización: [31/12/2025]</p>
+
+            <div class="policy-section">
+                <div class="policy-section-header">
+                    <h3>¿Qué es Placetopay?</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Placetopay es la plataforma de pagos electrónicos que usa BioFX para procesar en línea las transacciones generadas en la tienda virtual con las formas de pago habilitadas para tal fin.</p>
+                </div>
+            </div>
+
+            <div class="policy-section">
+                <div class="policy-section-header">
+                    <h3>¿Cómo puedo pagar?</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>En la tienda virtual de BioFX usted podrá realizar su pago con los medios habilitados para tal fin. Usted, de acuerdo a las opciones de pago escogidas por el comercio, podrá pagar a través de Diners, Discover, Visa y MasterCard; de todos los bancos con pago corriente y en los diferido, únicamente las tarjetas emitidas por Banco Pichincha, Diners, Loja, BGR y Manabí.</p>
+                </div>
+            </div>
+
+            <div class="policy-section">
+                <div class="policy-section-header">
+                    <h3>¿Es seguro ingresar mis datos bancarios en este sitio web?</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Para proteger tus datos BioFX delega en Placetopay la captura de la información sensible. Nuestra plataforma de pagos cumple con los más altos estándares exigidos por la norma internacional PCI DSS de seguridad en transacciones con tarjeta de crédito.</p>
+                    <p>Además tiene certificado de seguridad SSL expedido por GeoTrust una compañía Verisign, el cual garantiza comunicaciones seguras mediante la encriptación de todos los datos hacia y desde el sitio; de esta manera, te podrás sentir seguro a la hora de ingresar la información de su tarjeta.</p>
+                    <p>Durante el proceso de pago, en el navegador se muestra el nombre de la organización autenticada, la autoridad que lo certifica y la barra de dirección cambia a color verde. Estas características son visibles de inmediato y dan garantía y confianza para completar la transacción en Placetopay.</p>
+                    <p>Placetopay también cuenta con el monitoreo constante de McAfee Secure y la firma de mensajes electrónicos con Certicámara. Placetopay es una marca de la empresa colombiana EGM Ingeniería Sin Fronteras S.A.S..</p>
+                </div>
+            </div>
+
+            <div class="policy-section">
+                <div class="policy-section-header">
+                    <h3>¿Puedo realizar el pago cualquier día y a cualquier hora?</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Sí, en BioFX podrás realizar tus compras en línea los 7 días de la semana, las 24 horas del día a sólo un clic de distancia.</p>
+                </div>
+            </div>
+
+            <div class="policy-section">
+                <div class="policy-section-header">
+                    <h3>¿Puedo cambiar la forma de pago?</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Si aún no has finalizado tu pago, podrás volver al paso inicial y elegir la forma de pago que prefieras. Una vez finalizada la compra no es posible cambiar la forma de pago.</p>
+                </div>
+            </div>
+
+            <div class="policy-section">
+                <div class="policy-section-header">
+                    <h3>¿Pagar electrónicamente tiene algún valor para mí como comprador?</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>No, los pagos electrónicos realizados a través de Placetopay no generan costos adicionales para el comprador.</p>
+                </div>
+            </div>
+
+            <div class="policy-section">
+                <div class="policy-section-header">
+                    <h3>¿Qué debo hacer si mi transacción no concluyó?</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>En primera instancia deberás revisar si llegó un mail de confirmación del pago en tu cuenta de correo electrónico (la inscrita en el momento de realizar el pago), en caso de no haberlo recibido, deberás contactar a <a href="mailto:info@biofx.com.ec">info@biofx.com.ec</a> para confirmar el estado de la transacción.</p>
+                    <p>En caso que tu transacción haya declinado, debes verificar si la información de la cuenta es válida, está habilitada para compras no presenciales y si tienes cupo o saldo disponible. Si después de esto continua con la declinación debes comunicarte con BioFX. En última instancia, puedes remitir tu solicitud a <a href="mailto:servicioposventa@placetopay.ec">servicioposventa@placetopay.ec</a>.</p>
+                </div>
+            </div>
+
+            <div class="policy-section">
+                <div class="policy-section-header">
+                    <h3>¿Qué debo hacer si no recibí el comprobante de pago?</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Por cada transacción aprobada a través de Placetopay, recibirás un comprobante del pago con la referencia de compra en la dirección de correo electrónico que indicaste al momento de pagar.</p>
+                    <p>Si no lo recibes, podrás contactar a la línea [+593 98 499 8324] o al correo electrónico <a href="mailto:info@biofx.com.ec">info@biofx.com.ec</a>, para solicitar el reenvío del comprobante a la misma dirección de correo electrónico registrada al momento de pagar. En última instancia, puedes remitir tu solicitud a <a href="mailto:servicioposventa@placetopay.ec">servicioposventa@placetopay.ec</a>.</p>
+                </div>
+            </div>
+
+            <div class="policy-section">
+                <div class="policy-section-header">
+                    <h3>No me llegó el producto que compré ¿qué hago?</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>Debes verificar si la transacción fue exitosa en tu extracto bancario. En caso de ser así, debes revisar nuestras políticas de envío en el sitio web de BioFX para identificar los tiempos de entrega.</p>
+                </div>
+            </div>
+
+            <div class="policy-section" id="data-protection">
+                <div class="policy-section-header">
+                    <h3>Protección de datos personales (Cláusula Placetopay)</h3>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="policy-section-content">
+                    <p>El titular de los datos acepta y emite su consentimiento unilateral de manera libre y voluntaria para el tratamiento de sus datos personales para que sean: recolectados a través de nuestros canales electrónicos o por cualquier medio, almacenados, procesados, transmitidos y eliminados o para ser objeto de cualquier tratamiento o conjunto de tratamientos a realizar, ya sea por procedimientos técnicos de carácter automatizado, parcialmente automatizado o no automatizados por el Comercio o su delegado, con la finalidad de identificar, actualizar sus datos y ofrecerle servicios y/o productos a través de los canales digitales o cualquier otro medio.</p>
+                    
+                    <p>La transmisión y almacenamiento de la información recopilada por el Comercio o su delegado, será realizada en la infraestructura que este administre, dentro o fuera del territorio ecuatoriano. Esta infraestructura puede ser implementada en servidores físicos o en la nube de proveedores que cuenten con las debidas certificaciones internacionales para el tratamiento de Seguridad de la Información.</p>
+                    
+                    <p>Adicionalmente, mediante la presente el titular de los datos declara conocer y aceptar el Aviso de Política de Privacidad de Placetopay en la cual se indican sus derechos, datos tratados y las actividades comerciales de los aliados, así como otros datos de interés respecto a la protección de datos personales, que se encuentran detallados en el sitio web de Placetopay en la ruta <a href="https://www.placetopay.com/web/politicas-de-privacidad/" target="_blank">https://www.placetopay.com/web/politicas-de-privacidad/</a>, mediante la cual, se podrá solicitar la gestión de derechos o consentimientos.</p>
+                    
+                    <p>El Comercio o su delegado notificará sobre las actualizaciones del Aviso de Política de Privacidad antes mencionado por medio de los diferentes canales digitales.</p>
+                </div>
+            </div>
+
+        </section>
     </div>
 
-    <!-- Footer -->
     <footer class="policy-footer">
         <div class="container">
             <p><a href="mailto:info@biofx.com.ec">info@biofx.com.ec</a> | <a href="../index.html">Volver al sitio principal</a></p>
@@ -514,32 +629,46 @@
     </footer>
 
     <script>
-        // Funcionalidad para alternar entre políticas y términos
+        // Funcionalidad para alternar entre políticas, términos y FAQ
         document.addEventListener('DOMContentLoaded', function() {
             const privacyLink = document.querySelector('a[href="#privacy"]');
             const termsLink = document.querySelector('a[href="#terms"]');
+            const faqLink = document.querySelector('a[href="#faq-placetopay"]');
+            
             const privacySection = document.getElementById('privacy');
             const termsSection = document.getElementById('terms');
+            const faqSection = document.getElementById('faq-placetopay');
             
-            privacyLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                privacySection.style.display = 'block';
-                termsSection.style.display = 'none';
-                privacyLink.classList.add('active');
-                termsLink.classList.remove('active');
-            });
-            
-            termsLink.addEventListener('click', function(e) {
-                e.preventDefault();
+            // Función para cambiar de pestaña
+            function switchTab(tabId) {
+                // Ocultar todo
                 privacySection.style.display = 'none';
-                termsSection.style.display = 'block';
+                termsSection.style.display = 'none';
+                faqSection.style.display = 'none';
+                
                 privacyLink.classList.remove('active');
-                termsLink.classList.add('active');
-            });
+                termsLink.classList.remove('active');
+                faqLink.classList.remove('active');
+
+                // Mostrar seleccionado
+                if (tabId === 'privacy') {
+                    privacySection.style.display = 'block';
+                    privacyLink.classList.add('active');
+                } else if (tabId === 'terms') {
+                    termsSection.style.display = 'block';
+                    termsLink.classList.add('active');
+                } else if (tabId === 'faq-placetopay') {
+                    faqSection.style.display = 'block';
+                    faqLink.classList.add('active');
+                }
+            }
+
+            privacyLink.addEventListener('click', (e) => { e.preventDefault(); switchTab('privacy'); });
+            termsLink.addEventListener('click', (e) => { e.preventDefault(); switchTab('terms'); });
+            faqLink.addEventListener('click', (e) => { e.preventDefault(); switchTab('faq-placetopay'); });
             
             // Funcionalidad para acordeón
             const sectionHeaders = document.querySelectorAll('.policy-section-header');
-            
             sectionHeaders.forEach(header => {
                 header.addEventListener('click', function() {
                     const section = this.parentElement;
@@ -547,10 +676,47 @@
                 });
             });
             
-            // Abrir la primera sección por defecto
-            if (document.querySelector('.policy-section')) {
-                document.querySelector('.policy-section').classList.add('active');
+            // --- LÓGICA DE APERTURA AUTOMÁTICA (DEEP LINKING) ---
+            function handleHash() {
+                const hash = window.location.hash;
+                
+                if (hash === '#terms') {
+                    switchTab('terms');
+                } else if (hash === '#faq-placetopay') {
+                    switchTab('faq-placetopay');
+                } else if (hash === '#data-protection') {
+                    // 1. Ir a la pestaña de FAQ
+                    switchTab('faq-placetopay');
+                    
+                    // 2. Buscar la sección específica
+                    const targetSection = document.getElementById('data-protection');
+                    if (targetSection) {
+                        // 3. Abrir el acordeón
+                        targetSection.classList.add('active');
+                        
+                        // 4. Scroll suave hacia la sección
+                        setTimeout(() => {
+                            targetSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            // Pequeño efecto visual
+                            targetSection.style.transition = "box-shadow 0.5s";
+                            targetSection.style.boxShadow = "0 0 15px rgba(42, 127, 140, 0.5)";
+                            setTimeout(() => { targetSection.style.boxShadow = ""; }, 1500);
+                        }, 100);
+                    }
+                } else {
+                    // Default: Privacy (si no hay hash o es #privacy)
+                    if (hash === '#privacy' || !hash) {
+                        switchTab('privacy');
+                        // Asegurar que el primer acordeón esté abierto si es la vista por defecto
+                        if(!document.querySelector('.policy-section.active') && document.querySelector('#privacy .policy-section')) {
+                             document.querySelector('#privacy .policy-section').classList.add('active');
+                        }
+                    }
+                }
             }
+
+            // Ejecutar al cargar
+            handleHash();
         });
     </script>
 </body>

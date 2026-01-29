@@ -732,21 +732,235 @@ function cambiarCategoria(categoria) {
   }
 }
 
+// Variable para controlar el cooldown del botón de actualizar
+const UPDATE_COOLDOWN = 60000;
+
 // Abrir modal de carrito
 async function abrirCarrito() {
-  if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para ver tu carrito." })))
-    return;
+    if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para ver tu carrito." })))
+        return;
 
-  await fetchAndBindCart();
-  cargarCarritoItems();
-  cartModal.style.display = "flex";
-  document.body.style.overflow = "hidden";
+    await fetchAndBindCart();
+    cargarCarritoItems();
+    await verificarPagoPendienteEnCarrito();
+
+    cartModal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+}
+
+// Función principal para gestión de estados de pago en el carrito
+async function verificarPagoPendienteEnCarrito() {
+    const checkoutBtn = document.getElementById("checkoutButton");
+    const cartSummary = document.querySelector(".cart-summary");
+    
+    // Limpieza inicial
+    const existingAlert = document.querySelector(".cart-pending-alert");
+    if (existingAlert) existingAlert.remove();
+
+    // Restaurar botón a estado "Normal" por defecto
+    if (checkoutBtn) {
+        checkoutBtn.disabled = false;
+        checkoutBtn.classList.remove("btn-disabled", "btn-continue-payment");
+        checkoutBtn.innerHTML = "Finalizar Compra";
+        checkoutBtn.removeAttribute("data-action"); 
+        checkoutBtn.removeAttribute("data-order-id");
+    }
+
+    try {
+        // BUSCAR EN EL API (Historial)
+        const history = await window.api.getMyOrdersHistory();
+        
+        if (!Array.isArray(history) || history.length === 0) return;
+
+        const blockingStates = ["PENDING", "PENDING_PAYMENT", "PENDING_VALIDATION"];
+        
+        // Ordenamos por ID descendente y tomamos la más reciente
+        const pendingOrder = history
+            .filter(o => blockingStates.includes(String(o.status || o.paymentStatus || "").toUpperCase()))
+            .sort((a, b) => (b.id || b.orderId) - (a.id || a.orderId))[0];
+
+        if (!pendingOrder) return; // El usuario está limpio
+
+        // Datos de la orden encontrada
+        const lastOrderId = pendingOrder.id || pendingOrder.orderId;
+        const reference = pendingOrder.reference || pendingOrder.orderNumber || `ORD-${lastOrderId}`;
+        const status = String(pendingOrder.status || pendingOrder.paymentStatus || "").toUpperCase();
+
+        // CASO A: VALIDANDO
+        if (status === "PENDING_VALIDATION") {
+            
+            if (checkoutBtn) {
+                checkoutBtn.disabled = true;
+                checkoutBtn.classList.add("btn-disabled");
+                checkoutBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Validando Pago...';
+            }
+
+            injectCartAlert(cartSummary, {
+                type: "validation",
+                title: "Estamos validando tu pago",
+                msg: "Tu banco está procesando la respuesta. Por seguridad, espera un momento.",
+                icon: "fa-sync-alt fa-spin",
+                orderId: lastOrderId
+            });
+
+        // CASO B: PENDIENTE
+        } else if (["PENDING", "PENDING_PAYMENT"].includes(status)) {
+            
+            if (checkoutBtn) {
+                checkoutBtn.disabled = false;
+                checkoutBtn.classList.add("btn-continue-payment");
+                // Cambio de texto solicitado
+                checkoutBtn.innerHTML = 'Continuar con el pago pendiente <i class="fas fa-arrow-right"></i>';
+                
+                // Marcadores para que finalizarCompra sepa qué hacer
+                checkoutBtn.setAttribute("data-action", "redirect");
+                checkoutBtn.setAttribute("data-order-id", lastOrderId);
+            }
+
+            injectCartAlert(cartSummary, {
+                type: "pending",
+                title: "Tienes una orden pendiente",
+                msg: `La orden #${reference} está esperando pago.`,
+                icon: "fa-exclamation-triangle",
+                orderId: lastOrderId
+            });
+        }
+
+    } catch (e) {
+        console.error("Error verificando pago pendiente:", e);
+    }
+}
+
+// Nueva función para actualizar manualmente la orden (con Cooldown)
+async function actualizarEstadoOrdenManual(orderId, btnElement) {
+    const now = Date.now();
+    const lastUpdateKey = `last_update_${orderId}`;
+    const lastUpdate = localStorage.getItem(lastUpdateKey);
+
+    // Restricción de tiempo
+    if (lastUpdate && (now - parseInt(lastUpdate)) < UPDATE_COOLDOWN) {
+        const remaining = Math.ceil((UPDATE_COOLDOWN - (now - parseInt(lastUpdate))) / 1000);
+        const msg = `Por favor espera ${remaining} segundos para actualizar nuevamente.`;
+        if (window.Snackbar?.show) window.Snackbar.show(msg, { type: 'error' });
+        else alert(msg);
+        return;
+    }
+
+    // Feedback visual
+    const originalContent = btnElement.innerHTML;
+    btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ...';
+    btnElement.style.pointerEvents = 'none';
+
+    try {
+        // Llamada al API
+        await window.api.getOrderStatus(orderId);
+        
+        // Guardar timestamp
+        localStorage.setItem(lastUpdateKey, now.toString());
+
+        if (window.Snackbar?.show) window.Snackbar.show("Estado actualizado.", { type: 'success' });
+
+        // Refrescar la vista del carrito
+        await verificarPagoPendienteEnCarrito();
+
+    } catch (error) {
+        console.error("Error actualizando orden:", error);
+        if (window.Snackbar?.show) window.Snackbar.show("No se pudo actualizar.", { type: 'error' });
+        
+        // Restaurar botón solo si falló
+        btnElement.innerHTML = originalContent;
+        btnElement.style.pointerEvents = 'auto';
+    }
+}
+
+// Helper para inyectar la alerta visualmente
+function injectCartAlert(container, { type, title, msg, icon, orderId }) {
+    if (!container) return;
+
+    const alertDiv = document.createElement("div");
+    const modeClass = type === "validation" ? "validation-mode" : "";
+    
+    alertDiv.className = `cart-pending-alert ${modeClass}`;
+    
+    alertDiv.innerHTML = `
+        <i class="fas ${icon}"></i>
+        <div class="cart-pending-content">
+            <h4>${title}</h4>
+            <p>${msg}</p>
+            <p style="font-size: 0.85em; margin-top:5px; opacity: 0.9;">
+                ${type === 'pending' 
+                    ? 'Debes completar o cancelar esta orden antes de crear una nueva.' 
+                    : 'Si el estado no cambia automáticamente, usa el botón de actualizar.'}
+            </p>
+            
+            <div style="margin-top: 8px; display: flex; gap: 15px; align-items: center;">
+                <a href="profile/profile.html" style="text-decoration: underline; cursor: pointer;">Ver en perfil</a>
+                
+                <a href="#" class="update-status-link" style="text-decoration: none; cursor: pointer; font-weight: 700;">
+                    <i class="fas fa-sync"></i> Actualizar estado
+                </a>
+            </div>
+        </div>
+    `;
+
+    // Asignar el evento click al botón de actualizar
+    const updateBtn = alertDiv.querySelector('.update-status-link');
+    if (updateBtn && orderId) {
+        updateBtn.onclick = (e) => {
+            e.preventDefault();
+            actualizarEstadoOrdenManual(orderId, updateBtn);
+        };
+    }
+
+    container.insertBefore(alertDiv, container.firstChild);
 }
 
 // Cerrar modal de carrito
 function cerrarModalCarrito() {
   cartModal.style.display = "none";
   document.body.style.overflow = "auto";
+}
+// Lógica de Finalizar Compra
+async function finalizarCompra() {
+    const checkoutBtn = document.getElementById("checkoutButton");
+        
+    // REDIRECCIÓN DE PAGO PENDIENTE
+    if (checkoutBtn && checkoutBtn.getAttribute("data-action") === "redirect") {
+        const pendingOrderId = checkoutBtn.getAttribute("data-order-id");
+        
+        if (pendingOrderId) {
+            window.location.href = `continuar_pago/continuar_pago.html?orderId=${pendingOrderId}`;
+            return; 
+        }
+    }
+
+    // FLUJO NORMAL DE COMPRA NUEVA
+    // (Solo llega aquí si NO hay un pago pendiente activo)
+    
+    // A. Validar Sesión
+    if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para pagar." }))) return;
+
+    // Sincronizar Carrito
+    await fetchAndBindCart();
+
+    // Validar Carrito Vacío
+    const totalItems = carrito.reduce((s, it) => s + Number(it.cantidad || 0), 0);
+    
+    if (!totalItems) {
+        (window.Snackbar?.error || mostrarNotificacion)?.("Tu carrito está vacío.");
+        return;
+    }
+
+    // Preparar datos para Checkout
+    const snapshot = buildCheckoutSnapshot(carrito);
+    try {
+        sessionStorage.setItem("carritoCheckout", JSON.stringify(snapshot));
+    } catch (e) {
+        console.error("Error guardando sesión de carrito:", e);
+    }
+
+    // Ir al Checkout
+    window.location.href = "checkout/checkout.html";
 }
 
 // Cargar items del carrito
@@ -821,30 +1035,6 @@ async function eliminarDelCarrito(productId) {
   } catch (e) {
     (window.Snackbar?.error || mostrarNotificacion)(e.message || "Error al eliminar.");
   }
-}
-
-async function finalizarCompra() {
-  // 1) Requiere sesión
-  if (!(await ensureAuthOrOpenLogin({ reason: "Debes iniciar sesión para pagar." }))) return;
-
-  // 2) Sincroniza carrito desde API para evitar cantidades desactualizadas
-  await fetchAndBindCart();
-
-  // 3) Bloquea si vacío
-  const totalItems = carrito.reduce((s, it) => s + Number(it.cantidad || 0), 0);
-  if (!totalItems) {
-    (window.Snackbar?.error || mostrarNotificacion)?.("Tu carrito está vacío.");
-    return;
-  }
-
-  // 4) Snapshot mínimo para Checkout
-  const snapshot = buildCheckoutSnapshot(carrito);
-  try {
-    sessionStorage.setItem("carritoCheckout", JSON.stringify(snapshot));
-  } catch {}
-
-  // 5) Redirige
-  window.location.href = "checkout/checkout.html";
 }
 
 // Actualizar contador de carrito
