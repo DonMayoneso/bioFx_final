@@ -227,7 +227,46 @@
     max-width: 200px;
     height: auto;
 }
+/* Estilos para los iconos de tarjetas */
+.card-icons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin: 10px 0 20px 0;
+    font-size: 2rem;
+}
 
+/* Colores oficiales de las marcas para mejor UX */
+.fa-cc-visa {
+    color: #1A1F71;
+}
+
+.fa-cc-diners-club {
+    color: #0079BE;
+}
+
+.fa-cc-discover {
+    color: #FF6000;
+}
+
+.fa-cc-mastercard {
+    color: #EB001B;
+}
+
+.fa-cc-amex {
+    color: #2E77BC;
+}
+
+/* Efecto hover sutil para interactividad */
+.card-icons i {
+    transition: transform 0.2s ease;
+    cursor: default;
+}
+
+.card-icons i:hover {
+    transform: scale(1.1); /* Pequeño zoom al pasar el mouse */
+}
 /* NUEVO: Estilos para la sección de aceptación */
 .acceptance-section {
     background-color: #f9f9f9;

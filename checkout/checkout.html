@@ -7,10 +7,7 @@
     <link rel="icon" type="image/png" href="../assets/logos/isotipoico.webp" />
     <link rel="stylesheet" href="../styles.css" />
     <link rel="stylesheet" href="checkout.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   </head>
   <body>
     <header class="header">
@@ -150,10 +147,9 @@
                   >
                 </div>
               </fieldset>
-
+              
               <fieldset class="form-section">
                 <legend><i class="fas fa-credit-card"></i> Método de Pago</legend>
-
                 <div class="payment-methods">
                   <div class="payment-method selected">
                     <div class="payment-header">
@@ -165,16 +161,23 @@
                         Serás redirigido a Placetopay para completar tu pago de forma segura.
                         Aceptamos tarjetas de crédito, débito y transferencias bancarias.
                       </p>
+                      
                       <div class="payment-logo">
                         <img src="https://static.placetopay.com/placetopay-logo.svg" alt="PlaceToPay" />
                       </div>
+
+                      <div class="card-icons">
+                          <i class="fa-brands fa-cc-visa" title="Visa"></i>
+                          <i class="fa-brands fa-cc-diners-club" title="Diners Club"></i>
+                          <i class="fa-brands fa-cc-discover" title="Discover"></i>
+                          <i class="fa-brands fa-cc-mastercard" title="MasterCard"></i>
+                          <i class="fa-brands fa-cc-amex" title="American Express"></i>
+                      </div>
                       <div class="payment-terms">
-                        <small
-                          >En caso de dudas sobre el manejo de su información bancaria ver
-                          <a href="../politicas/politicas.html" target="_blank"
-                            >Términos y condiciones</a
-                          ></small
-                        >
+                        <small>
+                          En caso de dudas sobre el manejo de su información bancaria ver
+                          <a href="../politicas/politicas.html" target="_blank">Términos y condiciones</a>
+                        </small>
                       </div>
                     </div>
                   </div>
@@ -184,11 +187,11 @@
               <div class="acceptance-section">
                  <div class="checkbox-group">
                     <input type="checkbox" id="acceptTerms" name="acceptTerms" required>
-                    <label for="acceptTerms">He leído y acepto los <a href="../politicas/politicas.html#faq-placetopay" target="_blank">Términos y Condiciones</a></label>
+                    <label for="acceptTerms">Si, acepto los <a href="../politicas/politicas.html#faq-placetopay" target="_blank">Términos y Condiciones</a></label>
                  </div>
                  <div class="checkbox-group">
                     <input type="checkbox" id="acceptPrivacy" name="acceptPrivacy" required>
-                    <label for="acceptPrivacy">He leído y acepto la <a href="../politicas/politicas.html#data-protection" target="_blank">Política de Protección de Datos</a></label>
+                    <label for="acceptPrivacy">Si, acepto la <a href="../politicas/politicas.html#data-protection" target="_blank">Política de Protección de Datos</a></label>
                  </div>
               </div>
               <div class="form-actions">
@@ -218,7 +221,7 @@
               </div>
               <div class="summary-row">
                 <span>Envío</span>
-                <span id="shipping">$5.00</span>
+                <span id="shipping">$3.50</span>
               </div>
               <div class="summary-row total">
                 <span>Total</span>
