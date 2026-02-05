@@ -1656,9 +1656,7 @@ body {
     color: var(--gray);
 }
 
-/*
-   FOOTER ACTUALIZADO
- */
+/* FOOTER ACTUALIZADO */
 
 /* Estilos para enlaces de texto */
 .text-link {
@@ -1751,27 +1749,24 @@ body {
 .payment-methods h4 {
     font-size: 16px;
     margin-bottom: 10px;
-    color: var(--white); /* Asumiendo que esta variable existe en tu root */
+    color: var(--white);
 }
 
-/* Ajuste para el logo de place to pay si es necesario que se vea bien en fondo oscuro */
 .placetopay-logo {
-    /* Sugerencia visual: a veces estos logos necesitan un fondo blanco o filtro brightness 
-       si son oscuros, pero si el svg ya es blanco/claro, déjalo así. */
-    max-width: 150px; /* Tamaño controlado */
+    max-width: 150px;
     height: auto;
 }
 
 .payment-icons {
     display: flex;
     gap: 15px;
-    margin-top: 15px; /* Un poco más de aire respecto al logo de arriba */
-    flex-wrap: wrap; /* Seguridad por si el footer es muy angosto */
+    margin-top: 15px;
+    flex-wrap: wrap;
 }
 
 .payment-icons i {
     font-size: 32px;
-    color: #fff; /* BLANCO solicitado */
+    color: #fff;
     opacity: 0.8;
     transition: all 0.3s ease;
     cursor: default;
@@ -1779,7 +1774,7 @@ body {
 
 .payment-icons i:hover {
     opacity: 1;
-    transform: translateY(-2px); /* Pequeño detalle de interacción UX */
+    transform: translateY(-2px);
 }
 
 .social-media {
@@ -2994,21 +2989,18 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-/*
-   BANNER PROMOCIONES DESLIZANTE
-*/
+/* BANNER PROMOCIONES DESLIZANTE */
 .promo-banner {
     background: linear-gradient(90deg, #1a5276, #2e86c1);
     color: white;
     padding: 10px 0;
     overflow: hidden;
-    position: absolute;
-
-    top: 55px; 
+    position: fixed;
+    top: 55px;
     left: 0;
     right: 0;
     z-index: 999;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     white-space: nowrap;
     transition: top 0.3s ease;
     height: 40px;
@@ -3019,7 +3011,7 @@ body {
 .promo-track {
     display: flex;
     width: max-content;
-    animation: moveText 20s linear infinite;
+    animation: moveText 0s linear infinite; /* Editar para dar movimiento */
 }
 
 .promo-content {
@@ -3035,16 +3027,20 @@ body {
 }
 
 @keyframes moveText {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
 }
 
 .main-content {
-    margin-top: 40px !important; 
+    margin-top: 40px !important;
 }
 
 .header.shrink ~ .promo-banner {
-    top: 50px; 
+    top: 50px;
 }
 
 .header.shrink ~ .main-content {
@@ -3056,19 +3052,19 @@ body {
     .promo-text {
         font-size: 13px;
     }
-    
+
     .promo-banner {
-        top: 105px; 
+        top: 105px;
     }
-    
+
     .main-content {
-        margin-top: 105px !important; 
+        margin-top: 105px !important;
     }
-    
+
     .header.shrink ~ .promo-banner {
         top: 50px;
     }
-    
+
     .header.shrink ~ .main-content {
         margin-top: 50px !important;
     }
