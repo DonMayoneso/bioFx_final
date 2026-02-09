@@ -95,7 +95,7 @@ body {
 }
 
 /*
-   HEADER Y NAVEGACIÓN
+    HEADER Y NAVEGACIÓN - CORRECCIÓN DE ALINEACIÓN HORIZONTAL (PC)
 */
 .header {
     background-color: var(--white);
@@ -116,7 +116,6 @@ body {
     min-height: 60px;
 }
 
-/* Contenedor del logo */
 .logo {
     position: relative;
     height: 50px;
@@ -124,12 +123,10 @@ body {
     align-items: center;
 }
 
-/* Estilos para ambas versiones del logo */
 .logo-img {
     transition: all 0.3s ease;
 }
 
-/* Logo completo - visible por defecto */
 .logo-full {
     height: 50px;
     width: auto;
@@ -137,26 +134,15 @@ body {
     visibility: visible;
 }
 
-/* Isotipo - oculto por defecto */
 .logo-isotipo {
     position: absolute;
     top: 50%;
-    left: 0;
-    transform: translateY(-50%);
-    height: 40px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 35px;
     width: auto;
     opacity: 0;
     visibility: hidden;
-}
-
-/* Estado reducido del header al hacer scroll */
-.header.shrink {
-    padding: 0;
-}
-
-.header.shrink .container {
-    padding: 0 20px;
-    min-height: 50px;
 }
 
 .header.shrink .logo-full {
@@ -168,39 +154,16 @@ body {
 .header.shrink .logo-isotipo {
     opacity: 1;
     visibility: visible;
-    height: 35px;
 }
 
-.header.shrink .logo {
-    height: 35px; 
-}
-
-/* Resto de estilos de navegación */
-.main-nav ul {
-    display: flex;
-    gap: 20px;
-    list-style: none;
-}
-
-.main-nav a {
-    color: var(--dark);
-    font-weight: 500;
-    padding: 5px 10px;
-    transition: var(--transition);
-}
-
-.main-nav a:hover,
-.main-nav a.active {
-    color: var(--primary);
-}
-
+/* PC: ACCIONES EN HORIZONTAL (UNO AL LADO DEL OTRO) */
 .header-actions {
-    display: flex;
+    display: flex; /* Asegura que en PC estén en línea */
     align-items: center;
-    gap: 15px;
+    gap: 15px; /* Separación horizontal entre usuario y carrito */
 }
 
-.cart-icon {
+.cart-icon, .user-icon {
     position: relative;
     cursor: pointer;
     font-size: 20px;
@@ -227,45 +190,43 @@ body {
     align-items: center;
 }
 
-.user-icon {
-    cursor: pointer;
-    font-size: 20px;
-    color: var(--dark);
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* RESPONSIVE HEADER - Ajustes críticos para móvil */
+/* RESPONSIVE MÓVIL: Única sección donde se permite posicionamiento absoluto */
 @media (max-width: 768px) {
     .header .container {
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 10px;
-        padding: 5px 15px;
+        display: block;
+        padding: 10px 10px 8px !important;
+        min-height: auto !important;
+        position: relative;
     }
 
     .logo {
-        height: 40px;
+        height: 35px;
+        justify-content: center;
+        margin: 0 auto 5px auto;
     }
 
-    .logo-full {
-        height: 40px;
+    /* En móvil, los iconos se separan a las esquinas */
+    .header-actions {
+        display: block; 
+    }
+
+    .user-icon {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+    }
+
+    .cart-icon {
+        position: absolute;
+        top: 10px;
+        right: 10px;
     }
 
     .search-container {
-        order: 3;
         width: 100%;
-        margin: 5px 0;
-    }
-
-    .header-actions {
-        order: 2;
+        margin: 0;
     }
 }
-
 /* Estilos para el modal de login (Intactos) */
 .login-modal {
     display: none;
@@ -421,9 +382,7 @@ body {
     display: none;
 }
 
-/*
-   HERO SECTION - CARRUSEL
-*/
+/* HERO SECTION - CARRUSEL */
 .hero {
     position: relative;
     height: 500px;
@@ -444,7 +403,9 @@ body {
     width: 100%;
     height: 100%;
     opacity: 0;
-    transition: opacity 0.8s ease-in-out;
+    /* CAMBIO: Se añade visibility para que el JS pueda alternar el flujo */
+    visibility: hidden; 
+    transition: opacity 0.8s ease-in-out, visibility 0.8s;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -453,7 +414,9 @@ body {
 
 .carousel-slide.active {
     opacity: 1;
-    z-index: 2;
+    /* CAMBIO: Se activa la visibilidad y se asegura el orden de capa */
+    visibility: visible;
+    z-index: 5; 
 }
 
 .carousel-slide.imagen {
@@ -484,6 +447,7 @@ body {
     z-index: 2;
 }
 
+/* CONTENIDO Y TEXTO */
 .carousel-text {
     flex: 1;
     padding: 20px;
@@ -499,6 +463,19 @@ body {
 .carousel-text.posicion-izquierda { order: 1; }
 .carousel-text.posicion-derecha { order: 2; }
 
+.carousel-text h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.carousel-text p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+/* IMÁGENES Y EFECTOS */
 .carousel-image {
     flex: 1;
     display: flex;
@@ -526,18 +503,17 @@ body {
     transform: translateY(-10px) scale(1.03);
 }
 
-.carousel-text h2 {
-    font-size: 2.5rem;
-    margin-bottom: 20px;
-    font-weight: 700;
+.floating {
+    animation: floating 6s ease-in-out infinite;
 }
 
-.carousel-text p {
-    font-size: 1.2rem;
-    margin-bottom: 30px;
-    line-height: 1.6;
+@keyframes floating {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0px); }
 }
 
+/* CONTROLES Y BOTONES */
 .carousel-btn {
     display: inline-block;
     padding: 12px 30px;
@@ -604,94 +580,71 @@ body {
     transition: all 0.3s ease;
 }
 
-.carousel-prev:hover, .carousel-next:hover {
-    background-color: white;
-}
-
-/* Efectos especiales */
-.floating {
-    animation: floating 6s ease-in-out infinite;
-}
-
-@keyframes floating {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-15px); }
-    100% { transform: translateY(0px); }
-}
-
-/* RESPONSIVE OPTIMIZADO PARA IMÁGENES
-*/
+/* RESPONSIVE MÓVIL */
 @media (max-width: 968px) {
-    .hero {
-        height: auto;
-        min-height: 500px;
+    .main-content {
+        margin-top: 0px !important; 
     }
-    
+
+    .hero {
+        height: 380px;
+        margin-top: 0 !important;
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--dark) 100%);
+    }
+
+    .carousel-slide {
+        padding: 0;
+    }
+
+    .carousel-slide::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(26, 58, 58, 0.65);
+        z-index: 1;
+    }
+
     .carousel-content {
         flex-direction: column;
-        text-align: center;
-        padding: 40px 0 60px 0;
-        justify-content: center;
+        justify-content: center; 
+        align-items: center;
+        height: 100%;
+        width: 100%;
+        padding: 0 20px;
+        z-index: 2;
     }
     
     .carousel-image {
-        order: 1 !important;
-        flex: none;
-        width: 100%;
-        margin-bottom: 20px;
-        min-height: 200px;
+        display: none !important;
     }
 
     .carousel-text {
-        order: 2 !important;
-        flex: none;
-        width: 100%;
-        padding: 0;
-    }
-    
-    .carousel-text, 
-    .carousel-text.alineacion-izquierda, 
-    .carousel-text.alineacion-derecha {
+        width: 100% !important;
+        max-width: 100%;
+        color: var(--white) !important;
         text-align: center !important;
     }
-    
-    .carousel-image img {
-        max-height: 250px;
-        width: auto;
-        max-width: 80%;
-    }
-    
-    .carousel-text h2 {
-        font-size: 2rem;
-    }
-    
-    .carousel-text p {
-        font-size: 1.1rem;
-    }
-}
 
-@media (max-width: 576px) {
     .carousel-text h2 {
         font-size: 1.8rem;
+        margin-bottom: 10px;
+        text-align: center !important;
     }
-    
+
     .carousel-text p {
         font-size: 1rem;
+        margin-bottom: 20px;
+        text-align: center !important;
     }
-    
-    .carousel-image img {
-        max-height: 200px;
+
+    .carousel-btn {
+        margin: 0 auto;
     }
-    
+
     .carousel-nav {
-        display: none;
-    }
-    
-    .carousel-slide {
-        padding: 0 15px;
+        display: none !important;
     }
 }
-
 /*
    PRODUCTOS DESTACADOS
  */
@@ -2989,12 +2942,12 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-/* BANNER PROMOCIONES DESLIZANTE */
+/* BANNER PROMOCIONES - CENTRADO Y SIEMPRE HORIZONTAL */
 .promo-banner {
     background: linear-gradient(90deg, #1a5276, #2e86c1);
     color: white;
     padding: 10px 0;
-    overflow: hidden;
+    overflow: hidden; /* CRÍTICO: Oculta lo que no cabe sin apilar */
     position: fixed;
     top: 55px;
     left: 0;
@@ -3010,29 +2963,29 @@ body {
 
 .promo-track {
     display: flex;
-    width: max-content;
-    animation: moveText 0s linear infinite; /* Editar para dar movimiento */
+    width: 100%;
+    justify-content: center; 
 }
 
 .promo-content {
     display: flex;
     align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap; /* CORRECCIÓN: Evita que las frases se pongan una debajo de otra */
 }
 
 .promo-text {
     font-weight: 600;
     font-size: 14px;
     letter-spacing: 0.5px;
-    margin-right: 50px;
+    margin: 0 25px; 
+    flex-shrink: 0; /* CORRECCIÓN: Evita que el texto se encoja o deforme */
 }
 
+/* Animación desactivada */
 @keyframes moveText {
-    0% {
-        transform: translateX(0);
-    }
-    100% {
-        transform: translateX(-50%);
-    }
+    0% { transform: translateX(0); }
+    100% { transform: translateX(0); }
 }
 
 .main-content {
@@ -3051,6 +3004,12 @@ body {
 @media (max-width: 768px) {
     .promo-text {
         font-size: 13px;
+        margin: 0; 
+    }
+
+    /* Oculta las frases extras en móvil para que quede una sola limpia */
+    .promo-text:not(:first-child) {
+        display: none;
     }
 
     .promo-banner {
@@ -3058,7 +3017,7 @@ body {
     }
 
     .main-content {
-        margin-top: 105px !important;
+        margin-top: 40px !important;
     }
 
     .header.shrink ~ .promo-banner {

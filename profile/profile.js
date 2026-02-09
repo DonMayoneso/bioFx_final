@@ -7,6 +7,40 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const ordersListEl = document.querySelector("#orders .orders-list");
 
+  const UPDATE_COOLDOWN = 60000;
+
+  async function actualizarEstadoOrdenManual(orderId, btnElement) {
+    const now = Date.now();
+    const lastUpdateKey = `last_update_${orderId}`;
+    const lastUpdate = localStorage.getItem(lastUpdateKey);
+
+    if (lastUpdate && now - parseInt(lastUpdate) < UPDATE_COOLDOWN) {
+      const remaining = Math.ceil((UPDATE_COOLDOWN - (now - parseInt(lastUpdate))) / 1000);
+      const msg = `Espera ${remaining}s para actualizar.`;
+      if (window.Snackbar?.show) window.Snackbar.show(msg, { type: "error" });
+      else alert(msg);
+      return;
+    }
+
+    const originalContent = btnElement.innerHTML;
+    btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ...';
+    btnElement.style.pointerEvents = "none";
+
+    try {
+      await window.api.getOrderStatus(orderId);
+      localStorage.setItem(lastUpdateKey, now.toString());
+      if (window.Snackbar?.show) window.Snackbar.show("Estado actualizado.", { type: "success" });
+
+      // Recargamos el historial sin refrescar la página
+      await loadOrdersHistory();
+    } catch (error) {
+      console.error("Error actualizando:", error);
+      if (window.Snackbar?.show) window.Snackbar.show("No se pudo actualizar.", { type: "error" });
+      btnElement.innerHTML = originalContent;
+      btnElement.style.pointerEvents = "auto";
+    }
+  }
+
   function formatOrderDate(isoUtc) {
     if (!isoUtc) return "";
     const fechaSegura = isoUtc.endsWith("Z") ? isoUtc : isoUtc + "Z";
@@ -83,27 +117,20 @@ document.addEventListener("DOMContentLoaded", function () {
     const statusConfig = getStatusConfig(statusRaw);
 
     // 2. Obtener código de autorización (si existe)
-    const authCode =
-      order.authorization || order.authorizationCode || order.authCode || null;
+    const authCode = order.authorization || order.authorizationCode || order.authCode || null;
 
-    const orderNumber =
-      order.orderNumber || order.reference || `ORD-${order.orderId}`;
+    const internalRef = order.internalReference || order.InternalReference || null;
+    const orderNumber = order.orderNumber || order.reference || `ORD-${order.orderId}`;
     const dateText = formatOrderDate(order.createdAt);
 
     const paymentInfoParts = [];
-    if (order.paymentMethodName)
-      paymentInfoParts.push(order.paymentMethodName);
+    if (order.paymentMethodName) paymentInfoParts.push(order.paymentMethodName);
 
     // Solo mostramos emisor si no es rechazado
-    if (order.issuerName && statusRaw !== "REJECTED")
-      paymentInfoParts.push(order.issuerName);
+    if (order.issuerName && statusRaw !== "REJECTED") paymentInfoParts.push(order.issuerName);
 
-    const paymentInfo = paymentInfoParts.length
-      ? `Pago con ${paymentInfoParts.join(" · ")}`
-      : "";
-    const hasAttachmentText = order.hasAttachment
-      ? "Incluye factura adjunta"
-      : "";
+    const paymentInfo = paymentInfoParts.length ? `Pago con ${paymentInfoParts.join(" · ")}` : "";
+    const hasAttachmentText = order.hasAttachment ? "Incluye factura adjunta" : "";
 
     const itemsHtml = (order.items || [])
       .map(
@@ -121,7 +148,7 @@ document.addEventListener("DOMContentLoaded", function () {
           </div>
           <div class="order-price">$${Number(item.totalPrice).toFixed(2)}</div>
         </div>
-      `
+      `,
       )
       .join("");
 
@@ -130,11 +157,7 @@ document.addEventListener("DOMContentLoaded", function () {
       <div class="order-header">
         <div class="order-header-info">
           <div class="order-id">Pedido #${orderNumber}</div>
-          ${
-            dateText
-              ? `<div class="order-date">Realizado el: ${dateText}</div>`
-              : ""
-          }
+          ${dateText ? `<div class="order-date">Realizado el: ${dateText}</div>` : ""}
           
           <div class="order-status-badge ${statusConfig.class}">
             <i class="fas ${statusConfig.icon}"></i>
@@ -146,7 +169,11 @@ document.addEventListener("DOMContentLoaded", function () {
               ? `<div style="margin-top:5px; font-size: 0.9em; color: var(--gray);">Cód. Autorización: <span class="auth-code">${authCode}</span></div>`
               : ""
           }
-
+          ${
+            internalRef
+              ? `<div style="margin-top:5px; font-size: 0.9em; color: var(--gray);">Ref. Interna: <span class="auth-code">${internalRef}</span></div>`
+              : ""
+          }
           ${
             paymentInfo
               ? `<div class="order-payment" style="margin-top:5px; font-size:0.9em;">${paymentInfo}</div>`
@@ -165,9 +192,7 @@ document.addEventListener("DOMContentLoaded", function () {
       </div>
 
       <div class="order-footer">
-        <div class="order-total">Total: $${Number(order.totalAmount).toFixed(
-          2
-        )}</div>
+        <div class="order-total">Total: $${Number(order.totalAmount).toFixed(2)}</div>
         
         ${
           statusConfig.label === "Rechazada"
@@ -183,27 +208,22 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Función mejorada para mostrar alerta (admite modo validación)
-  function showPendingAlert(title, message, isValidation = false) {
-    if (document.querySelector(".pending-order-alert")) return;
+  function showPendingAlert(title, message, isValidation = false, orderId = null) {
+    // Borramos alerta previa si existe para evitar duplicados
+    const existingAlert = document.querySelector(".pending-order-alert");
+    if (existingAlert) existingAlert.remove();
 
     const container = document.querySelector("#orders");
     const alertDiv = document.createElement("div");
 
-    // Asigna la clase base y añade 'validation-mode' si es necesario
-    const cssClass = isValidation
-      ? "pending-order-alert validation-mode"
-      : "pending-order-alert";
-    const iconClass = isValidation
-      ? "fa-sync-alt fa-spin"
-      : "fa-exclamation-triangle";
+    const cssClass = isValidation ? "pending-order-alert validation-mode" : "pending-order-alert";
+    const iconClass = isValidation ? "fa-sync-alt fa-spin" : "fa-exclamation-triangle";
 
-    // Textos por defecto
     const finalTitle = title || "Pago Pendiente Detectado";
-    const finalMsg =
-      message ||
-      "Tu banco está procesando una transacción. Por favor espera la confirmación antes de realizar una nueva compra.";
+    const finalMsg = message || "Tu banco está procesando una transacción.";
 
     alertDiv.className = cssClass;
+    // Quitamos el onclick="location.reload()" del HTML string
     alertDiv.innerHTML = `
       <i class="fas ${iconClass}"></i>
       <div>
@@ -211,11 +231,23 @@ document.addEventListener("DOMContentLoaded", function () {
         <p style="margin:0; font-size:0.9rem;">${finalMsg}</p>
       </div>
       <div class="pending-actions">
-        <button class="btn-check-status" onclick="location.reload()">Actualizar Estado</button>
+        <button class="btn-check-status">Actualizar Estado</button>
       </div>
     `;
 
-    // Inserta la alerta después del título de la sección
+    // Asignamos el evento click manualmente
+    const btn = alertDiv.querySelector(".btn-check-status");
+    if (btn) {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (orderId) {
+          actualizarEstadoOrdenManual(orderId, btn);
+        } else {
+          location.reload(); // Fallback si no hay ID
+        }
+      });
+    }
+
     const sectionTitle = container.querySelector(".section-title");
     if (sectionTitle) {
       sectionTitle.insertAdjacentElement("afterend", alertDiv);
@@ -224,6 +256,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function loadOrdersHistory() {
     if (!ordersListEl) return;
+    const existingAlert = document.querySelector(".pending-order-alert");
+    if (existingAlert) existingAlert.remove();
     ordersListEl.innerHTML = `<p class="orders-loading"><i class="fas fa-spinner fa-spin"></i> Cargando tu historial de pedidos...</p>`;
 
     try {
@@ -234,11 +268,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Filtramos la lista completa antes de hacer nada más
       const visibleOrders = (orders || []).filter((order) => {
-        const status = (
-          order.status ||
-          order.paymentStatus ||
-          ""
-        ).toUpperCase();
+        const status = (order.status || order.paymentStatus || "").toUpperCase();
         return allowedStatuses.includes(status);
       });
 
@@ -254,23 +284,19 @@ document.addEventListener("DOMContentLoaded", function () {
       ordersListEl.innerHTML = "";
 
       // Ordenar: Las más recientes primero
-      visibleOrders.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      );
+      visibleOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
       // Bandera para detectar validación
       let hasValidationOrder = false;
+      let validationOrderId = null;
 
       visibleOrders.forEach((order) => {
-        const status = (
-          order.status ||
-          order.paymentStatus ||
-          ""
-        ).toUpperCase();
+        const status = (order.status || order.paymentStatus || "").toUpperCase();
 
         // Detectar si hay una orden validando
         if (status === "PENDING_VALIDATION") {
           hasValidationOrder = true;
+          validationOrderId = order.id || order.orderId;
         }
 
         const card = buildOrderCard(order);
@@ -282,7 +308,8 @@ document.addEventListener("DOMContentLoaded", function () {
         showPendingAlert(
           "Pago en Validación",
           "Tu transacción está siendo validada por el banco. El estado se actualizará automáticamente en unos instantes.",
-          true // TRUE activa el modo validación
+          true,
+          validationOrderId,
         );
       }
     } catch (err) {
@@ -345,8 +372,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (nameEl) nameEl.textContent = nombre;
       if (emailEl) emailEl.textContent = email;
-      if (dateEl && creado)
-        dateEl.textContent = "Miembro desde: " + formatearMesAnio(creado);
+      if (dateEl && creado) dateEl.textContent = "Miembro desde: " + formatearMesAnio(creado);
 
       // Rellenar formulario "Información Personal"
       const firstNameEl = document.getElementById("firstName");
@@ -457,17 +483,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Sanitiza mientras se escribe
   firstNameEl?.addEventListener("input", () => {
-    firstNameEl.value = firstNameEl.value.replace(
-      /[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g,
-      ""
-    );
+    firstNameEl.value = firstNameEl.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g, "");
     validateNames();
   });
   lastNameEl?.addEventListener("input", () => {
-    lastNameEl.value = lastNameEl.value.replace(
-      /[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g,
-      ""
-    );
+    lastNameEl.value = lastNameEl.value.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g, "");
     validateNames();
   });
   phoneEl?.addEventListener("input", validatePhone);

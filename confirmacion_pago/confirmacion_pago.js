@@ -107,6 +107,7 @@ async function consultarEstado(orderId, requestId) {
         uiStatus = "REJECTED";
         extraMsg = "Tu sesión de pago ha expirado. Por favor, vuelve a realizar la compra.";
         break;
+      
 
       default:
         uiStatus = "ERROR";
