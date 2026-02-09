@@ -1374,7 +1374,7 @@ function agregarEventListenersCarrusel() {
   });
 }
 
-// Inicializar controles del carrusel (esta función permanece igual)
+// Inicializar controles del carrusel
 function inicializarControlesCarrusel(totalSlides) {
   const slides = document.querySelectorAll(".carousel-slide");
   const dots = document.querySelectorAll(".carousel-dot");
