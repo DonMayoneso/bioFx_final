@@ -119,6 +119,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // 2. Obtener código de autorización (si existe)
     const authCode = order.authorization || order.authorizationCode || order.authCode || null;
 
+    const internalRef = order.internalReference || order.InternalReference || null;
     const orderNumber = order.orderNumber || order.reference || `ORD-${order.orderId}`;
     const dateText = formatOrderDate(order.createdAt);
 
@@ -168,7 +169,11 @@ document.addEventListener("DOMContentLoaded", function () {
               ? `<div style="margin-top:5px; font-size: 0.9em; color: var(--gray);">Cód. Autorización: <span class="auth-code">${authCode}</span></div>`
               : ""
           }
-
+          ${
+            internalRef
+              ? `<div style="margin-top:5px; font-size: 0.9em; color: var(--gray);">Ref. Interna: <span class="auth-code">${internalRef}</span></div>`
+              : ""
+          }
           ${
             paymentInfo
               ? `<div class="order-payment" style="margin-top:5px; font-size:0.9em;">${paymentInfo}</div>`
