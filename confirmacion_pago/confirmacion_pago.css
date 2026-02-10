@@ -9,6 +9,7 @@
     --success: #27ae60;
     --dark: #333333;
     --light-gray: #f5f5f5;
+    --cancelled: #7f8c8d; /* Color para estado cancelado */
 }
 
 /* Reset básico */
@@ -76,9 +77,11 @@ body {
         transform: scale(1.05);
     }
     70% {
+        opacity: 1;
         transform: scale(0.9);
     }
     100% {
+        opacity: 1;
         transform: scale(1);
     }
 }

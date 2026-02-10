@@ -306,7 +306,7 @@ document.addEventListener("DOMContentLoaded", function () {
       // Si encontramos una orden en validación, mostramos la alerta Turquesa
       if (hasValidationOrder) {
         showPendingAlert(
-          "Pago en Validación",
+          "Pendiente",
           "Tu transacción está siendo validada por el banco. El estado se actualizará automáticamente en unos instantes.",
           true,
           validationOrderId,

@@ -22,13 +22,13 @@ async function guardAccessOrRedirect() {
   }
 }
 
-// NUEVO: Se agregó parámetro 'orderData' para recibir referencia y total
+// Función encargada de actualizar la interfaz
 function setUI(status, extraMsg, orderData = null) {
   const icon = document.getElementById("icon");
   const title = document.getElementById("title");
   const desc = document.getElementById("desc");
 
-  // Elementos nuevos
+  // Elementos del resumen
   const orderInfo = document.getElementById("orderInfo");
   const orderReference = document.getElementById("orderReference");
   const orderTotal = document.getElementById("orderTotal");
@@ -37,6 +37,7 @@ function setUI(status, extraMsg, orderData = null) {
     APPROVED: '<i class="fas fa-check-circle"></i>',
     REJECTED: '<i class="fas fa-times-circle"></i>',
     PENDING: '<i class="fas fa-hourglass-half"></i>',
+    CANCELLED: '<i class="fas fa-ban"></i>', // Icono para cancelado
     ERROR: '<i class="fas fa-exclamation-triangle"></i>',
   };
 
@@ -45,27 +46,31 @@ function setUI(status, extraMsg, orderData = null) {
   // Actualizar datos de la orden si existen
   if (orderData) {
       orderInfo.style.display = "block";
-      // Intentamos obtener referencia u orderNumber
       orderReference.textContent = orderData.reference || "---";
       
-      // Formatear total
       const total = Number(orderData.total || 0);
       orderTotal.textContent = `$${total.toFixed(2)}`;
   }
 
+  // Lógica de visualización por estado
   if (status === "APPROVED") {
     title.textContent = "Pago aprobado";
     desc.textContent = extraMsg || "Tu transacción fue procesada correctamente.";
-    icon.style.color = "var(--success)"; // Verde
+    icon.style.color = "var(--success)"; 
     limpiarDatosCompra();
   } else if (status === "REJECTED") {
     title.textContent = "Pago rechazado";
     desc.textContent = extraMsg || "Tu transacción no pudo completarse.";
-    icon.style.color = "#dc3545"; // Rojo
+    icon.style.color = "#dc3545"; 
   } else if (status === "PENDING") {
     title.textContent = "Pago en proceso";
     desc.textContent = extraMsg || "Aún estamos esperando confirmación.";
-    icon.style.color = "#ffc107"; // Amarillo
+    icon.style.color = "#ffc107"; 
+  } else if (status === "CANCELLED") {
+    // Manejo del estado cancelado en la UI
+    title.textContent = "Pago cancelado";
+    desc.textContent = extraMsg || "La transacción ha sido cancelada.";
+    icon.style.color = "#6c757d"; // Gris para estado cancelado
   } else {
     title.textContent = "Estado desconocido";
     desc.textContent = extraMsg || "Intenta nuevamente en unos segundos.";
@@ -75,7 +80,7 @@ function setUI(status, extraMsg, orderData = null) {
 
 async function consultarEstado(orderId, requestId) {
   try {
-    const res = await window.api.getOrderStatus(Number(orderId)); // { status: "PAID"|..., totalAmount: 100, reference: "ORD-123" }
+    const res = await window.api.getOrderStatus(Number(orderId));
 
     const rawStatus = String(res?.status || res?.Status || "").toUpperCase() || "ERROR";
     let uiStatus = "ERROR";
@@ -108,15 +113,23 @@ async function consultarEstado(orderId, requestId) {
         extraMsg = "Tu sesión de pago ha expirado. Por favor, vuelve a realizar la compra.";
         break;
       
+      // Casos de cancelación detectados
+      case "CANCELLED":
+      case "CANCELED":
+      case "CANCELADA":
+      case "CANCEL":
+      case "VOIDED":
+        uiStatus = "CANCELLED";
+        extraMsg = "La transacción ha sido cancelada.";
+        break;
 
       default:
         uiStatus = "ERROR";
         extraMsg =
-          "No se pudo determinar el estado de tu transacción. Intenta nuevamente en unos segundos.";
+          "La transacción ha sido cancelada.";
         break;
     }
 
-    // Pasamos el objeto 'res' completo como tercer parámetro para extraer datos
     setUI(uiStatus, extraMsg, res);
   } catch (e) {
     setUI("ERROR", e?.message || "No se pudo consultar el estado.");
@@ -129,7 +142,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const { orderId, requestId } = guard;
 
-  // Estado inicial visual (sin datos aun)
+  // Estado inicial visual
   setUI("PENDING", "Consultando con el proveedor de pagos...");
   
   await consultarEstado(orderId, requestId);
