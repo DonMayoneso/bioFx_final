@@ -1,3 +1,6 @@
+const costoEnvio = 3.5;
+const totalParaDescuentoEnvio = 50.0;
+
 function verificarAlmacenamiento() {
   try {
     localStorage.setItem("test", "test");
@@ -316,7 +319,6 @@ async function cargarResumenPedido() {
     } catch {}
   }
 
-  // 5) Fallback desde API
   if (!carritoData) {
     try {
       const apiCart = await window.api.getMyCart();
@@ -440,7 +442,7 @@ function calcularTotalesCheckout(items, tieneReceta) {
   }, 0);
 
   const subtotalNeto = Math.max(0, subtotalBase - descuentoProductos);
-  const shipping = subtotalNeto >= 50 ? 0 : 5;
+  const shipping = subtotalNeto >= totalParaDescuentoEnvio ? 0 : costoEnvio; 
   const descuentoReceta = tieneReceta ? subtotalNeto * 0.02 : 0;
 
   const descuentoTotal = descuentoProductos + descuentoReceta;
@@ -694,7 +696,6 @@ async function procesarCheckout(e) {
   }
 }
 
-// CAMBIO 5: Modificada la validación para retornar mensajes específicos y validar los nuevos campos
 function validarFormulario() {
   const requiredFields = document.querySelectorAll("#checkoutForm [required]");
   let mensajeError = null;

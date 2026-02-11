@@ -80,11 +80,16 @@ function setUI(status, extraMsg, orderData = null) {
 
 async function consultarEstado(orderId, requestId) {
   try {
+    console.log("Dentro de consultarEstado")
     const res = await window.api.getOrderStatus(Number(orderId));
+
+    console.log(res)
 
     const rawStatus = String(res?.status || res?.Status || "").toUpperCase() || "ERROR";
     let uiStatus = "ERROR";
     let extraMsg = "";
+
+    
 
     switch (rawStatus) {
       case "PAID":
@@ -144,7 +149,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Estado inicial visual
   setUI("PENDING", "Consultando con el proveedor de pagos...");
-  
+
+    
   await consultarEstado(orderId, requestId);
 });
 
