@@ -645,9 +645,8 @@ body {
         display: none !important;
     }
 }
-/*
-   PRODUCTOS DESTACADOS
- */
+
+/* PRODUCTOS DESTACADOS */
 .featured-products {
     padding: 80px 0;
     background: linear-gradient(135deg, rgba(155, 196, 49, 0.05) 0%, rgba(46, 177, 152, 0.05) 100%);
@@ -802,46 +801,89 @@ body {
 }
 
 /* Responsive */
+/* RESPONSIVE MÓVIL OPTIMIZADO */
 @media (max-width: 768px) {
     .featured-products {
-        padding: 60px 0;
+        padding: 50px 0;
     }
     
     .section-header h2 {
-        font-size: 2.2rem;
-    }
-    
-    .subtitle {
-        font-size: 1.1rem;
+        font-size: 2rem;
     }
     
     .featured-grid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        padding: 0 10px;
+    }
+
+    .featured-product:last-child:nth-child(odd) {
+        grid-column: span 2;
+        width: calc(50% - 7.5px);
+        margin: 0 auto;
+    }
+
+    .product-image {
+        height: 200px;
+        padding: 10px;
+    }
+
+    .product-image img {
+        max-width: 95%;
+        max-height: 95%;
+    }
+
+    .product-info {
+        padding: 12px 8px;
+    }
+
+    .product-info h3 {
+        font-size: 0.95rem;
+        min-height: 2.5rem;
+        margin-bottom: 8px;
+        line-height: 1.2;
+    }
+
+    .price-container {
+        margin-bottom: 5px;
+    }
+
+    .original-price {
+        font-size: 0.8rem;
+    }
+
+    .discounted-price, .current-price {
+        font-size: 1.15rem;
+    }
+
+    .product-code {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+    }
+
+    .product-badge {
+        top: 8px;
+        left: 8px;
+        padding: 4px 8px;
+        font-size: 0.65rem;
+    }
+
+    .product-badge.discount {
+        right: 8px;
     }
 }
 
-@media (max-width: 480px) {
-    .section-header h2 {
-        font-size: 1.8rem;
-    }
-    
-    .featured-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .product-info h3 {
-        font-size: 1.1rem;
+@media (max-width: 400px) {
+    .product-image {
+        height: 150px;
     }
     
     .discounted-price, .current-price {
-        font-size: 1.3rem;
+        font-size: 1rem;
     }
 }
 
-/*
-   CATEGORÍAS
- */
+/* CATEGORÍAS */
 .categories {
     margin: 40px 0;
 }
@@ -888,9 +930,7 @@ body {
     font-size: 0.9rem;
 }
 
-/*
-   PRODUCTOS - EFECTO FLIP
- */
+/* PRODUCTOS */
 .products-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -954,18 +994,68 @@ body {
     text-align: center;
 }
 
-.product-short-description {
-    color: var(--gray);
-    font-size: 14px;
-    margin-bottom: 15px;
-    text-align: center;
-    padding: 0 10px;
-    flex: 1;
+/* RESPONSIVE MÓVIL - ELIMINACIÓN DE ESPACIO BLANCO */
+@media (max-width: 768px) {
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+        padding: 0 10px;
+        align-items: stretch; /* Estira las tarjetas de la misma fila para que midan lo mismo */
+    }
+
+    .product-card {
+        /* CAMBIO CLAVE: Quitamos la altura fija de 220px/180px */
+        height: auto !important; 
+        min-height: auto !important;
+        transform: none !important;
+        transition: none !important;
+        display: flex !important;
+        flex-direction: column;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #eee;
+    }
+
+    .product-card-back { 
+        display: none !important; 
+    }
+    
+    .product-card-front { 
+        position: relative !important; 
+        height: auto !important; 
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .product-image {
+        height: 130px !important; 
+        object-fit: contain !important;
+        padding: 8px;
+        background: #fdfdfd;
+        width: 100%;
+    }
+
+    .product-name {
+        font-size: 0.8rem !important;
+        padding: 5px !important; 
+        min-height: auto !important; 
+        margin: 0 !important;
+        line-height: 1.1;
+        text-align: center;
+    }
+
+    .product-price {
+        font-size: 1rem !important;
+        font-weight: 700;
+        margin: 0 !important;
+        padding: 5px 0 10px 0 !important;
+        text-align: center;
+        color: var(--primary);
+    }
 }
 
-/*
-   MODAL - VISTA DE PRODUCTO
- */
+/* MODAL - VISTA DE PRODUCTO */
 .modal {
     display: none;
     position: fixed;

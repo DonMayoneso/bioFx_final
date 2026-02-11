@@ -1442,12 +1442,12 @@ function scrollToSection(sectionId) {
 
   // Mapeo especial para textos de botones específicos
   const buttonTextMap = {
-    calmantes: "why-choose-us", // "Conócenos mejor" debe ir a "why-choose-us"
+    calmantes: "why-choose-us",
     conocenos: "why-choose-us",
     "conoce-nosotros": "why-choose-us",
     about: "why-choose-us",
     nosotros: "why-choose-us",
-    oferta: "featured-products", // "Aprovechar oferta" debe ir a productos destacados
+    oferta: "featured-products",
     ofertas: "featured-products",
     promocion: "featured-products",
   };
@@ -1471,7 +1471,7 @@ function scrollToSection(sectionId) {
     const sectionMap = {
       categories: ".categories",
       productos: ".products-section",
-      calmantes: ".why-choose-us", // Mapeo adicional para calmantes
+      calmantes: ".why-choose-us",
       productsContainer: ".products-section",
       "featured-products": ".featured-products",
       destacados: ".featured-products",
