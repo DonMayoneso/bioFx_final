@@ -63,14 +63,13 @@ function setUI(status, extraMsg, orderData = null) {
     desc.textContent = extraMsg || "Tu transacción no pudo completarse.";
     icon.style.color = "#dc3545"; 
   } else if (status === "PENDING") {
-    title.textContent = "Pago en proceso";
-    desc.textContent = extraMsg || "Aún estamos esperando confirmación.";
+    title.textContent = "PENDIENTE";
+    desc.textContent = extraMsg || "Su transacción estara lista en unos mintos";
     icon.style.color = "#ffc107"; 
   } else if (status === "CANCELLED") {
-    // Manejo del estado cancelado en la UI
     title.textContent = "Pago cancelado";
     desc.textContent = extraMsg || "La transacción ha sido cancelada.";
-    icon.style.color = "#6c757d"; // Gris para estado cancelado
+    icon.style.color = "#6c757d";
   } else {
     title.textContent = "Estado desconocido";
     desc.textContent = extraMsg || "Intenta nuevamente en unos segundos.";
