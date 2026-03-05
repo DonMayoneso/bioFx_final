@@ -165,6 +165,47 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   });
 
+    const inputsSanitizar = [
+        { id: "nombres", regex: /[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g },
+        { id: "apellidos", regex: /[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g },
+        { id: "direccion", regex: /[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ#,. ]/g },
+        { id: "ciudad", regex: /[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g },
+        { id: "provincia", regex: /[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g },
+        { id: "codigoPostal", regex: /[^a-zA-Z0-9]/g }
+    ];
+
+    inputsSanitizar.forEach(inputObj => {
+        const el = document.getElementById(inputObj.id);
+        if (el) {
+            el.addEventListener("input", function() {
+                // Elimina caracteres que coincidan con la regex de exclusión
+                this.value = this.value.replace(inputObj.regex, '');
+            });
+        }
+    });
+
+    // --- LÓGICA ESPECÍFICA PARA DOCUMENTOS ---
+    const inputDoc = document.getElementById("numeroDocumento");
+    const selectTipoDoc = document.getElementById("tipoDocumento");
+
+    if (inputDoc && selectTipoDoc) {
+        inputDoc.addEventListener("input", function() {
+            const tipo = selectTipoDoc.value;
+            let valor = this.value;
+
+            if (tipo === "cedula") {
+                // Solo números, max 10
+                this.value = valor.replace(/\D/g, '').slice(0, 10);
+            } else if (tipo === "ruc") {
+                // Solo números, max 13
+                this.value = valor.replace(/\D/g, '').slice(0, 13);
+            } else if (tipo === "pasaporte") {
+                // Alfanumérico (letras y números), sin especiales
+                this.value = valor.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            }
+        });
+  }
+
   // CAMBIO 3: Validar que el teléfono solo acepte números en tiempo real
   const inputTelefono = document.getElementById("telefono");
   if (inputTelefono) {

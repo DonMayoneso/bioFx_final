@@ -53,11 +53,11 @@
                 <div class="form-row">
                   <div class="form-group">
                     <label for="nombres">Nombres Completos *</label>
-                    <input type="text" id="nombres" name="nombres" required />
+                    <input type="text" id="nombres" name="nombres" inputmode="text" autocomplete="given-name" required />
                   </div>
                   <div class="form-group">
                     <label for="apellidos">Apellidos Completos *</label>
-                    <input type="text" id="apellidos" name="apellidos" required />
+                    <input type="text" id="apellidos" name="apellidos" inputmode="text" autocomplete="family-name" required />
                   </div>
                 </div>
 
@@ -73,18 +73,18 @@
                   </div>
                   <div class="form-group">
                     <label for="numeroDocumento">Número de Documento *</label>
-                    <input type="text" id="numeroDocumento" name="numeroDocumento" required />
+                    <input type="text" id="numeroDocumento" name="numeroDocumento" inputmode="text" required />
                   </div>
                 </div>
 
                 <div class="form-row">
                   <div class="form-group">
                     <label for="email">Correo Electrónico *</label>
-                    <input type="email" id="email" name="email" required />
+                    <input type="email" id="email" name="email" autocomplete="email" required />
                   </div>
                   <div class="form-group">
                     <label for="telefono">Teléfono de Contacto/Whatsapp*</label>
-                    <input type="tel" id="telefono" name="telefono" required />
+                    <input type="tel" id="telefono" name="telefono" inputmode="tel" autocomplete="tel" required />
                   </div>
                 </div>
               </fieldset>
@@ -94,24 +94,24 @@
 
                 <div class="form-group">
                   <label for="direccion">Dirección Completa *</label>
-                  <textarea id="direccion" name="direccion" rows="3" required></textarea>
+                  <textarea id="direccion" name="direccion" rows="3" inputmode="text" autocomplete="street-address" required></textarea>
                 </div>
 
                 <div class="form-row">
                   <div class="form-group">
                     <label for="ciudad">Ciudad *</label>
-                    <input type="text" id="ciudad" name="ciudad" required />
+                    <input type="text" id="ciudad" name="ciudad" inputmode="text" autocomplete="address-level2" required />
                   </div>
                   <div class="form-group">
                     <label for="provincia">Provincia *</label>
-                    <input type="text" id="provincia" name="provincia" required />
+                    <input type="text" id="provincia" name="provincia" inputmode="text" autocomplete="address-level1" required />
                   </div>
                 </div>
 
                 <div class="form-row">
                   <div class="form-group">
                     <label for="codigoPostal">Código Postal (opcional)</label>
-                    <input type="text" id="codigoPostal" name="codigoPostal" />
+                    <input type="text" id="codigoPostal" name="codigoPostal" inputmode="numeric" autocomplete="postal-code" />
                   </div>
                   <div class="form-group">
                     <label for="pais">País *</label>
@@ -128,7 +128,7 @@
                 <div class="form-group">
                   <div class="file-upload">
                     <label for="recetaMedica">Subir receta médica (PDF o imágen)</label>
-                    <input type="file" id="recetaMedica" name="recetaMedica" accept="image/*" />
+                    <input type="file" id="recetaMedica" name="recetaMedica" accept="image/*,application/pdf" />
                     <div class="upload-preview" id="uploadPreview">
                       <i class="fas fa-cloud-upload-alt"></i>
                       <p>Arrastra una imagen aquí o haz clic para seleccionar</p>
@@ -141,7 +141,7 @@
                 <legend><i class="fas fa-user-md"></i> Información del Médico</legend>
                 <div class="form-group">
                   <label for="nombreMedico">Nombre del Médico *</label>
-                  <input type="text" id="nombreMedico" name="nombreMedico" required />
+                  <input type="text" id="nombreMedico" name="nombreMedico" inputmode="text" required />
                   <small class="disclaimer-medico"
                     >Si no tiene un médico tratante, escriba "NA"</small
                   >
